@@ -1,7 +1,10 @@
 import React, { useState } from 'react'
-import { Alert, StyleSheet, View, AppState } from 'react-native'
+import { Alert, StyleSheet, View, AppState, Text, Image, ScrollView } from 'react-native'
 import { supabase } from '../lib/supabase'
 import { Button, Input } from '@rneui/themed'
+import { SafeAreaView } from 'react-native-safe-area-context'
+
+import { images } from '../constants'
 
 // Tells Supabase Auth to continuously refresh the session automatically if
 // the app is in the foreground. When this is added, you will continue to receive
@@ -24,6 +27,15 @@ export default function Auth() {
   const [phoneNumber, setPhoneNumber] = useState('');  // Phone Number for signup
   const [loading, setLoading] = useState(false);
   const [isSignup, setIsSignup] = useState(false); // Toggle between login and signup
+
+  const inputStyles = {
+    autoCapitalize: 'none' as const,
+    containerStyle: styles.inputWrapper,
+    inputContainerStyle: styles.inputContainer,
+    inputStyle: styles.inputText,
+    labelStyle: styles.label,
+    placeholderTextColor: '#7b7b8b',
+  };
 
   // Login function
   async function signInWithEmail() {
@@ -66,10 +78,31 @@ export default function Auth() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.container}>
+          <View style={styles.headerRow}>
+            <View style={styles.headerCopy}>
+              <Text style={styles.headerEyebrow}>Profile</Text>
+              <Text style={styles.headerTitle}>{isSignup ? 'Create your account' : 'Sign in to your profile'}</Text>
+            </View>
+            <Image
+              source={images.logoTopOneWhite}
+              style={{ width: 140, height: 56 }}
+              resizeMode="contain"
+            />
+          </View>
+
+          <View style={styles.heroCard}>
+            <Text style={styles.eyebrow}>Guest Access</Text>
+            <Text style={styles.title}>{isSignup ? 'Create your account' : 'Sign in to your profile'}</Text>
+            <Text style={styles.subtitle}>
+              Keep the guest experience in the same dark dashboard style while managing your account details.
+            </Text>
+          </View>
+
       {isSignup ? (
         <>
-          {/* Signup Form */}
           <View style={[styles.verticallySpaced, styles.mt20]}>
             <Input
               label="First Name"
@@ -78,6 +111,11 @@ export default function Auth() {
               value={firstName}
               placeholder="Enter your first name"
               autoCapitalize="words"
+              containerStyle={styles.inputWrapper}
+              inputContainerStyle={styles.inputContainer}
+              inputStyle={styles.inputText}
+              labelStyle={styles.label}
+              placeholderTextColor="#7b7b8b"
             />
           </View>
           <View style={[styles.verticallySpaced, styles.mt20]}>
@@ -88,6 +126,11 @@ export default function Auth() {
               value={lastName}
               placeholder="Enter your last name"
               autoCapitalize="words"
+              containerStyle={styles.inputWrapper}
+              inputContainerStyle={styles.inputContainer}
+              inputStyle={styles.inputText}
+              labelStyle={styles.label}
+              placeholderTextColor="#7b7b8b"
             />
           </View>
           <View style={styles.verticallySpaced}>
@@ -98,6 +141,11 @@ export default function Auth() {
               value={phoneNumber}
               placeholder="Enter your phone number"
               keyboardType="phone-pad"
+              containerStyle={styles.inputWrapper}
+              inputContainerStyle={styles.inputContainer}
+              inputStyle={styles.inputText}
+              labelStyle={styles.label}
+              placeholderTextColor="#7b7b8b"
             />
           </View>
           <View style={styles.verticallySpaced}>
@@ -107,7 +155,7 @@ export default function Auth() {
               onChangeText={(text) => setEmail(text)}
               value={email}
               placeholder="email@address.com"
-              autoCapitalize="none"
+              {...inputStyles}
             />
           </View>
           <View style={styles.verticallySpaced}>
@@ -118,16 +166,15 @@ export default function Auth() {
               value={password}
               secureTextEntry={true}
               placeholder="Password"
-              autoCapitalize="none"
+              {...inputStyles}
             />
           </View>
           <View style={[styles.verticallySpaced, styles.mt20]}>
-            <Button title="Sign up" disabled={loading} onPress={signUpWithEmail} />
+            <Button title="Sign up" disabled={loading} onPress={signUpWithEmail} buttonStyle={styles.primaryButton} titleStyle={styles.primaryButtonText} />
           </View>
         </>
       ) : (
         <>
-          {/* Login Form */}
           <View style={[styles.verticallySpaced, styles.mt20]}>
             <Input
               label="Email"
@@ -135,7 +182,7 @@ export default function Auth() {
               onChangeText={(text) => setEmail(text)}
               value={email}
               placeholder="email@address.com"
-              autoCapitalize="none"
+              {...inputStyles}
             />
           </View>
           <View style={styles.verticallySpaced}>
@@ -146,30 +193,68 @@ export default function Auth() {
               value={password}
               secureTextEntry={true}
               placeholder="Password"
-              autoCapitalize="none"
+              {...inputStyles}
             />
           </View>
           <View style={[styles.verticallySpaced, styles.mt20]}>
-            <Button title="Sign in" disabled={loading} onPress={signInWithEmail} />
+            <Button title="Sign in" disabled={loading} onPress={signInWithEmail} buttonStyle={styles.primaryButton} titleStyle={styles.primaryButtonText} />
           </View>
         </>
       )}
 
-      {/* Toggle between login and signup */}
       <View style={[styles.verticallySpaced, styles.mt20]}>
         <Button
           title={isSignup ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}
           onPress={() => setIsSignup(!isSignup)}
+          buttonStyle={styles.secondaryButton}
+          titleStyle={styles.secondaryButtonText}
         />
       </View>
     </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    backgroundColor: '#161622',
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
   container: {
-    marginTop: 40,
-    padding: 12,
+    backgroundColor: '#161622',
+    flex: 1,
+    padding: 16,
+  },
+  headerRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  headerCopy: {
+    flex: 1,
+    paddingRight: 16,
+  },
+  headerEyebrow: {
+    color: '#CDCDE0',
+    fontSize: 13,
+  },
+  headerTitle: {
+    color: '#ffffff',
+    fontSize: 24,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  heroCard: {
+    backgroundColor: '#1E1E2D',
+    borderColor: '#232533',
+    borderRadius: 28,
+    borderWidth: 1,
+    padding: 20,
   },
   verticallySpaced: {
     paddingTop: 4,
@@ -178,5 +263,67 @@ const styles = StyleSheet.create({
   },
   mt20: {
     marginTop: 20,
+  },
+  eyebrow: {
+    color: '#8ED1FC',
+    fontSize: 12,
+    fontWeight: '500',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  title: {
+    color: '#ffffff',
+    fontSize: 30,
+    fontWeight: '600',
+    marginTop: 12,
+  },
+  subtitle: {
+    color: '#CDCDE0',
+    fontSize: 14,
+    lineHeight: 22,
+    marginTop: 12,
+  },
+  inputWrapper: {
+    paddingHorizontal: 0,
+  },
+  inputContainer: {
+    backgroundColor: '#1E1E2D',
+    borderBottomWidth: 0,
+    borderColor: '#232533',
+    borderRadius: 18,
+    minHeight: 56,
+    paddingHorizontal: 14,
+  },
+  inputText: {
+    color: '#ffffff',
+    fontSize: 15,
+  },
+  label: {
+    color: '#CDCDE0',
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  primaryButton: {
+    backgroundColor: '#8ED1FC',
+    borderRadius: 16,
+    minHeight: 56,
+  },
+  primaryButtonText: {
+    color: '#161622',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  secondaryButton: {
+    backgroundColor: '#1E1E2D',
+    borderColor: '#232533',
+    borderRadius: 16,
+    borderWidth: 1,
+    minHeight: 56,
+  },
+  secondaryButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { StyleSheet, View, Alert, ScrollView, SafeAreaView,Text } from 'react-native';
+import { StyleSheet, View, Alert, ScrollView, Text, Image } from 'react-native';
 import { Button } from '@rneui/themed';
 import { Session } from '@supabase/supabase-js';
 import { router } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 import FormField from '../components/FormField'; 
+import { images } from '../constants';
 
 export default function Account({ session }: { session: Session }) {
   const [loading, setLoading] = useState(true);
-  const [username, setUsername] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const emailAddress = session.user.email ?? '';
 
   useEffect(() => {
     if (session) getProfile();
@@ -24,7 +27,7 @@ export default function Account({ session }: { session: Session }) {
 
       const { data, error, status } = await supabase
         .from('profiles')
-        .select(`username, first_name, last_name, phone_number`)
+        .select(`first_name, last_name, phone_number`)
         .eq('id', session?.user.id)
         .single();
       if (error && status !== 406) {
@@ -32,7 +35,6 @@ export default function Account({ session }: { session: Session }) {
       }
 
       if (data) {
-        setUsername(data.username);
         setFirstName(data.first_name);
         setLastName(data.last_name);
         setPhoneNumber(data.phone_number);
@@ -47,12 +49,10 @@ export default function Account({ session }: { session: Session }) {
   }
 
   async function updateProfile({
-    username,
     first_name,
     last_name,
     phone_number,
   }: {
-    username: string;
     first_name: string;
     last_name: string;
     phone_number: string;
@@ -63,7 +63,6 @@ export default function Account({ session }: { session: Session }) {
 
       const updates = {
         id: session?.user.id,
-        username,
         first_name,
         last_name,
         phone_number,
@@ -85,21 +84,34 @@ export default function Account({ session }: { session: Session }) {
   }
 
   return (
-  <SafeAreaView className="">
+  <SafeAreaView edges={['top']} className="flex-1 bg-primary" style={{ backgroundColor: '#161622' }}>
     <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
     <View style={styles.container}>
-    <View className="flex-1 justify-center items-center px-4 pb-8">
-      <Text className="text-2xl text-black font-psemibold">
-            Profile
-      </Text>
+    <View style={styles.headerRow}>
+      <View className="flex-1 pr-4">
+        <Text className="text-sm text-gray-100 font-pregular">
+          Profile
+        </Text>
+        <Text className="mt-1 text-2xl text-white font-psemibold">
+          Your Account
+        </Text>
+        <Text className="mt-2 font-pregular text-sm text-gray-100">
+          Update your account details below.
+        </Text>
       </View>
+      <Image
+        source={images.logoTopOneWhite}
+        style={{ width: 140, height: 56 }}
+        resizeMode="contain"
+      />
+    </View>
       <FormField
         title="First Name"
         value={firstName}
         handleChangeText={setFirstName}
         placeholder="Enter your first name"
         OtherStyles="mt-5"
-        titleColor="text-black"
+        titleColor="text-gray-100"
       />
        <FormField
         title="Last Name"
@@ -107,16 +119,14 @@ export default function Account({ session }: { session: Session }) {
         handleChangeText={setLastName}
         placeholder="Enter your last name"
         OtherStyles="mt-5"
-        titleColor="text-black"
+        titleColor="text-gray-100"
       />
-      <FormField 
-        title="Username"
-        value={username}
-        handleChangeText={setUsername}
-        placeholder="Enter your username"
-        OtherStyles="mt-5 text-black"
-         titleColor="text-black"
-      />
+      <View className="mt-5">
+        <Text className="text-base font-pmedium text-gray-100">Email</Text>
+        <View className="mt-2 w-full rounded-2xl border-2 border-black-200 bg-black-100 px-4 py-4">
+          <Text className="font-psemibold text-base text-white">{emailAddress || 'No email available'}</Text>
+        </View>
+      </View>
       <FormField
         title="Phone Number"
         value={phoneNumber}
@@ -124,7 +134,7 @@ export default function Account({ session }: { session: Session }) {
         placeholder="Enter your phone number"
         OtherStyles="mt-5"
         keyboardType="phone-pad"
-        titleColor="text-black"
+        titleColor="text-gray-100"
       />
 
       <View style={[styles.verticallySpaced, styles.mt20]}>
@@ -132,13 +142,14 @@ export default function Account({ session }: { session: Session }) {
           title={loading ? 'Loading ...' : 'Update'}
           onPress={() =>
             updateProfile({
-              username,
               first_name: firstName,
               last_name: lastName,
               phone_number: phoneNumber,
             })
           }
           disabled={loading}
+          buttonStyle={styles.primaryButton}
+          titleStyle={styles.primaryButtonText}
         />
       </View>
 
@@ -149,6 +160,8 @@ export default function Account({ session }: { session: Session }) {
         await supabase.auth.signOut();
         router.replace('/');
         }}
+        buttonStyle={styles.secondaryButton}
+        titleStyle={styles.secondaryButtonText}
       />
       </View>
     </View>
@@ -159,8 +172,14 @@ export default function Account({ session }: { session: Session }) {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 40,
-    padding: 12,
+    flex: 1,
+    padding: 16,
+  },
+  headerRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
   verticallySpaced: {
     paddingTop: 4,
@@ -169,5 +188,27 @@ const styles = StyleSheet.create({
   },
   mt20: {
     marginTop: 20,
+  },
+  primaryButton: {
+    backgroundColor: '#8ED1FC',
+    borderRadius: 16,
+    minHeight: 56,
+  },
+  primaryButtonText: {
+    color: '#161622',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  secondaryButton: {
+    backgroundColor: '#1E1E2D',
+    borderColor: '#232533',
+    borderRadius: 16,
+    borderWidth: 1,
+    minHeight: 56,
+  },
+  secondaryButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

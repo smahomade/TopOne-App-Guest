@@ -1,4 +1,5 @@
 import bookmark from "../assets/icons/bookmark.png";
+import comb from "../assets/icons/comb.png";
 import home from "../assets/icons/home.png";
 import plus from "../assets/icons/plus.png";
 import profile from "../assets/icons/profile.png";
@@ -12,10 +13,12 @@ import eyeHide from "../assets/icons/eye-hide.png";
 import eye from "../assets/icons/eye.png";
 import play from "../assets/icons/play.png";
 import scissors from "../assets/icons/scissors.png";
+import topOneScissors from "../assets/icons/topone-scissors.png";
 
 export default {
   play,
   bookmark,
+  comb,
   home,
   plus,
   profile,
@@ -27,5 +30,6 @@ export default {
   logout,
   eyeHide,
   eye,
-  scissors
+  scissors,
+  topOneScissors
 };

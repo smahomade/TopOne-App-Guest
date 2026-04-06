@@ -1,12 +1,16 @@
-import { View, Text, Image } from 'react-native'
-import { Tabs, Redirect, useNavigation} from 'expo-router'
-import Home from './home'
+import { View, Text, Image, type ImageSourcePropType } from 'react-native'
+import { Tabs } from 'expo-router'
 import { icons } from '../../constants';
-import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
-const TabIcon = ({ icon, color, name, focused }) => {
+type TabIconProps = {
+    color: string;
+    focused: boolean;
+    icon: ImageSourcePropType;
+    name: string;
+}
+
+const TabIcon = ({ icon, color, name, focused }: TabIconProps) => {
     return(
         <View className="items-center justify-center gap-2">
             <Image
@@ -28,9 +32,12 @@ const TabIcon = ({ icon, color, name, focused }) => {
 const TabsLayout = () => {
   return (
     <>
-    <StatusBar backgroundColor='#161622' style='dark'/>
+    <StatusBar backgroundColor='#161622' style='light'/>
   
         <Tabs
+            sceneContainerStyle={{
+                backgroundColor: '#161622',
+            }}
             screenOptions={{
                 tabBarShowLabel: false,
                 tabBarActiveTintColor: '#8ED1FC', //This is the 'color' variable
@@ -83,9 +90,25 @@ const TabsLayout = () => {
                 headerShown: false,
                 tabBarIcon: ({ color,focused }) => (
                     <TabIcon 
-                        icon={icons.eyeHide}
+                        icon={icons.comb}
                         color={color}
                         name="Collection"
+                        focused={focused}
+                     />
+                )
+            }}
+            />
+
+        <Tabs.Screen
+            name='book'
+            options={{
+                title: 'Messages',
+                headerShown: false,
+                tabBarIcon: ({ color,focused }) => (
+                    <TabIcon 
+                        icon={icons.bookmark}
+                        color={color}
+                        name="Messages"
                         focused={focused}
                      />
                 )
