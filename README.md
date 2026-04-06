@@ -1,50 +1,112 @@
-# Welcome to your Expo app 👋
+# Top One Guest App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## About
 
-## Get started
+Top One Guest App is the customer-facing mobile app for the Top One salon system.
 
-1. Install dependencies
+This app works alongside the Top One Admin App. The admin app is responsible for managing salon content and operational data, while this guest app consumes that data from Supabase and presents it to customers in a read-focused experience.
 
-   ```bash
-   npm install
-   ```
+In practice, that means:
 
-2. Start the app
+- content created or updated in the admin app can appear in this app
+- customers can browse banners, collections, services, and locations
+- customers can build service selections and send booking requests
+- booking requests open message conversations that admins can continue manually
 
-   ```bash
-    npx expo start
-   ```
+The admin app handles full CRUD behaviour. This guest app is primarily designed to read shared data and support customer communication.
 
-In the output, you'll find options to open the app in a
+## What This App Is For
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+The purpose of this app is to help customers explore the salon and contact the store owner or admin team for manual booking.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+Customers can:
 
-## Get a fresh project
+- browse salon updates from the home page
+- view service categories and choose services
+- create a booking request from selected services
+- open message conversations with the admin team
+- browse collection images grouped by year
+- view salon location information
+- manage their account details
 
-When you're ready, run:
+## How To Run
+
+1. Clone or download the repository.
+2. Install dependencies.
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+3. Add the required Supabase environment variables.
+4. Start the Expo development server.
 
-## Learn more
+```bash
+npx expo start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+5. Run the app in one of the supported environments:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- Android Emulator
+- iOS Simulator through Xcode
+- Expo Go if needed for testing
 
-## Join the community
+## Environment Setup
 
-Join our community of developers creating universal apps.
+This project requires Supabase connection details in your environment configuration.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Add the following values:
+
+```env
+EXPO_PUBLIC_SUPABASE_URL=your_supabase_project_url
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+Without these values, the app cannot authenticate users or load shared content.
+
+## Supabase Requirements
+
+The app depends on Supabase tables being available.
+
+Minimum tables required:
+
+- `banners`
+- `collections` or the gallery table used by the admin app
+- `locations`
+- `messages`
+- `profiles`
+- `services`
+
+Some features also expect certain fields to exist. Examples include:
+
+- `messages.conversation_id` for grouping booking conversations
+- `banners.long_description` for detailed banner popups
+- location detail fields such as `address_line_1`, `address_line_2`, `postcode`, `country`, `phone`, `email`, and `opening_hours`
+
+## Booking Flow
+
+The booking flow is intentionally manual from the admin side.
+
+1. A customer opens the Services tab.
+2. They choose one or more services.
+3. They submit the selection as a booking request.
+4. The app creates a new conversation in the Messages section.
+5. The admin or store owner can continue the booking manually inside that conversation.
+
+This approach keeps service selection simple for customers while still allowing the salon to confirm appointments directly.
+
+## Notes For Developers
+
+- This is an Expo Router project using file-based routing.
+- Shared content is fetched from Supabase and updated in the guest app based on admin-side changes.
+- The app is designed around a dark UI and a read-focused customer experience.
+- If database schema changes are introduced in the admin app, the guest app may also need updates to its Supabase mapping logic.
+
+## Summary
+
+Top One Guest App exists to give customers a polished mobile experience while keeping the business workflow controlled through the admin app and Supabase.
+
+It is best understood as the client-facing side of a two-app system:
+
+- Admin App: manages content and operations
+- Guest App: displays that content and helps customers start bookings and conversations
