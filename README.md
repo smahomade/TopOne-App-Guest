@@ -1,50 +1,44 @@
-# Welcome to your Expo app 👋
+# TopOne App Guest
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Guest-facing mobile app for TopOne Salon, built with Expo Router and Supabase.
 
-## Get started
+This app lets clients:
+- browse salon updates from the admin app
+- view services and build booking requests
+- open booking conversations with admins
+- browse collection images by year
+- view salon location details
+- manage their guest profile
 
-1. Install dependencies
+## Features
 
-   ```bash
-   npm install
-   ```
+- Supabase auth for guest sign in and sign up
+- Realtime content syncing from admin-managed data
+- Home banners with popup details
+- Services flow with multi-service booking requests
+- Messages inbox with booking-based conversations
+- Collection grouped into yearly bundles
+- Location cards with full popup details
+- Dark mode UI across all main pages
 
-2. Start the app
+## Tech Stack
 
-   ```bash
-    npx expo start
-   ```
+- Expo
+- React Native
+- Expo Router
+- TypeScript
+- Supabase
+- NativeWind / Tailwind-style classes
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Project Structure
 
 ```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+app/
+  (auth)/
+  (extras)/
+  (tabs)/
+components/
+constants/
+hooks/
+lib/
+assets/
