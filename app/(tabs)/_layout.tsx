@@ -39,6 +39,7 @@ const TabsLayout = () => {
                 backgroundColor: '#161622',
             }}
             screenOptions={{
+                unmountOnBlur: true,
                 tabBarShowLabel: false,
                 tabBarActiveTintColor: '#8ED1FC', //This is the 'color' variable
                 tabBarInactiveTintColor: '#CDCDE0', // this is the 'color' variable

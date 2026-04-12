@@ -18,8 +18,16 @@ export type HomeBanner = {
 export type GalleryImage = {
   id: string;
   imageUrl: string;
+  subtitle: string | null;
   title: string | null;
   year: string;
+};
+
+export type OpeningTime = {
+  closeTime: string | null;
+  dayOfWeek: number;
+  isClosed: boolean;
+  openTime: string | null;
 };
 
 export type LocationCard = {
@@ -33,6 +41,7 @@ export type LocationCard = {
   isDefault: boolean;
   name: string;
   openingHours: string | null;
+  openingTimes: OpeningTime[];
   phone: string | null;
   postcode: string | null;
 };
@@ -43,6 +52,7 @@ export type ServiceRole = {
 };
 
 export type GroupedService = {
+  duration: number | null;
   roles: ServiceRole[];
   service: string;
   serviceCategory: string;
@@ -52,8 +62,15 @@ export type ServiceCategoryMap = Record<string, GroupedService[]>;
 
 export const HOME_CONTENT_TABLES = ['home_banners', 'banners', 'home_cards'];
 export const GALLERY_CONTENT_TABLES = ['gallery_images', 'gallery', 'collections'];
-export const LOCATION_CONTENT_TABLES = ['locations', 'salons', 'branches'];
+export const LOCATION_CONTENT_TABLES = ['locations', 'opening_times', 'salons', 'branches'];
 export const SERVICES_CONTENT_TABLES = ['services'];
+
+type OpeningTimeRow = {
+  close_time?: string | null;
+  day_of_week?: number | string | null;
+  is_closed?: boolean | string | null;
+  open_time?: string | null;
+};
 
 function getString(row: Row, keys: string[]): string | null {
   for (const key of keys) {
@@ -161,6 +178,101 @@ function sortRows(rows: Row[]): Row[] {
   });
 }
 
+function formatTimeValue(value: string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const match = value.match(/^(\d{1,2}):(\d{2})/);
+
+  if (!match) {
+    return value;
+  }
+
+  const hourValue = Number(match[1]);
+  const minuteValue = match[2];
+
+  if (!Number.isFinite(hourValue)) {
+    return value;
+  }
+
+  const suffix = hourValue >= 12 ? 'PM' : 'AM';
+  const normalizedHour = hourValue % 12 === 0 ? 12 : hourValue % 12;
+
+  return `${normalizedHour}:${minuteValue} ${suffix}`;
+}
+
+function formatOpeningHours(openingTimes: OpeningTimeRow[] | null | undefined) {
+  if (!Array.isArray(openingTimes) || openingTimes.length === 0) {
+    return null;
+  }
+
+  const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  const lines = [...openingTimes]
+    .sort((leftRow, rightRow) => {
+      const leftDay = typeof leftRow.day_of_week === 'number' ? leftRow.day_of_week : Number(leftRow.day_of_week ?? 99);
+      const rightDay = typeof rightRow.day_of_week === 'number' ? rightRow.day_of_week : Number(rightRow.day_of_week ?? 99);
+
+      return leftDay - rightDay;
+    })
+    .map((row) => {
+      const dayIndex = typeof row.day_of_week === 'number' ? row.day_of_week : Number(row.day_of_week ?? -1);
+      const dayLabel = dayLabels[dayIndex] ?? 'Day';
+      const isClosed = typeof row.is_closed === 'boolean'
+        ? row.is_closed
+        : typeof row.is_closed === 'string'
+          ? row.is_closed.trim().toLowerCase() === 'true'
+          : false;
+
+      if (isClosed) {
+        return `${dayLabel}: Closed`;
+      }
+
+      const openTime = formatTimeValue(row.open_time);
+      const closeTime = formatTimeValue(row.close_time);
+
+      if (!openTime || !closeTime) {
+        return null;
+      }
+
+      return `${dayLabel}: ${openTime} - ${closeTime}`;
+    })
+    .filter((line): line is string => Boolean(line));
+
+  return lines.length > 0 ? lines.join('\n') : null;
+}
+
+function mapOpeningTimes(openingTimes: OpeningTimeRow[] | null | undefined): OpeningTime[] {
+  if (!Array.isArray(openingTimes)) {
+    return [];
+  }
+
+  return [...openingTimes]
+    .map((row) => {
+      const dayOfWeek = typeof row.day_of_week === 'number' ? row.day_of_week : Number(row.day_of_week ?? -1);
+
+      if (!Number.isInteger(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6) {
+        return null;
+      }
+
+      const isClosed = typeof row.is_closed === 'boolean'
+        ? row.is_closed
+        : typeof row.is_closed === 'string'
+          ? row.is_closed.trim().toLowerCase() === 'true'
+          : false;
+
+      return {
+        closeTime: row.close_time ?? null,
+        dayOfWeek,
+        isClosed,
+        openTime: row.open_time ?? null,
+      };
+    })
+    .filter((item): item is OpeningTime => item !== null)
+    .sort((leftRow, rightRow) => leftRow.dayOfWeek - rightRow.dayOfWeek);
+}
+
 async function fetchFirstAvailableList<T>(
   tables: string[],
   mapper: (row: Row) => T | null
@@ -235,6 +347,7 @@ export async function fetchGalleryImages(): Promise<LiveContentResult<GalleryIma
     return {
       id: getIdentifier(row),
       imageUrl,
+      subtitle: getString(row, ['subtitle', 'sub_title', 'subTitle', 'description']),
       title: getString(row, ['title', 'name', 'caption']),
       year: getYear(row),
     };
@@ -242,6 +355,68 @@ export async function fetchGalleryImages(): Promise<LiveContentResult<GalleryIma
 }
 
 export async function fetchLocations(): Promise<LiveContentResult<LocationCard[]>> {
+  const { data: locationData, error: locationError } = await supabase
+    .from('locations')
+    .select(`
+      id,
+      name,
+      address_line_1,
+      address_line_2,
+      postcode,
+      country,
+      phone,
+      email,
+      image_url,
+      sort_order,
+      created_at,
+      opening_hours,
+      opening_times(day_of_week, open_time, close_time, is_closed)
+    `)
+    .order('sort_order', { ascending: true });
+
+  if (!locationError) {
+    const mappedLocations = sortRows((locationData as Row[]) ?? [])
+      .map((row) => {
+        const name = getString(row, ['name', 'title', 'branch_name', 'branchName']) ?? 'Location';
+        const addressLine1 = getString(row, ['address_line_1', 'addressLine1', 'address', 'full_address', 'fullAddress', 'location']) ?? '';
+        const addressLine2 = getString(row, ['address_line_2', 'addressLine2']);
+        const postcode = getString(row, ['postcode', 'postal_code', 'postalCode', 'zip_code', 'zipCode']);
+        const country = getString(row, ['country']);
+        const phone = getString(row, ['phone', 'phone_number', 'phoneNumber']);
+        const email = getString(row, ['email']);
+        const address = [addressLine1, postcode].filter(Boolean).join(', ');
+        const openingTimes = mapOpeningTimes((row.opening_times as OpeningTimeRow[] | null | undefined) ?? null);
+        const openingHours = formatOpeningHours((row.opening_times as OpeningTimeRow[] | null | undefined) ?? null)
+          ?? getString(row, ['opening_hours', 'openingHours', 'hours']);
+
+        if (name.length === 0 && address.length === 0) {
+          return null;
+        }
+
+        return {
+          address,
+          addressLine1,
+          addressLine2,
+          country,
+          email,
+          id: getIdentifier(row),
+          imageUrl: getString(row, ['image_url', 'imageUrl', 'thumbnail_url', 'thumbnailUrl', 'banner_url', 'bannerUrl']),
+          isDefault: getBoolean(row, ['is_default', 'isDefault'], false),
+          name,
+          openingHours,
+          openingTimes,
+          phone,
+          postcode,
+        };
+      })
+      .filter((item): item is LocationCard => item !== null);
+
+    return {
+      data: mappedLocations,
+      sourceTable: 'locations',
+    };
+  }
+
   return fetchFirstAvailableList(LOCATION_CONTENT_TABLES, (row) => {
     if (getBoolean(row, ['is_active', 'isActive'], true) === false) {
       return null;
@@ -272,14 +447,21 @@ export async function fetchLocations(): Promise<LiveContentResult<LocationCard[]
       isDefault: getBoolean(row, ['is_default', 'isDefault'], false),
       name,
       openingHours,
+      openingTimes: [],
       phone,
       postcode,
     };
   });
 }
 
-export async function fetchServices(): Promise<LiveContentResult<ServiceCategoryMap>> {
-  const { data, error } = await supabase.from('services').select('*');
+export async function fetchServices(locationId?: string | null): Promise<LiveContentResult<ServiceCategoryMap>> {
+  let query = supabase.from('services').select('*');
+
+  if (locationId) {
+    query = query.eq('location_id', locationId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     return {
@@ -296,6 +478,7 @@ export async function fetchServices(): Promise<LiveContentResult<ServiceCategory
     const mainCategory = getString(row, ['main_category', 'mainCategory']) ?? 'Services';
     const serviceCategory = getString(row, ['service_category', 'serviceCategory']) ?? 'General';
     const serviceName = getString(row, ['service', 'name', 'title']) ?? 'Service';
+    const duration = getNumber(row, ['duration', 'duration_minutes', 'durationMinutes', 'service_duration', 'serviceDuration']);
     const role = getString(row, ['role']) ?? 'Stylist';
     const price = getNumber(row, ['price']) ?? 0;
 
@@ -303,11 +486,13 @@ export async function fetchServices(): Promise<LiveContentResult<ServiceCategory
       categories[mainCategory] = [];
     }
 
-    const existingGroup = categories[mainCategory].find(
-      (group) => group.service === serviceName && group.serviceCategory === serviceCategory
-    );
+    const existingGroup = categories[mainCategory].find((group) => group.service === serviceName);
 
     if (existingGroup) {
+      if (existingGroup.duration === null && duration !== null) {
+        existingGroup.duration = duration;
+      }
+
       existingGroup.roles.push({
         price,
         role,
@@ -317,6 +502,7 @@ export async function fetchServices(): Promise<LiveContentResult<ServiceCategory
     }
 
     categories[mainCategory].push({
+      duration,
       roles: [{ price, role }],
       service: serviceName,
       serviceCategory,

@@ -7,7 +7,7 @@ import { fetchGalleryImages, GALLERY_CONTENT_TABLES } from '@/lib/adminContent';
 import { images } from '../../constants';
 
 const Collection = () => {
-  const [selectedYear, setSelectedYear] = useState<string | null>(null);
+  const [selectedBundle, setSelectedBundle] = useState<string | null>(null);
   const {
     data: galleryResult,
     loading,
@@ -23,32 +23,59 @@ const Collection = () => {
   });
 
   const galleryImages = galleryResult.data;
-  const galleryByYear = useMemo(() => galleryImages.reduce<Record<string, typeof galleryImages>>((groups, image) => {
-    const yearKey = image.year || 'Unknown';
+  const galleryByBundle = useMemo(() => galleryImages.reduce<Record<string, typeof galleryImages>>((groups, image) => {
+    const bundleKey = image.title?.trim() || 'Collection';
 
-    if (!groups[yearKey]) {
-      groups[yearKey] = [];
+    if (!groups[bundleKey]) {
+      groups[bundleKey] = [];
     }
 
-    groups[yearKey].push(image);
+    groups[bundleKey].push(image);
 
     return groups;
   }, {}), [galleryImages]);
 
-  const orderedYears = useMemo(() => Object.keys(galleryByYear).sort((leftYear, rightYear) => {
-    if (leftYear === 'Unknown') {
-      return 1;
+  const orderedBundles = useMemo(() => {
+    const seenBundles = new Set<string>();
+    const bundlesInSortOrder: string[] = [];
+
+    for (const image of galleryImages) {
+      const bundleKey = image.title?.trim() || 'Collection';
+
+      if (seenBundles.has(bundleKey)) {
+        continue;
+      }
+
+      seenBundles.add(bundleKey);
+      bundlesInSortOrder.push(bundleKey);
     }
 
-    if (rightYear === 'Unknown') {
-      return -1;
+    return bundlesInSortOrder;
+  }, [galleryImages]);
+
+  const activeBundle = selectedBundle && galleryByBundle[selectedBundle] ? selectedBundle : null;
+  const activeBundleImages = activeBundle ? galleryByBundle[activeBundle] : [];
+  const activeBundleYearLabel = useMemo(() => {
+    const seenYears = new Set<string>();
+    const years: string[] = [];
+
+    for (const image of activeBundleImages) {
+      const yearLabel = image.year || 'Unknown';
+
+      if (seenYears.has(yearLabel)) {
+        continue;
+      }
+
+      seenYears.add(yearLabel);
+      years.push(yearLabel);
     }
 
-    return Number(rightYear) - Number(leftYear);
-  }), [galleryByYear]);
-
-  const activeYear = selectedYear && galleryByYear[selectedYear] ? selectedYear : null;
-  const activeYearImages = activeYear ? galleryByYear[activeYear] : [];
+    return years.join(' · ');
+  }, [activeBundleImages]);
+  const activeBundleSubtitle = useMemo(
+    () => activeBundleImages.find((image) => Boolean(image.subtitle))?.subtitle ?? null,
+    [activeBundleImages]
+  );
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-primary" style={{ backgroundColor: '#161622' }}>
@@ -71,54 +98,80 @@ const Collection = () => {
             />
           </View>
           <Text className="mb-4 font-pregular text-sm text-gray-100">
-            {activeYear
-              ? `Viewing all images from ${activeYear}.`
-              : 'Choose a year bundle to view all collection images from that year.'}
+            {activeBundle
+              ? `Viewing all images from ${activeBundle}.`
+              : 'Choose a collection bundle to view all images in that set.'}
           </Text>
         </View>
 
         <View style={styles.container}>
           {loading ? <ActivityIndicator size="small" color="#8ED1FC" /> : null}
 
-          {orderedYears.length > 0 ? (
-            activeYear ? (
+          {orderedBundles.length > 0 ? (
+            activeBundle ? (
               <View style={styles.yearSection}>
-                <Pressable style={styles.backButton} onPress={() => setSelectedYear(null)}>
-                  <Text style={styles.backButtonText}>Back to years</Text>
+                <Pressable style={styles.backButton} onPress={() => setSelectedBundle(null)}>
+                  <Text style={styles.backButtonText}>Back to bundles</Text>
                 </Pressable>
 
-                <Text style={styles.yearTitle}>{activeYear}</Text>
-                <Text style={styles.yearSubtitle}>{activeYearImages.length} images in this bundle</Text>
+                <Text style={styles.yearTitle}>{activeBundle}</Text>
+                <Text style={styles.yearSubtitle}>
+                  {[activeBundleYearLabel, activeBundleSubtitle].filter(Boolean).join(' · ') || 'No details'}
+                </Text>
+                <Text style={styles.yearSubtitle}>{activeBundleImages.length} images in this bundle</Text>
 
                 <View style={styles.collage}>
-                  {activeYearImages.map((item) => (
+                  {activeBundleImages.map((item) => (
                     <View key={item.id} style={styles.card}>
                       <Image
                         source={{ uri: item.imageUrl }}
                         style={styles.image}
                         resizeMode="cover"
                       />
-                      {item.title ? <Text style={styles.caption}>{item.title}</Text> : null}
+                      <Text style={styles.caption}>
+                        {[item.year || 'Unknown', item.subtitle].filter(Boolean).join(' · ')}
+                      </Text>
                     </View>
                   ))}
                 </View>
               </View>
             ) : (
-              orderedYears.map((year) => (
-                <Pressable key={year} style={styles.yearBundleCard} onPress={() => setSelectedYear(year)}>
+              orderedBundles.map((bundleTitle) => {
+                const bundleImages = galleryByBundle[bundleTitle] ?? [];
+                const seenYears = new Set<string>();
+                const bundleYears: string[] = [];
+
+                for (const image of bundleImages) {
+                  const yearLabel = image.year || 'Unknown';
+
+                  if (seenYears.has(yearLabel)) {
+                    continue;
+                  }
+
+                  seenYears.add(yearLabel);
+                  bundleYears.push(yearLabel);
+                }
+
+                const bundleSubtitle = bundleImages.find((image) => Boolean(image.subtitle))?.subtitle ?? null;
+                const bundleSubText = [bundleYears.join(' · '), bundleSubtitle].filter(Boolean).join(' · ');
+
+                return (
+                  <Pressable key={bundleTitle} style={styles.yearBundleCard} onPress={() => setSelectedBundle(bundleTitle)}>
                   <Image
-                    source={{ uri: galleryByYear[year][0]?.imageUrl }}
+                    source={{ uri: bundleImages[0]?.imageUrl }}
                     style={styles.yearBundleImage}
                     resizeMode="cover"
                   />
                   <View style={styles.yearBundleOverlay} />
                   <View style={styles.yearBundleContent}>
-                    <Text style={styles.yearBundleTitle}>{year}</Text>
-                    <Text style={styles.yearBundleMeta}>{galleryByYear[year].length} images</Text>
+                    <Text style={styles.yearBundleTitle}>{bundleTitle}</Text>
+                    {bundleSubText ? <Text style={styles.yearBundleMeta}>{bundleSubText}</Text> : null}
+                    <Text style={styles.yearBundleMeta}>{bundleImages.length} images</Text>
                     <Text style={styles.yearBundleHint}>Tap to open this bundle</Text>
                   </View>
                 </Pressable>
-              ))
+                );
+              })
             )
           ) : (
             <Text style={styles.emptyState}>

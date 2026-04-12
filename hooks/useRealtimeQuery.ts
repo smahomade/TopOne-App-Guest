@@ -10,6 +10,8 @@ type UseRealtimeQueryOptions<T> = {
   initialData: T;
   tables: string[];
   enabled?: boolean;
+  reloadKey?: string;
+  refreshOnFocus?: boolean;
 };
 
 export function useRealtimeQuery<T>({
@@ -17,6 +19,8 @@ export function useRealtimeQuery<T>({
   initialData,
   tables,
   enabled = true,
+  reloadKey,
+  refreshOnFocus = true,
 }: UseRealtimeQueryOptions<T>) {
   const [data, setData] = useState<T>(initialData);
   const [loading, setLoading] = useState<boolean>(enabled);
@@ -24,6 +28,7 @@ export function useRealtimeQuery<T>({
   const [error, setError] = useState<string | null>(null);
   const isMountedRef = useRef(true);
   const fetcherRef = useRef(fetcher);
+  const requestIdRef = useRef(0);
   const tablesKey = useMemo(() => tables.join('|'), [tables]);
   const stableTables = useMemo(() => tables, [tablesKey]);
 
@@ -43,6 +48,9 @@ export function useRealtimeQuery<T>({
         return;
       }
 
+      const requestId = requestIdRef.current + 1;
+      requestIdRef.current = requestId;
+
       if (mode === 'initial') {
         setLoading(true);
       } else {
@@ -56,10 +64,18 @@ export function useRealtimeQuery<T>({
           return;
         }
 
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
+
         setData(nextData);
         setError(null);
       } catch (fetchError) {
         if (!isMountedRef.current) {
+          return;
+        }
+
+        if (requestId !== requestIdRef.current) {
           return;
         }
 
@@ -113,16 +129,18 @@ export function useRealtimeQuery<T>({
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [enabled, load, stableTables, tablesKey]);
+  }, [enabled, load, reloadKey, stableTables, tablesKey]);
+
+  const refetch = useCallback(() => load('refresh'), [load]);
 
   useFocusEffect(
     useCallback(() => {
-      if (!enabled) {
+      if (!enabled || !refreshOnFocus) {
         return;
       }
 
-      void load('refresh');
-    }, [enabled, load])
+      void refetch();
+    }, [enabled, refetch, refreshOnFocus])
   );
 
   return {
@@ -130,6 +148,6 @@ export function useRealtimeQuery<T>({
     error,
     loading,
     refreshing,
-    refetch: () => load('refresh'),
+    refetch,
   };
 }

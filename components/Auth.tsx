@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
 import { Alert, StyleSheet, View, AppState, Text, Image, ScrollView } from 'react-native'
 import { supabase } from '../lib/supabase'
-import { Button, Input } from '@rneui/themed'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { images } from '../constants'
+import FormField from './FormField'
+import CustomButton from './CustomButton'
 
 // Tells Supabase Auth to continuously refresh the session automatically if
 // the app is in the foreground. When this is added, you will continue to receive
@@ -27,21 +28,34 @@ export default function Auth() {
   const [phoneNumber, setPhoneNumber] = useState('');  // Phone Number for signup
   const [loading, setLoading] = useState(false);
   const [isSignup, setIsSignup] = useState(false); // Toggle between login and signup
+  const [showRequiredErrors, setShowRequiredErrors] = useState(false);
 
-  const inputStyles = {
-    autoCapitalize: 'none' as const,
-    containerStyle: styles.inputWrapper,
-    inputContainerStyle: styles.inputContainer,
-    inputStyle: styles.inputText,
-    labelStyle: styles.label,
-    placeholderTextColor: '#7b7b8b',
+  const signUpFieldErrors = {
+    email: email.trim().length === 0,
+    firstName: firstName.trim().length === 0,
+    password: password.length === 0,
+    phoneNumber: phoneNumber.trim().length === 0,
+  };
+
+  const signInFieldErrors = {
+    email: email.trim().length === 0,
+    password: password.length === 0,
   };
 
   // Login function
   async function signInWithEmail() {
+    const trimmedEmail = email.trim().toLowerCase();
+
+    if (!trimmedEmail || !password) {
+      setShowRequiredErrors(true);
+      Alert.alert('Missing required details', 'Email and password are required.');
+      return;
+    }
+
+    setShowRequiredErrors(false);
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
-      email: email,
+      email: trimmedEmail,
       password: password,
     });
 
@@ -51,10 +65,22 @@ export default function Auth() {
 
   // Signup function
   async function signUpWithEmail() {
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastName = lastName.trim();
+    const trimmedPhoneNumber = phoneNumber.trim();
+
+    if (!trimmedFirstName || !trimmedPhoneNumber || !trimmedEmail || !password) {
+      setShowRequiredErrors(true);
+      Alert.alert('Missing required details', 'First name, phone number, email, and password are required.');
+      return;
+    }
+
+    setShowRequiredErrors(false);
     setLoading(true);
     
     const { data: { user }, error } = await supabase.auth.signUp({
-      email: email,
+      email: trimmedEmail,
       password: password,
       
     });
@@ -65,7 +91,7 @@ export default function Auth() {
       // Insert first and last name and phone number into the Users table
       const { error: profileError } = await supabase
         .from('profiles')
-        .upsert({ id: user.id, updated_at: new Date(), first_name:firstName, last_name:lastName, phone_number:phoneNumber});
+        .upsert({ id: user.id, updated_at: new Date(), first_name:trimmedFirstName, last_name:trimmedLastName, phone_number:trimmedPhoneNumber});
   
       if (profileError) {
         console.log('Profile Insert Error:', profileError);
@@ -79,12 +105,20 @@ export default function Auth() {
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        bounces={false}
+        alwaysBounceVertical={false}
+        overScrollMode="never"
+        contentContainerStyle={styles.scrollContent}
+      >
         <View style={styles.container}>
           <View style={styles.headerRow}>
             <View style={styles.headerCopy}>
               <Text style={styles.headerEyebrow}>Profile</Text>
               <Text style={styles.headerTitle}>{isSignup ? 'Create your account' : 'Sign in to your profile'}</Text>
+              <Text style={styles.accessText}>
+                Current access: <Text style={styles.accessValue}>Guest Access</Text>
+              </Text>
             </View>
             <Image
               source={images.logoTopOneWhite}
@@ -93,122 +127,106 @@ export default function Auth() {
             />
           </View>
 
-          <View style={styles.heroCard}>
-            <Text style={styles.eyebrow}>Guest Access</Text>
-            <Text style={styles.title}>{isSignup ? 'Create your account' : 'Sign in to your profile'}</Text>
-            <Text style={styles.subtitle}>
-              Keep the guest experience in the same dark dashboard style while managing your account details.
-            </Text>
-          </View>
-
       {isSignup ? (
         <>
-          <View style={[styles.verticallySpaced, styles.mt20]}>
-            <Input
-              label="First Name"
-              leftIcon={{ type: 'font-awesome', name: 'user' }}
-              onChangeText={(text) => setFirstName(text)}
-              value={firstName}
-              placeholder="Enter your first name"
-              autoCapitalize="words"
-              containerStyle={styles.inputWrapper}
-              inputContainerStyle={styles.inputContainer}
-              inputStyle={styles.inputText}
-              labelStyle={styles.label}
-              placeholderTextColor="#7b7b8b"
-            />
-          </View>
-          <View style={[styles.verticallySpaced, styles.mt20]}>
-            <Input
-              label="Last Name"
-              leftIcon={{ type: 'font-awesome', name: 'user' }}
-              onChangeText={(text) => setLastName(text)}
-              value={lastName}
-              placeholder="Enter your last name"
-              autoCapitalize="words"
-              containerStyle={styles.inputWrapper}
-              inputContainerStyle={styles.inputContainer}
-              inputStyle={styles.inputText}
-              labelStyle={styles.label}
-              placeholderTextColor="#7b7b8b"
-            />
-          </View>
-          <View style={styles.verticallySpaced}>
-            <Input
-              label="Phone Number"
-              leftIcon={{ type: 'font-awesome', name: 'phone' }}
-              onChangeText={(text) => setPhoneNumber(text)}
-              value={phoneNumber}
-              placeholder="Enter your phone number"
-              keyboardType="phone-pad"
-              containerStyle={styles.inputWrapper}
-              inputContainerStyle={styles.inputContainer}
-              inputStyle={styles.inputText}
-              labelStyle={styles.label}
-              placeholderTextColor="#7b7b8b"
-            />
-          </View>
-          <View style={styles.verticallySpaced}>
-            <Input
-              label="Email"
-              leftIcon={{ type: 'font-awesome', name: 'envelope' }}
-              onChangeText={(text) => setEmail(text)}
-              value={email}
-              placeholder="email@address.com"
-              {...inputStyles}
-            />
-          </View>
-          <View style={styles.verticallySpaced}>
-            <Input
-              label="Password"
-              leftIcon={{ type: 'font-awesome', name: 'lock' }}
-              onChangeText={(text) => setPassword(text)}
-              value={password}
-              secureTextEntry={true}
-              placeholder="Password"
-              {...inputStyles}
-            />
-          </View>
-          <View style={[styles.verticallySpaced, styles.mt20]}>
-            <Button title="Sign up" disabled={loading} onPress={signUpWithEmail} buttonStyle={styles.primaryButton} titleStyle={styles.primaryButtonText} />
-          </View>
+          <FormField
+            title="First Name"
+            value={firstName}
+            handleChangeText={setFirstName}
+            placeholder="Enter your first name"
+            OtherStyles="mt-5"
+            isRequired
+            requiredReason="We need your name so we know who the account belongs to."
+            hasError={showRequiredErrors && signUpFieldErrors.firstName}
+          />
+          <FormField
+            title="Last Name"
+            value={lastName}
+            handleChangeText={setLastName}
+            placeholder="Enter your last name"
+            OtherStyles="mt-4"
+          />
+          <FormField
+            title="Phone Number"
+            value={phoneNumber}
+            handleChangeText={setPhoneNumber}
+            placeholder="Enter your phone number"
+            keyboardType="phone-pad"
+            OtherStyles="mt-4"
+            isRequired
+            requiredReason="Your phone number helps us find you in our system faster."
+            hasError={showRequiredErrors && signUpFieldErrors.phoneNumber}
+          />
+          <FormField
+            title="Email"
+            value={email}
+            handleChangeText={setEmail}
+            placeholder="email@address.com"
+            keyboardType="email-address"
+            OtherStyles="mt-4"
+            isRequired
+            requiredReason="Your email is your username for signing in to the app."
+            hasError={showRequiredErrors && signUpFieldErrors.email}
+          />
+          <FormField
+            title="Password"
+            value={password}
+            handleChangeText={setPassword}
+            placeholder="Password"
+            OtherStyles="mt-4"
+            isRequired
+            requiredReason="Your password protects your account and booking information."
+            hasError={showRequiredErrors && signUpFieldErrors.password}
+          />
+          <CustomButton
+            title="Sign up"
+            handlePress={signUpWithEmail}
+            containerStyles="mt-6 w-full"
+            isLoading={loading}
+          />
         </>
       ) : (
         <>
-          <View style={[styles.verticallySpaced, styles.mt20]}>
-            <Input
-              label="Email"
-              leftIcon={{ type: 'font-awesome', name: 'envelope' }}
-              onChangeText={(text) => setEmail(text)}
-              value={email}
-              placeholder="email@address.com"
-              {...inputStyles}
-            />
-          </View>
-          <View style={styles.verticallySpaced}>
-            <Input
-              label="Password"
-              leftIcon={{ type: 'font-awesome', name: 'lock' }}
-              onChangeText={(text) => setPassword(text)}
-              value={password}
-              secureTextEntry={true}
-              placeholder="Password"
-              {...inputStyles}
-            />
-          </View>
-          <View style={[styles.verticallySpaced, styles.mt20]}>
-            <Button title="Sign in" disabled={loading} onPress={signInWithEmail} buttonStyle={styles.primaryButton} titleStyle={styles.primaryButtonText} />
-          </View>
+          <FormField
+            title="Email"
+            value={email}
+            handleChangeText={setEmail}
+            placeholder="email@address.com"
+            keyboardType="email-address"
+            OtherStyles="mt-5"
+            isRequired
+            requiredReason="Your email is your username for signing in to the app."
+            hasError={showRequiredErrors && signInFieldErrors.email}
+          />
+          <FormField
+            title="Password"
+            value={password}
+            handleChangeText={setPassword}
+            placeholder="Password"
+            OtherStyles="mt-4"
+            isRequired
+            requiredReason="Your password protects your account and booking information."
+            hasError={showRequiredErrors && signInFieldErrors.password}
+          />
+          <CustomButton
+            title="Sign in"
+            handlePress={signInWithEmail}
+            containerStyles="mt-6 w-full"
+            isLoading={loading}
+          />
         </>
       )}
 
-      <View style={[styles.verticallySpaced, styles.mt20]}>
-        <Button
-          title={isSignup ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}
-          onPress={() => setIsSignup(!isSignup)}
-          buttonStyle={styles.secondaryButton}
-          titleStyle={styles.secondaryButtonText}
-        />
+      <View style={styles.switchRow}>
+        <Text style={styles.switchLabel}>
+          {isSignup ? 'Already have an account?' : "Don't have an account?"}
+        </Text>
+        <Text style={styles.switchAction} onPress={() => {
+          setShowRequiredErrors(false);
+          setIsSignup(!isSignup);
+        }}>
+          {isSignup ? 'Sign In' : 'Sign Up'}
+        </Text>
       </View>
     </View>
       </ScrollView>
@@ -233,7 +251,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   headerCopy: {
     flex: 1,
@@ -249,81 +267,30 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 4,
   },
-  heroCard: {
-    backgroundColor: '#1E1E2D',
-    borderColor: '#232533',
-    borderRadius: 28,
-    borderWidth: 1,
-    padding: 20,
+  accessText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '500',
+    marginTop: 6,
   },
-  verticallySpaced: {
-    paddingTop: 4,
-    paddingBottom: 4,
-    alignSelf: 'stretch',
+  accessValue: {
+    color: '#8ED1FC',
   },
-  mt20: {
+  switchRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
     marginTop: 20,
   },
-  eyebrow: {
+  switchLabel: {
+    color: '#CDCDE0',
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+  },
+  switchAction: {
     color: '#8ED1FC',
-    fontSize: 12,
-    fontWeight: '500',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-  },
-  title: {
-    color: '#ffffff',
-    fontSize: 30,
-    fontWeight: '600',
-    marginTop: 12,
-  },
-  subtitle: {
-    color: '#CDCDE0',
+    fontFamily: 'Poppins-SemiBold',
     fontSize: 14,
-    lineHeight: 22,
-    marginTop: 12,
-  },
-  inputWrapper: {
-    paddingHorizontal: 0,
-  },
-  inputContainer: {
-    backgroundColor: '#1E1E2D',
-    borderBottomWidth: 0,
-    borderColor: '#232533',
-    borderRadius: 18,
-    minHeight: 56,
-    paddingHorizontal: 14,
-  },
-  inputText: {
-    color: '#ffffff',
-    fontSize: 15,
-  },
-  label: {
-    color: '#CDCDE0',
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  primaryButton: {
-    backgroundColor: '#8ED1FC',
-    borderRadius: 16,
-    minHeight: 56,
-  },
-  primaryButtonText: {
-    color: '#161622',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  secondaryButton: {
-    backgroundColor: '#1E1E2D',
-    borderColor: '#232533',
-    borderRadius: 16,
-    borderWidth: 1,
-    minHeight: 56,
-  },
-  secondaryButtonText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

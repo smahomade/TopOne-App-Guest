@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Image, AppState } from 'react-native'
+import { View, Text, ScrollView, Image, AppState, Alert } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { images } from '../../constants'
@@ -6,7 +6,6 @@ import FormField from '../../components/FormField'
 import CustomButton from '../../components/CustomButton'
 import { Link, router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
-import Account from '../../components/Account'
 
 
 const SignIn = () => {
@@ -39,10 +38,10 @@ const SignIn = () => {
     });
 
     if (error) {
-      alert(error.message);
+      Alert.alert('Login failed', error.message);
     }
     else{
-      alert('Login successful!');
+      Alert.alert('Login successful', 'Welcome back to Top One.');
       router.push('/profile');
     }
 
@@ -50,10 +49,13 @@ const SignIn = () => {
   };
 
   return (
-    //Whole Background becomes faded black
     <SafeAreaView className="bg-primary h-full">
-        
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+      <ScrollView
+        bounces={false}
+        alwaysBounceVertical={false}
+        overScrollMode="never"
+        contentContainerStyle={{ flexGrow: 1 }}
+      >
         <View className="flex-1 justify-center items-center px-4">
           <Image 
             source={images.logoTopOneWhite}
@@ -61,10 +63,8 @@ const SignIn = () => {
             className="w-[150px] h-[85px]"
           />
         </View>
-        {/* All items inside view get adjusted by CSS */}
-        <View className="flex-1 justify-center items-center px-4 pb-14">
 
-          {/* Text under the logo */}
+        <View className="flex-1 justify-center items-center px-4 pb-14">
           <Text className="text-2xl text-white font-psemibold mt-4">
             Log in to Top One
           </Text>
@@ -72,16 +72,18 @@ const SignIn = () => {
           <FormField
             title="Email"
             value={form.email}
-            handleChangeText={(e) => setForm({...form, email:e})}
+            handleChangeText={(value: string) => setForm({...form, email:value})}
             OtherStyles='mt-7'
             keyboardType="email-address"
+            placeholder="Enter your email"
           />
 
           <FormField
             title="Password"
             value={form.password}
-            handleChangeText={(e) => setForm({...form, password:e})}
+            handleChangeText={(value: string) => setForm({...form, password:value})}
             OtherStyles='mt-7'
+            placeholder="Enter your password"
           />
 
           <CustomButton 
@@ -91,7 +93,6 @@ const SignIn = () => {
             isLoading={isSubmitting}
           />
 
-          {/* Admin Text - Positioned at the bottom */}
           <View className="justify-center pt-5 flex-row gap-2">
             <Text className="text-lg text-gray-100 font-pregular">
               Dont have an Account?
@@ -99,18 +100,19 @@ const SignIn = () => {
             <Link href={"/sign-up"} className="text-lg font-psemibold text-secondary underline">Sign up</Link>
           </View>
 
-          {/* Admin Text - Positioned at the bottom */}
           <View className=" justify-center pt-20 flex-row gap-2">
-              <Text className="text-lg text-gray-100 font-pregular">
-                Forgot Password?
-              </Text>
-              <Link href="/sign-in" className="text-lg font-psemibold text-secondary underline">
-                Click Here
-              </Link>
-            </View>
+            <Text className="text-lg text-gray-100 font-pregular">
+              Forgot Password?
+            </Text>
+            <Text
+              className="text-lg font-psemibold text-secondary underline"
+              onPress={() => router.push('/(auth)/forgot-password' as never)}
+            >
+              Click Here
+            </Text>
+          </View>
         </View>
       </ScrollView>
-      
     </SafeAreaView>
   )
 }
