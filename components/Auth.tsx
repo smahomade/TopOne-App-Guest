@@ -2,15 +2,12 @@ import React, { useState } from 'react'
 import { Alert, StyleSheet, View, AppState, Text, Image, ScrollView } from 'react-native'
 import { supabase } from '../lib/supabase'
 import { SafeAreaView } from 'react-native-safe-area-context'
-
 import { images } from '../constants'
 import FormField from './FormField'
 import CustomButton from './CustomButton'
+import PhoneField from './PhoneField'
+import PasswordStrengthMeter from './PasswordStrengthMeter'
 
-// Tells Supabase Auth to continuously refresh the session automatically if
-// the app is in the foreground. When this is added, you will continue to receive
-// `onAuthStateChange` events with the `TOKEN_REFRESHED` or `SIGNED_OUT` event
-// if the user's session is terminated. This should only be registered once.
 AppState.addEventListener('change', (state) => {
   if (state === 'active') {
     supabase.auth.startAutoRefresh()
@@ -19,88 +16,115 @@ AppState.addEventListener('change', (state) => {
   }
 })
 
+const rules = [
+  (v: string) => v.length >= 8,
+  (v: string) => /[A-Z]/.test(v),
+  (v: string) => /[0-9]/.test(v),
+  (v: string) => /[^A-Za-z0-9]/.test(v),
+]
+
+const getScore = (value: string): number => {
+  return rules.filter(r => r(value)).length
+}
+
 export default function Auth() {
-  // State variables for login/signup fields
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [firstName, setFirstName] = useState('');  // First Name for signup
-  const [lastName, setLastName] = useState('');  // Last Name for signup
-  const [phoneNumber, setPhoneNumber] = useState('');  // Phone Number for signup
-  const [loading, setLoading] = useState(false);
-  const [isSignup, setIsSignup] = useState(false); // Toggle between login and signup
-  const [showRequiredErrors, setShowRequiredErrors] = useState(false);
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [isSignup, setIsSignup] = useState(false)
+  const [showRequiredErrors, setShowRequiredErrors] = useState(false)
 
   const signUpFieldErrors = {
     email: email.trim().length === 0,
     firstName: firstName.trim().length === 0,
     password: password.length === 0,
     phoneNumber: phoneNumber.trim().length === 0,
-  };
+  }
 
   const signInFieldErrors = {
     email: email.trim().length === 0,
     password: password.length === 0,
-  };
-
-  // Login function
-  async function signInWithEmail() {
-    const trimmedEmail = email.trim().toLowerCase();
-
-    if (!trimmedEmail || !password) {
-      setShowRequiredErrors(true);
-      Alert.alert('Missing required details', 'Email and password are required.');
-      return;
-    }
-
-    setShowRequiredErrors(false);
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: trimmedEmail,
-      password: password,
-    });
-
-    if (error) Alert.alert(error.message);
-    setLoading(false);
   }
 
-  // Signup function
-  async function signUpWithEmail() {
-    const trimmedEmail = email.trim().toLowerCase();
-    const trimmedFirstName = firstName.trim();
-    const trimmedLastName = lastName.trim();
-    const trimmedPhoneNumber = phoneNumber.trim();
+  async function signInWithEmail() {
+    const trimmedEmail = email.trim().toLowerCase()
 
-    if (!trimmedFirstName || !trimmedPhoneNumber || !trimmedEmail || !password) {
-      setShowRequiredErrors(true);
-      Alert.alert('Missing required details', 'First name, phone number, email, and password are required.');
-      return;
+    if (!trimmedEmail || !password) {
+      setShowRequiredErrors(true)
+      Alert.alert('Missing required details', 'Email and password are required.')
+      return
     }
 
-    setShowRequiredErrors(false);
-    setLoading(true);
-    
-    const { data: { user }, error } = await supabase.auth.signUp({
+    setShowRequiredErrors(false)
+    setLoading(true)
+    const { error } = await supabase.auth.signInWithPassword({
       email: trimmedEmail,
-      password: password,
-      
-    });
-  
+      password,
+    })
+
+    if (error) Alert.alert(error.message)
+    setLoading(false)
+  }
+
+  async function signUpWithEmail() {
+    const trimmedEmail = email.trim().toLowerCase()
+    const trimmedFirstName = firstName.trim()
+    const trimmedLastName = lastName.trim()
+
+    if (!trimmedFirstName || !phoneNumber || !trimmedEmail || !password) {
+      setShowRequiredErrors(true)
+      Alert.alert('Missing required details', 'First name, phone number, email, and password are required.')
+      return
+    }
+
+    if (getScore(password) < 3) {
+      Alert.alert('Weak password', 'Please choose a stronger password. Try adding an uppercase letter, a number, or a special character.')
+      return
+    }
+
+    setShowRequiredErrors(false)
+    setLoading(true)
+
+    const { data: { user, session }, error } = await supabase.auth.signUp({
+      email: trimmedEmail,
+      password,
+      options: {
+        data: {
+          first_name: trimmedFirstName,
+          last_name: trimmedLastName,
+          phone_number: phoneNumber,
+        },
+      },
+    })
+
     if (error) {
-      Alert.alert(error.message);
-    } else if (user) {
-      // Insert first and last name and phone number into the Users table
+      Alert.alert('Sign up failed', error.message)
+    } else if (user && session) {
       const { error: profileError } = await supabase
         .from('profiles')
-        .upsert({ id: user.id, updated_at: new Date(), first_name:trimmedFirstName, last_name:trimmedLastName, phone_number:trimmedPhoneNumber});
-  
+        .upsert({
+          id: user.id,
+          first_name: trimmedFirstName,
+          last_name: trimmedLastName,
+          phone_number: phoneNumber,
+          username: trimmedEmail,
+          updated_at: new Date(),
+        })
+
       if (profileError) {
-        console.log('Profile Insert Error:', profileError);
-      } else {
-        console.log('Profile Insert Success');
+        Alert.alert('Profile setup failed', profileError.message)
       }
+    } else if (user && !session) {
+      Alert.alert(
+        'Confirm your email',
+        'A confirmation link has been sent to your email. Please verify it to complete sign up.'
+      )
     }
-  
-    setLoading(false);
+
+    setLoading(false)
   }
 
   return (
@@ -115,7 +139,9 @@ export default function Auth() {
           <View style={styles.headerRow}>
             <View style={styles.headerCopy}>
               <Text style={styles.headerEyebrow}>Profile</Text>
-              <Text style={styles.headerTitle}>{isSignup ? 'Create your account' : 'Sign in to your profile'}</Text>
+              <Text style={styles.headerTitle}>
+                {isSignup ? 'Create your account' : 'Sign in to your profile'}
+              </Text>
               <Text style={styles.accessText}>
                 Current access: <Text style={styles.accessValue}>Guest Access</Text>
               </Text>
@@ -127,111 +153,119 @@ export default function Auth() {
             />
           </View>
 
-      {isSignup ? (
-        <>
-          <FormField
-            title="First Name"
-            value={firstName}
-            handleChangeText={setFirstName}
-            placeholder="Enter your first name"
-            OtherStyles="mt-5"
-            isRequired
-            requiredReason="We need your name so we know who the account belongs to."
-            hasError={showRequiredErrors && signUpFieldErrors.firstName}
-          />
-          <FormField
-            title="Last Name"
-            value={lastName}
-            handleChangeText={setLastName}
-            placeholder="Enter your last name"
-            OtherStyles="mt-4"
-          />
-          <FormField
-            title="Phone Number"
-            value={phoneNumber}
-            handleChangeText={setPhoneNumber}
-            placeholder="Enter your phone number"
-            keyboardType="phone-pad"
-            OtherStyles="mt-4"
-            isRequired
-            requiredReason="Your phone number helps us find you in our system faster."
-            hasError={showRequiredErrors && signUpFieldErrors.phoneNumber}
-          />
-          <FormField
-            title="Email"
-            value={email}
-            handleChangeText={setEmail}
-            placeholder="email@address.com"
-            keyboardType="email-address"
-            OtherStyles="mt-4"
-            isRequired
-            requiredReason="Your email is your username for signing in to the app."
-            hasError={showRequiredErrors && signUpFieldErrors.email}
-          />
-          <FormField
-            title="Password"
-            value={password}
-            handleChangeText={setPassword}
-            placeholder="Password"
-            OtherStyles="mt-4"
-            isRequired
-            requiredReason="Your password protects your account and booking information."
-            hasError={showRequiredErrors && signUpFieldErrors.password}
-          />
-          <CustomButton
-            title="Sign up"
-            handlePress={signUpWithEmail}
-            containerStyles="mt-6 w-full"
-            isLoading={loading}
-          />
-        </>
-      ) : (
-        <>
-          <FormField
-            title="Email"
-            value={email}
-            handleChangeText={setEmail}
-            placeholder="email@address.com"
-            keyboardType="email-address"
-            OtherStyles="mt-5"
-            isRequired
-            requiredReason="Your email is your username for signing in to the app."
-            hasError={showRequiredErrors && signInFieldErrors.email}
-          />
-          <FormField
-            title="Password"
-            value={password}
-            handleChangeText={setPassword}
-            placeholder="Password"
-            OtherStyles="mt-4"
-            isRequired
-            requiredReason="Your password protects your account and booking information."
-            hasError={showRequiredErrors && signInFieldErrors.password}
-          />
-          <CustomButton
-            title="Sign in"
-            handlePress={signInWithEmail}
-            containerStyles="mt-6 w-full"
-            isLoading={loading}
-          />
-        </>
-      )}
+          {isSignup ? (
+            <>
+              {/* First Name + Last Name side by side */}
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 20 }}>
+                <View style={{ flex: 1 }}>
+                  <FormField
+                    title="First Name"
+                    value={firstName}
+                    handleChangeText={setFirstName}
+                    placeholder="First name"
+                    isRequired
+                    requiredReason="We need your name so we know who the account belongs to."
+                    hasError={showRequiredErrors && signUpFieldErrors.firstName}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <FormField
+                    title="Last Name"
+                    value={lastName}
+                    handleChangeText={setLastName}
+                    placeholder="Last name"
+                  />
+                </View>
+              </View>
 
-      <View style={styles.switchRow}>
-        <Text style={styles.switchLabel}>
-          {isSignup ? 'Already have an account?' : "Don't have an account?"}
-        </Text>
-        <Text style={styles.switchAction} onPress={() => {
-          setShowRequiredErrors(false);
-          setIsSignup(!isSignup);
-        }}>
-          {isSignup ? 'Sign In' : 'Sign Up'}
-        </Text>
-      </View>
-    </View>
+              <PhoneField
+                value={phoneNumber}
+                onChangePhone={setPhoneNumber}
+                OtherStyles="mt-4"
+                hasError={showRequiredErrors && signUpFieldErrors.phoneNumber}
+              />
+
+              <FormField
+                title="Email"
+                value={email}
+                handleChangeText={setEmail}
+                placeholder="email@address.com"
+                keyboardType="email-address"
+                OtherStyles="mt-4"
+                isRequired
+                requiredReason="Your email is your username for signing in to the app."
+                hasError={showRequiredErrors && signUpFieldErrors.email}
+              />
+
+              <FormField
+                title="Password"
+                value={password}
+                handleChangeText={setPassword}
+                placeholder="Create a password"
+                OtherStyles="mt-4"
+                isRequired
+                requiredReason={`A strong password should have:\n• At least 8 characters\n• An uppercase letter (A–Z)\n• A number (0–9)\n• A special character (!@#$...)`}
+                hasError={showRequiredErrors && signUpFieldErrors.password}
+              />
+              <PasswordStrengthMeter value={password} />
+
+              <CustomButton
+                title="Sign up"
+                handlePress={signUpWithEmail}
+                containerStyles="mt-6 w-full"
+                isLoading={loading}
+              />
+            </>
+          ) : (
+            <>
+              <FormField
+                title="Email"
+                value={email}
+                handleChangeText={setEmail}
+                placeholder="email@address.com"
+                keyboardType="email-address"
+                OtherStyles="mt-5"
+                isRequired
+                requiredReason="Your email is your username for signing in to the app."
+                hasError={showRequiredErrors && signInFieldErrors.email}
+              />
+              <FormField
+                title="Password"
+                value={password}
+                handleChangeText={setPassword}
+                placeholder="Password"
+                OtherStyles="mt-4"
+                isRequired
+                requiredReason="Your password protects your account and booking information."
+                hasError={showRequiredErrors && signInFieldErrors.password}
+              />
+              <CustomButton
+                title="Sign in"
+                handlePress={signInWithEmail}
+                containerStyles="mt-6 w-full"
+                isLoading={loading}
+              />
+            </>
+          )}
+
+          <View style={styles.switchRow}>
+            <Text style={styles.switchLabel}>
+              {isSignup ? 'Already have an account?' : "Don't have an account?"}
+            </Text>
+            <Text
+              style={styles.switchAction}
+              onPress={() => {
+                setShowRequiredErrors(false)
+                setIsSignup(!isSignup)
+              }}
+            >
+              {isSignup ? 'Sign In' : 'Sign Up'}
+            </Text>
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -293,4 +327,4 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-SemiBold',
     fontSize: 14,
   },
-});
+})

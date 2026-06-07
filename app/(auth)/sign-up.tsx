@@ -6,11 +6,28 @@ import FormField from '../../components/FormField';
 import CustomButton from '../../components/CustomButton';
 import { Link, router } from 'expo-router';
 import { supabase } from '../../lib/supabase';
+import PasswordStrengthMeter from '../../components/PasswordStrengthMeter';
+import PhoneField from '../../components/PhoneField';
+
+const rules = [
+  (v: string) => v.length >= 8,
+  (v: string) => /[A-Z]/.test(v),
+  (v: string) => /[0-9]/.test(v),
+  (v: string) => /[^A-Za-z0-9]/.test(v),
+];
+
+const getScore = (value: string): number => {
+  const passed = rules.filter(r => r(value)).length;
+  if (!value || passed <= 1) return 0;
+  if (passed === 2) return 1;
+  if (passed === 3) return 2;
+  return 3;
+};
 
 const SignUp = () => {
   const [form, setForm] = useState({
     firstName: '',
-    lastName:'',
+    lastName: '',
     phone: '',
     email: '',
     password: '',
@@ -37,8 +54,14 @@ const SignUp = () => {
       return;
     }
 
+    if (getScore(form.password) < 2) {
+      Alert.alert('Weak password', 'Please choose a stronger password. Try adding an uppercase letter, a number, or a special character.');
+      return;
+    }
+
     setShowRequiredErrors(false);
     setisSubmitting(true);
+
     const { data: { user, session }, error } = await supabase.auth.signUp({
       email: trimmedEmail,
       password: form.password,
@@ -54,7 +77,6 @@ const SignUp = () => {
     if (error) {
       Alert.alert('Sign up failed', error.message);
     } else if (user && session) {
-      // Session exists — email confirmation is off, save profile immediately
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
@@ -73,7 +95,6 @@ const SignUp = () => {
         router.push('/profile');
       }
     } else if (user && !session) {
-      // Email confirmation is required — profile will be created after confirmation
       Alert.alert(
         'Confirm your email',
         'A confirmation link has been sent to your email. Please verify it to complete sign up.'
@@ -109,36 +130,35 @@ const SignUp = () => {
             </Text>
           </View>
 
-          <FormField
-            title="First Name"
-            value={form.firstName}
-            handleChangeText={(value: string) => setForm({ ...form, firstName: value })}
-            OtherStyles="mt-6"
-            isRequired
-            requiredReason="We need your name so we know who the account belongs to."
-            placeholder="Enter your first name"
-            hasError={showRequiredErrors && requiredFieldErrors.firstName}
-          />
+          {/* First Name + Last Name side by side */}
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 24 }}>
+            <View style={{ flex: 1 }}>
+              <FormField
+                title="First Name"
+                value={form.firstName}
+                handleChangeText={(value: string) => setForm({ ...form, firstName: value })}
+                isRequired
+                requiredReason="We need your name so we know who the account belongs to."
+                placeholder="First name"
+                hasError={showRequiredErrors && requiredFieldErrors.firstName}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <FormField
+                title="Last Name"
+                value={form.lastName}
+                handleChangeText={(value: string) => setForm({ ...form, lastName: value })}
+                placeholder="Last name"
+              />
+            </View>
+          </View>
 
-          <FormField
-            title="Last Name"
-            value={form.lastName}
-            handleChangeText={(value: string) => setForm({ ...form, lastName: value })}
-            OtherStyles="mt-5"
-            placeholder="Optional"
-          />
-
-          <FormField
-            title="Phone Number"
-            value={form.phone}
-            handleChangeText={(value: string) => setForm({ ...form, phone: value })}
-            OtherStyles="mt-5"
-            keyboardType="phone-pad"
-            isRequired
-            requiredReason="Your phone number helps us find you in our system faster."
-            placeholder="Enter your phone number"
-            hasError={showRequiredErrors && requiredFieldErrors.phone}
-          />
+<PhoneField
+  value={form.phone}
+  onChangePhone={(full) => setForm({ ...form, phone: full })}
+  OtherStyles="mt-5"
+  hasError={showRequiredErrors && requiredFieldErrors.phone}
+/>
 
           <FormField
             title="Email"
@@ -158,10 +178,11 @@ const SignUp = () => {
             handleChangeText={(value: string) => setForm({ ...form, password: value })}
             OtherStyles="mt-5"
             isRequired
-            requiredReason="Your password protects your account and booking information."
+            requiredReason={`A strong password should have:\n• At least 8 characters\n• An uppercase letter (A–Z)\n• A number (0–9)\n• A special character (!@#$...)`}
             placeholder="Create a password"
             hasError={showRequiredErrors && requiredFieldErrors.password}
           />
+          <PasswordStrengthMeter value={form.password} />
 
           <CustomButton
             title="Sign Up"
