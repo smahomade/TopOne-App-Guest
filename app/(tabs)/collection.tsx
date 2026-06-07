@@ -1,4 +1,4 @@
-import { ActivityIndicator, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Dimensions, Image, Modal, Pressable, RefreshControl, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useMemo, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -8,6 +8,7 @@ import { images } from '../../constants';
 
 const Collection = () => {
   const [selectedBundle, setSelectedBundle] = useState<string | null>(null);
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const {
     data: galleryResult,
     loading,
@@ -79,30 +80,42 @@ const Collection = () => {
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-primary" style={{ backgroundColor: '#161622' }}>
+      {/* Top header — always visible, not scrollable */}
+      <View className="px-4 pb-4 pt-2">
+        <View className="mb-2 flex-row items-center justify-between">
+          {activeBundle ? (
+            <TouchableOpacity
+              onPress={() => setSelectedBundle(null)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={{ width: 38, height: 38, borderRadius: 999, backgroundColor: '#1E1E2D', borderWidth: 1, borderColor: '#232533', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Text style={{ color: '#8ED1FC', fontSize: 22, lineHeight: 26, marginLeft: -2 }}>‹</Text>
+            </TouchableOpacity>
+          ) : (
+            <View>
+              <Text className="font-pregular text-sm text-gray-100">Collection</Text>
+              <Text className="mt-1 font-psemibold text-2xl text-white">Collection</Text>
+            </View>
+          )}
+          <Image
+            source={images.logoTopOneWhite}
+            style={{ width: 120, height: 52 }}
+            resizeMode="contain"
+          />
+        </View>
+        <Text className="mb-2 font-pregular text-sm text-gray-100">
+          {activeBundle
+            ? `Viewing all images from ${activeBundle}.`
+            : 'Choose a collection bundle to view all images in that set.'}
+        </Text>
+      </View>
+
       <ScrollView
         className="bg-primary"
         style={{ backgroundColor: '#161622' }}
         contentContainerStyle={{ paddingBottom: 32 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refetch} tintColor="#8ED1FC" />}
       >
-        <View className="px-4 pb-4 pt-2">
-          <View className="mb-5 flex-row items-center justify-between">
-            <View>
-              <Text className="font-pregular text-sm text-gray-100">Collection</Text>
-              <Text className="mt-1 font-psemibold text-2xl text-white">Collection</Text>
-            </View>
-            <Image 
-              source={images.logoTopOneWhite} 
-              style={{ width: 120, height: 52 }}
-              resizeMode="contain"
-            />
-          </View>
-          <Text className="mb-4 font-pregular text-sm text-gray-100">
-            {activeBundle
-              ? `Viewing all images from ${activeBundle}.`
-              : 'Choose a collection bundle to view all images in that set.'}
-          </Text>
-        </View>
 
         <View style={styles.container}>
           {loading ? <ActivityIndicator size="small" color="#8ED1FC" /> : null}
@@ -110,10 +123,6 @@ const Collection = () => {
           {orderedBundles.length > 0 ? (
             activeBundle ? (
               <View style={styles.yearSection}>
-                <Pressable style={styles.backButton} onPress={() => setSelectedBundle(null)}>
-                  <Text style={styles.backButtonText}>Back to bundles</Text>
-                </Pressable>
-
                 <Text style={styles.yearTitle}>{activeBundle}</Text>
                 <Text style={styles.yearSubtitle}>
                   {[activeBundleYearLabel, activeBundleSubtitle].filter(Boolean).join(' · ') || 'No details'}
@@ -122,7 +131,7 @@ const Collection = () => {
 
                 <View style={styles.collage}>
                   {activeBundleImages.map((item) => (
-                    <View key={item.id} style={styles.card}>
+                    <Pressable key={item.id} style={styles.card} onPress={() => setFullscreenImage(item.imageUrl)}>
                       <Image
                         source={{ uri: item.imageUrl }}
                         style={styles.image}
@@ -131,7 +140,7 @@ const Collection = () => {
                       <Text style={styles.caption}>
                         {[item.year || 'Unknown', item.subtitle].filter(Boolean).join(' · ')}
                       </Text>
-                    </View>
+                    </Pressable>
                   ))}
                 </View>
               </View>
@@ -182,6 +191,27 @@ const Collection = () => {
           )}
         </View>
       </ScrollView>
+
+      <Modal
+        visible={fullscreenImage !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setFullscreenImage(null)}
+        statusBarTranslucent
+      >
+        <View style={styles.fullscreenOverlay}>
+          <TouchableOpacity style={styles.fullscreenClose} onPress={() => setFullscreenImage(null)}>
+            <Text style={styles.fullscreenCloseText}>✕</Text>
+          </TouchableOpacity>
+          {fullscreenImage ? (
+            <Image
+              source={{ uri: fullscreenImage }}
+              style={styles.fullscreenImage}
+              resizeMode="contain"
+            />
+          ) : null}
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -297,6 +327,35 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontFamily: 'Poppins-Bold',
     fontSize: 28,
+  },
+  fullscreenOverlay: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.82)',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  fullscreenImage: {
+    height: Dimensions.get('window').height,
+    width: Dimensions.get('window').width,
+  },
+  fullscreenClose: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    borderColor: 'rgba(255,255,255,0.4)',
+    borderRadius: 999,
+    borderWidth: 1,
+    height: 44,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 18,
+    top: 52,
+    width: 44,
+    zIndex: 10,
+  },
+  fullscreenCloseText: {
+    color: '#ffffff',
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 20,
   },
 });
 

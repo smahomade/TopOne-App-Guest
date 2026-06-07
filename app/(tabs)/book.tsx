@@ -528,6 +528,7 @@ const Book = () => {
 	const [customerName, setCustomerName] = useState('Customer');
 	const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
 	const processedBookingKeyRef = useRef<string | null>(null);
+	const flatListRef = useRef<FlatList>(null);
 	const searchParams = useLocalSearchParams<{ bookingDates?: string | string[]; bookingKey?: string | string[]; bookingServices?: string | string[] }>();
 
 	useFocusEffect(
@@ -757,6 +758,21 @@ const Book = () => {
 		return fallbackLocationId;
 	}, [refetch]);
 
+	const markConversationAsRead = useCallback(
+		async (conversationId: string) => {
+			if (!userId) return;
+			await supabase
+				.from('messages')
+				.update({ is_read: true })
+				.eq('user_id', userId)
+				.eq('conversation_id', conversationId)
+				.eq('sender_is_admin', true)
+				.eq('is_read', false);
+			await refetch();
+		},
+		[refetch, userId]
+	);
+
 	const handleSendMessage = useCallback(async () => {
 		if (!userId) {
 			router.push('/sign-in');
@@ -984,35 +1000,46 @@ const Book = () => {
 				behavior={Platform.OS === 'ios' ? 'padding' : undefined}
 				keyboardVerticalOffset={Platform.OS === 'ios' ? 18 : 0}
 			>
-				<View className="border-b border-black-200 px-4 pb-4 pt-2">
-					<Text className="font-pregular text-sm text-gray-100">Booking Support</Text>
-					<Text className="mt-1 font-psemibold text-2xl text-white">{selectedConversation ? selectedConversation.title : 'Messages'}</Text>
-					{isSelectedConversationClosed ? (
-						<View className="mt-2 self-start rounded-full border border-red-300 bg-red-300/15 px-3 py-1.5">
-							<Text className="font-psemibold text-[11px] uppercase tracking-wider text-red-200">Conversation closed</Text>
-						</View>
-					) : null}
+				<View className="border-b border-black-200 px-4 pb-3 pt-2">
 					{selectedConversation ? (
-						<Pressable onPress={() => setSelectedConversationId(null)} className="mt-3 self-start rounded-full border border-secondary bg-secondary/15 px-4 py-2.5">
-							<Text className="font-psemibold text-xs text-secondary">Back to all conversations</Text>
-						</Pressable>
-					) : null}
-					<Text className="mt-2 font-pregular text-sm text-gray-100">{helperText}</Text>
-					<Text className={`mt-1 font-pregular text-xs ${activeLocationId ? 'text-secondary' : 'text-red-200'}`}>
-						{activeLocationId
-							? `Current location: ${activeLocationName ?? 'Loading location...'}`
-							: 'No active location selected in this tab.'}
-					</Text>
+						<View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+							<Pressable
+								onPress={() => setSelectedConversationId(null)}
+								hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+								style={{ width: 38, height: 38, borderRadius: 999, backgroundColor: '#1E1E2D', borderWidth: 1, borderColor: '#232533', alignItems: 'center', justifyContent: 'center' }}
+							>
+								<Text style={{ color: '#8ED1FC', fontSize: 22, lineHeight: 26, marginLeft: -2 }}>‹</Text>
+							</Pressable>
+							<View style={{ flex: 1, alignItems: 'center' }}>
+								<Text className="font-psemibold text-base text-white">{activeLocationName ?? 'Top One'}</Text>
+								{isSelectedConversationClosed ? (
+									<Text className="font-pregular text-[11px] text-red-200">Conversation closed</Text>
+								) : (
+									<Text className="font-pregular text-[11px] text-gray-100">Salon</Text>
+								)}
+							</View>
+							<View style={{ width: 38 }} />
+						</View>
+					) : (
+						<View>
+							<Text className="font-pregular text-sm text-gray-100">Booking Support</Text>
+							<Text className="mt-1 font-psemibold text-2xl text-white">Messages</Text>
+							<Text className="mt-2 font-pregular text-sm text-gray-100">{helperText}</Text>
+						</View>
+					)}
 					{error ? <Text className="mt-2 font-pregular text-sm text-red-300">{error}</Text> : null}
 				</View>
 
 				{selectedConversation ? (
 					<FlatList
+						ref={flatListRef}
 						data={selectedConversation.messages}
 						keyExtractor={(item) => item.id}
 						contentContainerStyle={{ flexGrow: 1, padding: 16 }}
 						refreshing={refreshing}
 						onRefresh={refetch}
+						onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+						onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
 						renderItem={({ item }) => {
 							const isClientMessage = item.senderRole === 'client';
 							const bookingDetails = item.body.includes(BOOKING_REQUEST_PREFIX) ? parseBookingRequest(item.body) : null;
@@ -1066,9 +1093,7 @@ const Book = () => {
 												{stripBookingPrefix(item.body)}
 											</Text>
 										)}
-										{item.senderRole === 'admin' && !item.isRead ? (
-											<Text className="mt-2 font-pregular text-[11px] text-secondary">New reply</Text>
-										) : null}
+										
 										<Text className={`mt-2 font-pregular text-[11px] ${isClientMessage ? 'text-primary' : 'text-gray-100'}`}>
 											{formatTimestamp(item.createdAt)}
 										</Text>
@@ -1085,7 +1110,7 @@ const Book = () => {
 						refreshing={refreshing}
 						onRefresh={refetch}
 						renderItem={({ item: section }) => (
-							<Pressable onPress={() => setSelectedConversationId(section.id)} className="mb-4 rounded-3xl border border-black-200 bg-black-100 px-4 py-4">
+							<Pressable onPress={() => { setSelectedConversationId(section.id); void markConversationAsRead(section.id); }} className="mb-4 rounded-3xl border border-black-200 bg-black-100 px-4 py-4">
 								<View className="flex-row items-start justify-between gap-4">
 									<View className="flex-1">
 										<Text className="font-pbold text-lg text-white">{section.title}</Text>
@@ -1119,7 +1144,16 @@ const Book = () => {
 									</View>
 									<View className="items-end">
 										<Text className="font-pregular text-[11px] text-gray-100">{formatTimestamp(section.lastMessageAt)}</Text>
-										<Text className="mt-3 font-psemibold text-xs text-secondary">{section.messages.length} messages</Text>
+										{(() => {
+											const unreadCount = section.messages.filter((m) => m.senderRole === 'admin' && !m.isRead).length;
+											return unreadCount > 0 ? (
+												<View style={{ marginTop: 8, minWidth: 22, height: 22, borderRadius: 999, backgroundColor: '#8ED1FC', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}>
+													<Text style={{ fontFamily: 'Poppins-Bold', fontSize: 11, color: '#161622' }}>{unreadCount}</Text>
+												</View>
+											) : (
+												<Text className="mt-3 font-pregular text-[11px] text-gray-100">{section.messages.length} msgs</Text>
+											);
+										})()}
 									</View>
 								</View>
 							</Pressable>
@@ -1141,41 +1175,31 @@ const Book = () => {
 					/>
 				)}
 
-				<View className="border-t border-black-200 px-4 pb-6 pt-4">
-					<View className="rounded-3xl border border-black-200 bg-black-100 px-4 py-4">
-						{isSelectedConversationClosed ? (
-							<View className="mb-3 rounded-2xl border border-red-300/60 bg-red-300/10 px-3 py-2">
-								<Text className="font-psemibold text-xs text-red-200">
-									This conversation is closed. You cannot send new messages in this thread.
-								</Text>
-							</View>
-						) : null}
-						<TextInput
-							value={draftMessage}
-							onChangeText={setDraftMessage}
-							placeholder="Ask for a booking, service, date, or stylist"
-							placeholderTextColor="#7b7b8b"
-							multiline
-							editable={!isSelectedConversationClosed}
-							style={{ color: '#ffffff', fontFamily: 'Poppins-Regular', minHeight: 92, textAlignVertical: 'top' }}
-						/>
-						<View className="mt-4 flex-row items-center justify-between">
-							<Text className="mr-4 flex-1 font-pregular text-xs text-gray-100">
-								{isSelectedConversationClosed ? 'Start a new conversation from the list to message the salon again.' : 'Example: “Can I book balayage next Friday after 3pm?”'}
-							</Text>
-							<Pressable
-								onPress={handleSendMessage}
-								disabled={isSelectedConversationClosed || sending || draftMessage.trim().length === 0}
-								className={`rounded-2xl px-5 py-3 ${isSelectedConversationClosed || sending || draftMessage.trim().length === 0 ? 'bg-black-200' : 'bg-secondary'}`}
-							>
-								<Text className={`font-psemibold ${isSelectedConversationClosed || sending || draftMessage.trim().length === 0 ? 'text-gray-100' : 'text-primary'}`}>
-									{isSelectedConversationClosed ? 'Closed' : sending ? 'Sending...' : 'Send'}
-								</Text>
-							</Pressable>
-						</View>
-					</View>
-				</View>
-			</KeyboardAvoidingView>
+		                <View className="border-t border-black-200 px-4 pb-4 pt-3">
+                                        <View className="flex-row items-center rounded-full border border-black-200 bg-black-100 px-4" style={{ minHeight: 48 }}>
+                                                {isSelectedConversationClosed ? (
+                                                        <Text className="flex-1 font-pregular text-sm text-gray-100">Conversation closed</Text>
+                                                ) : (
+                                                        <TextInput
+                                                                value={draftMessage}
+                                                                onChangeText={setDraftMessage}
+                                                                placeholder="Type a message..."
+                                                                placeholderTextColor="#7b7b8b"
+                                                                multiline
+                                                                editable={!isSelectedConversationClosed}
+                                                                style={{ flex: 1, color: '#ffffff', fontFamily: 'Poppins-Regular', fontSize: 14, paddingVertical: 12, maxHeight: 100, textAlignVertical: 'center' }}
+                                                        />
+                                                )}
+                                                <Pressable
+                                                        onPress={handleSendMessage}
+                                                        disabled={isSelectedConversationClosed || sending || draftMessage.trim().length === 0}
+                                                        style={{ marginLeft: 8, width: 36, height: 36, borderRadius: 999, backgroundColor: isSelectedConversationClosed || sending || draftMessage.trim().length === 0 ? '#232533' : '#8ED1FC', alignItems: 'center', justifyContent: 'center' }}
+                                                >
+                                                        <Text style={{ color: isSelectedConversationClosed || sending || draftMessage.trim().length === 0 ? '#7b7b8b' : '#161622', fontSize: 18, lineHeight: 22, fontWeight: 'bold' }}>{'>'}</Text>
+                                                </Pressable>
+                                        </View>
+                                </View>
+                        </KeyboardAvoidingView>
 		</SafeAreaView>
 	);
 };

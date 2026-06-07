@@ -35,9 +35,9 @@ export default function Account({ session }: { session: Session }) {
       }
 
       if (data) {
-        setFirstName(data.first_name);
-        setLastName(data.last_name);
-        setPhoneNumber(data.phone_number);
+        setFirstName(data.first_name ?? '');
+        setLastName(data.last_name ?? '');
+        setPhoneNumber(data.phone_number ?? '');
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -66,6 +66,7 @@ export default function Account({ session }: { session: Session }) {
         first_name,
         last_name,
         phone_number,
+        username: session?.user.email ?? '',
         updated_at: new Date(),
       };
 

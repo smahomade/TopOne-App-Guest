@@ -39,14 +39,22 @@ const SignUp = () => {
 
     setShowRequiredErrors(false);
     setisSubmitting(true);
-    const { data: { user }, error } = await supabase.auth.signUp({
+    const { data: { user, session }, error } = await supabase.auth.signUp({
       email: trimmedEmail,
       password: form.password,
+      options: {
+        data: {
+          first_name: trimmedFirstName,
+          last_name: form.lastName.trim(),
+          phone_number: trimmedPhone,
+        },
+      },
     });
 
     if (error) {
       Alert.alert('Sign up failed', error.message);
-    } else if (user) {
+    } else if (user && session) {
+      // Session exists — email confirmation is off, save profile immediately
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
@@ -54,6 +62,7 @@ const SignUp = () => {
           first_name: trimmedFirstName,
           last_name: form.lastName.trim(),
           phone_number: trimmedPhone,
+          username: trimmedEmail,
           updated_at: new Date(),
         });
 
@@ -63,6 +72,12 @@ const SignUp = () => {
         Alert.alert('Signup successful', 'Welcome to Top One!');
         router.push('/profile');
       }
+    } else if (user && !session) {
+      // Email confirmation is required — profile will be created after confirmation
+      Alert.alert(
+        'Confirm your email',
+        'A confirmation link has been sent to your email. Please verify it to complete sign up.'
+      );
     }
 
     setisSubmitting(false);

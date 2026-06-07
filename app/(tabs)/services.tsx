@@ -1,4 +1,4 @@
-import { ActivityIndicator, Image, Modal, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -111,6 +111,7 @@ const Services = () => {
   const [showRolesModal, setShowRolesModal] = useState<boolean>(false);
   const [showDateModal, setShowDateModal] = useState<boolean>(false);
   const [selectedBookingDates, setSelectedBookingDates] = useState<string[]>([]);
+  const [preferredTime, setPreferredTime] = useState<string | null>(null);
   const [visibleMonth, setVisibleMonth] = useState<Date>(getMonthStart(new Date()));
   const [savedLocationId, setSavedLocationId] = useState<string | null>(null);
   const [hasResolvedSavedLocation, setHasResolvedSavedLocation] = useState<boolean>(false);
@@ -270,6 +271,7 @@ const Services = () => {
     }
 
     setSelectedBookingDates([]);
+    setPreferredTime(null);
     setVisibleMonth(getMonthStart(new Date()));
     setShowDateModal(true);
   };
@@ -307,12 +309,15 @@ const Services = () => {
             serviceCategory: selection.serviceCategory,
           }))
         ),
-        bookingDates: JSON.stringify(selectedBookingDates),
+        bookingDates: JSON.stringify(
+          selectedBookingDates.map((date) => preferredTime ? `${date} ${preferredTime}` : date)
+        ),
       },
     });
     setShowDateModal(false);
     setBookingSelections([]);
     setSelectedBookingDates([]);
+    setPreferredTime(null);
   };
 
   if (isServicesLoading) {
@@ -505,57 +510,58 @@ const Services = () => {
           onRequestClose={() => setShowDateModal(false)}
         >
           <View className="flex-1 items-center justify-center bg-black/70 px-5">
-            <View className="w-full rounded-2xl border border-black-200 bg-black-100 p-6">
-              <Text className="font-psemibold text-xl text-white">Choose preferred dates</Text>
-              <Text className="mt-2 font-pregular text-sm text-gray-100">
-                Select up to {MAX_BOOKING_DATES} dates for the admin team to review.
-              </Text>
-              {activeLocation ? (
-                <Text className="mt-2 font-pregular text-sm text-gray-100">
-                  Booking for:{' '}
-                  <Text className="font-psemibold text-secondary">{activeLocation.name}</Text>
-                </Text>
-              ) : null}
-
-              <View className="mt-4 flex-row items-center gap-2 self-start rounded-full border border-white/10 bg-primary px-3 py-2">
-                <View className="h-3 w-3 rounded-full bg-black-200" />
-                <Text className="font-pregular text-xs text-gray-100">Past and closed branch dates are unavailable</Text>
+            <View className="w-full rounded-2xl border border-black-200 bg-black-100" style={{ maxHeight: '90%' }}>
+              <ScrollView contentContainerStyle={{ padding: 16 }} keyboardShouldPersistTaps="handled">
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <View style={{ flex: 1, marginRight: 8 }}>
+                  <Text className="font-psemibold text-base text-white">Choose preferred dates</Text>
+                  <Text className="font-pregular text-xs text-gray-100">
+                    Up to {MAX_BOOKING_DATES} dates{activeLocation ? ` · ${activeLocation.name}` : ''}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => setShowDateModal(false)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={{ width: 36, height: 36, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <Text style={{ color: '#ffffff', fontSize: 18, lineHeight: 22, fontWeight: 'bold' }}>×</Text>
+                </TouchableOpacity>
               </View>
 
-              <View className="mt-5 flex-row items-center justify-between">
+              <View className="mt-3 flex-row items-center justify-between">
                 <TouchableOpacity
                   activeOpacity={0.82}
-                  className="rounded-xl border border-white/10 px-3 py-2"
+                  className="rounded-lg border border-white/10 px-3 py-1.5"
                   onPress={() => setVisibleMonth((currentMonth) => addMonths(currentMonth, -1))}
                 >
-                  <Text className="font-psemibold text-xs text-gray-100">Previous</Text>
+                  <Text className="font-psemibold text-xs text-gray-100">‹</Text>
                 </TouchableOpacity>
 
-                <Text className="font-psemibold text-base text-white">
+                <Text className="font-psemibold text-sm text-white">
                   {visibleMonth.toLocaleDateString([], { month: 'long', year: 'numeric' })}
                 </Text>
 
                 <TouchableOpacity
                   activeOpacity={0.82}
-                  className="rounded-xl border border-white/10 px-3 py-2"
+                  className="rounded-lg border border-white/10 px-3 py-1.5"
                   onPress={() => setVisibleMonth((currentMonth) => addMonths(currentMonth, 1))}
                 >
-                  <Text className="font-psemibold text-xs text-gray-100">Next</Text>
+                  <Text className="font-psemibold text-xs text-gray-100">›</Text>
                 </TouchableOpacity>
               </View>
 
-              <View className="mt-4 flex-row justify-between">
-                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                  <Text key={day} className="w-10 text-center font-psemibold text-xs text-gray-100">
+              <View className="mt-2 flex-row justify-between">
+                {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map((day) => (
+                  <Text key={day} className="text-center font-psemibold text-[10px] text-gray-100" style={{ width: '14.28%' }}>
                     {day}
                   </Text>
                 ))}
               </View>
 
-              <View className="mt-3 flex-row flex-wrap gap-y-3">
+              <View className="mt-1 flex-row flex-wrap gap-y-1">
                 {calendarDays.map((day, index) => {
                   if (!day) {
-                    return <View key={`empty-${index}`} style={{ width: '14.28%', height: 40 }} />;
+                    return <View key={`empty-${index}`} style={{ width: '14.28%', height: 34 }} />;
                   }
 
                   const isSelected = selectedBookingDates.includes(day.dateValue);
@@ -569,69 +575,58 @@ const Services = () => {
                       <TouchableOpacity
                         activeOpacity={0.82}
                         disabled={isUnavailable}
-                        className={`h-10 w-10 items-center justify-center rounded-full ${isSelected ? 'bg-secondary' : 'bg-primary'} ${isUnavailable ? 'opacity-35' : ''}`}
+                        style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: 999, backgroundColor: isSelected ? '#8ED1FC' : 'transparent', opacity: isUnavailable ? 0.3 : 1 }}
                         onPress={() => {
                           if (!isUnavailable && !selectedBookingDates.includes(day.dateValue) && selectedBookingDates.length >= MAX_BOOKING_DATES) {
                             return;
                           }
-
                           handleToggleBookingDate(day.dateValue);
                         }}
                       >
-                        <Text className={`font-psemibold text-sm ${isSelected ? 'text-primary' : 'text-white'}`}>
+                        <Text style={{ fontFamily: 'Poppins-SemiBold', fontSize: 12, color: isSelected ? '#161622' : '#ffffff' }}>
                           {day.dayNumber}
                         </Text>
-                        {isUnavailable ? (
-                          <View
-                            pointerEvents="none"
-                            style={{
-                              position: 'absolute',
-                              width: 30,
-                              height: 1.5,
-                              backgroundColor: '#CDCDE0',
-                              transform: [{ rotate: '-32deg' }],
-                            }}
-                          />
-                        ) : null}
                       </TouchableOpacity>
                     </View>
                   );
                 })}
               </View>
 
-              <View className="mt-5 rounded-xl border border-white/10 bg-primary px-4 py-4">
-                <Text className="font-psemibold text-sm text-white">Selected dates</Text>
-                {selectedBookingDates.length > 0 ? (
-                  <View className="mt-3 gap-2">
+              {selectedBookingDates.length > 0 ? (
+                <View className="mt-3 flex-row items-center gap-3">
+                  <View style={{ flex: 1 }}>
+                    <Text className="font-psemibold text-xs text-gray-100 mb-1">Selected</Text>
                     {selectedBookingDates.map((dateValue) => (
-                      <Text key={dateValue} className="font-pregular text-sm text-gray-100">
-                        {formatDateLabel(dateValue)}
-                      </Text>
+                      <Text key={dateValue} className="font-pregular text-xs text-white">{formatDateLabel(dateValue)}</Text>
                     ))}
                   </View>
-                ) : (
-                  <Text className="mt-2 font-pregular text-sm text-gray-100">Select at least one date to continue.</Text>
-                )}
-              </View>
+                  <View style={{ flex: 1 }}>
+                    <Text className="font-psemibold text-xs text-gray-100 mb-1">Time (optional)</Text>
+                    <TextInput
+                      value={preferredTime ?? ''}
+                      onChangeText={(value) => setPreferredTime(value || null)}
+                      placeholder="e.g. 2:30 PM"
+                      placeholderTextColor="#7b7b8b"
+                      style={{ color: '#ffffff', fontFamily: 'Poppins-Regular', fontSize: 13, borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7 }}
+                    />
+                  </View>
+                </View>
+              ) : (
+                <Text className="mt-3 font-pregular text-xs text-gray-100">Tap a date to select it.</Text>
+              )}
 
               <TouchableOpacity
                 activeOpacity={0.82}
-                className={`mt-5 items-center rounded-xl px-4 py-4 ${selectedBookingDates.length === 0 ? 'bg-black-200' : 'bg-secondary'}`}
+                style={{ marginTop: 14, alignItems: 'center', borderRadius: 12, paddingVertical: 12, backgroundColor: selectedBookingDates.length === 0 ? '#232533' : '#8ED1FC' }}
                 onPress={handleConfirmBookingDates}
                 disabled={selectedBookingDates.length === 0}
               >
-                <Text className={`font-psemibold text-sm ${selectedBookingDates.length === 0 ? 'text-gray-100' : 'text-primary'}`}>
+                <Text style={{ fontFamily: 'Poppins-SemiBold', fontSize: 14, color: selectedBookingDates.length === 0 ? '#7b7b8b' : '#161622' }}>
                   Continue booking
                 </Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                activeOpacity={0.82}
-                className="mt-3 items-center rounded-xl border border-white/10 px-4 py-3"
-                onPress={() => setShowDateModal(false)}
-              >
-                <Text className="font-psemibold text-sm text-gray-100">Close</Text>
-              </TouchableOpacity>
+              </ScrollView>
             </View>
           </View>
         </Modal>

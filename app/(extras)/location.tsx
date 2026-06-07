@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRealtimeQuery } from '@/hooks/useRealtimeQuery';
 import { fetchLocations, LOCATION_CONTENT_TABLES, type LocationCard } from '@/lib/adminContent';
 import { images } from '../../constants';
+import { router } from 'expo-router';
 
 const SAVED_LOCATION_KEY = 'topone.currentLocationId';
 
@@ -204,6 +205,13 @@ const Location = () => {
         }}
         ListHeaderComponent={() => (
           <View className="px-4 pb-4 pt-4">
+            <TouchableOpacity
+              onPress={() => router.back()}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={{ width: 38, height: 38, borderRadius: 999, backgroundColor: '#1E1E2D', borderWidth: 1, borderColor: '#232533', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}
+            >
+              <Text style={{ color: '#8ED1FC', fontSize: 22, lineHeight: 26, marginLeft: -2 }}>‹</Text>
+            </TouchableOpacity>
             <View className="mb-5 flex-row items-center justify-between">
               <View>
                 <Text className="font-pregular text-sm text-gray-100">Locations</Text>
