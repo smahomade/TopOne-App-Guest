@@ -62,17 +62,18 @@ const SignUp = () => {
     setShowRequiredErrors(false);
     setisSubmitting(true);
 
-    const { data: { user, session }, error } = await supabase.auth.signUp({
-      email: trimmedEmail,
-      password: form.password,
-      options: {
-        data: {
-          first_name: trimmedFirstName,
-          last_name: form.lastName.trim(),
-          phone_number: trimmedPhone,
-        },
-      },
-    });
+const { data: { user, session }, error } = await supabase.auth.signUp({
+  email: trimmedEmail,
+  password: form.password,
+  options: {
+    emailRedirectTo: 'aora://confirm',
+    data: {
+      first_name: trimmedFirstName,
+      last_name: form.lastName.trim(),
+      phone_number: trimmedPhone,
+    },
+  },
+})
 
     if (error) {
       Alert.alert('Sign up failed', error.message);

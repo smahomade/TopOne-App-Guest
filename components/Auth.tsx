@@ -88,17 +88,18 @@ export default function Auth() {
     setShowRequiredErrors(false)
     setLoading(true)
 
-    const { data: { user, session }, error } = await supabase.auth.signUp({
-      email: trimmedEmail,
-      password,
-      options: {
-        data: {
-          first_name: trimmedFirstName,
-          last_name: trimmedLastName,
-          phone_number: phoneNumber,
-        },
-      },
-    })
+const { data: { user, session }, error } = await supabase.auth.signUp({
+  email: trimmedEmail,
+  password,
+  options: {
+    emailRedirectTo: 'aora://confirm',
+    data: {
+      first_name: trimmedFirstName,
+      last_name: trimmedLastName,
+      phone_number: phoneNumber,
+    },
+  },
+})
 
     if (error) {
       Alert.alert('Sign up failed', error.message)
