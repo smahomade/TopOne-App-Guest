@@ -6,8 +6,20 @@ import { router } from 'expo-router';
 
 import FormField from '../../components/FormField';
 import CustomButton from '../../components/CustomButton';
+import PasswordStrengthMeter from '../../components/PasswordStrengthMeter';
 import { images } from '../../constants';
 import { supabase } from '../../lib/supabase';
+
+const rules = [
+  (v: string) => v.length >= 8,
+  (v: string) => /[A-Z]/.test(v),
+  (v: string) => /[0-9]/.test(v),
+  (v: string) => /[^A-Za-z0-9]/.test(v),
+];
+
+const getScore = (value: string): number => {
+  return rules.filter(r => r(value)).length;
+};
 
 function extractTokens(url: string) {
   const fragment = url.includes('#') ? url.split('#')[1] : '';
@@ -85,6 +97,11 @@ const ResetPassword = () => {
       return;
     }
 
+    if (getScore(password) < 3) {
+      Alert.alert('Weak password', 'Please choose a stronger password. Try adding an uppercase letter, a number, or a special character.');
+      return;
+    }
+
     if (!recoveryReady) {
       Alert.alert('Recovery link required', 'Open this screen from the password reset email link before setting a new password.');
       return;
@@ -141,6 +158,7 @@ const ResetPassword = () => {
             placeholder="Enter your new password"
             hasError={showRequiredErrors && passwordMissing}
           />
+          <PasswordStrengthMeter value={password} />
 
           <FormField
             title="Confirm Password"
