@@ -39,6 +39,7 @@ export default function Auth() {
   const [showRequiredErrors, setShowRequiredErrors] = useState(false)
   const [showConfirmEmailModal, setShowConfirmEmailModal] = useState(false)
   const [showExistingAccountModal, setShowExistingAccountModal] = useState(false)
+  const [loginError, setLoginError] = useState<string | null>(null)
 
   const signUpFieldErrors = {
     email: email.trim().length === 0,
@@ -68,7 +69,7 @@ export default function Auth() {
       password,
     })
 
-    if (error) Alert.alert(error.message)
+    if (error) setLoginError(error.message)
     setLoading(false)
   }
 
@@ -287,6 +288,13 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
           setShowRequiredErrors(false)
           setIsSignup(false)
         }}
+      />
+
+      <InfoModal
+        visible={loginError !== null}
+        title="Login failed"
+        message={loginError ?? ''}
+        onClose={() => setLoginError(null)}
       />
     </SafeAreaView>
   )
