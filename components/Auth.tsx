@@ -58,7 +58,6 @@ export default function Auth() {
 
     if (!trimmedEmail || !password) {
       setShowRequiredErrors(true)
-      Alert.alert('Missing required details', 'Email and password are required.')
       return
     }
 
