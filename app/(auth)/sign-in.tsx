@@ -18,6 +18,12 @@ const SignIn = () => {
 
   const [isSubmitting, setisSubmitting] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [showRequiredErrors, setShowRequiredErrors] = useState(false);
+
+  const requiredFieldErrors = {
+    email: form.email.trim().length === 0,
+    password: form.password.length === 0,
+  };
 
 
   useEffect(() => {
@@ -33,9 +39,18 @@ const SignIn = () => {
 
 
   const submit = async () => {
+    const trimmedEmail = form.email.trim();
+
+    if (!trimmedEmail || !form.password) {
+      setShowRequiredErrors(true);
+      return;
+    }
+
+    setShowRequiredErrors(false);
     setisSubmitting(true);
+
     const { error } = await supabase.auth.signInWithPassword({
-      email: form.email,
+      email: trimmedEmail,
       password: form.password,
     });
 
@@ -77,6 +92,9 @@ const SignIn = () => {
             OtherStyles='mt-7'
             keyboardType="email-address"
             placeholder="Enter your email"
+            isRequired
+            requiredReason="Enter the email address you signed up with."
+            hasError={showRequiredErrors && requiredFieldErrors.email}
           />
 
           <FormField
@@ -85,6 +103,9 @@ const SignIn = () => {
             handleChangeText={(value: string) => setForm({...form, password:value})}
             OtherStyles='mt-7'
             placeholder="Enter your password"
+            isRequired
+            requiredReason="Enter your account password."
+            hasError={showRequiredErrors && requiredFieldErrors.password}
           />
 
           <CustomButton 
