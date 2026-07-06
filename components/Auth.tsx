@@ -7,6 +7,7 @@ import FormField from './FormField'
 import CustomButton from './CustomButton'
 import PhoneField from './PhoneField'
 import PasswordStrengthMeter from './PasswordStrengthMeter'
+import InfoModal from './InfoModal'
 
 AppState.addEventListener('change', (state) => {
   if (state === 'active') {
@@ -36,6 +37,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false)
   const [isSignup, setIsSignup] = useState(false)
   const [showRequiredErrors, setShowRequiredErrors] = useState(false)
+  const [showConfirmEmailModal, setShowConfirmEmailModal] = useState(false)
 
   const signUpFieldErrors = {
     email: email.trim().length === 0,
@@ -119,10 +121,7 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
         Alert.alert('Profile setup failed', profileError.message)
       }
     } else if (user && !session) {
-      Alert.alert(
-        'Confirm your email',
-        'A confirmation link has been sent to your email. Please verify it to complete sign up.'
-      )
+      setShowConfirmEmailModal(true)
     }
 
     setLoading(false)
@@ -265,6 +264,13 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
           </View>
         </View>
       </ScrollView>
+
+      <InfoModal
+        visible={showConfirmEmailModal}
+        title="Confirm your email"
+        message="A confirmation link has been sent to your email. Please verify it to complete sign up."
+        onClose={() => setShowConfirmEmailModal(false)}
+      />
     </SafeAreaView>
   )
 }

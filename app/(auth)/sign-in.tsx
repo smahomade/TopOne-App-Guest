@@ -41,8 +41,7 @@ const SignIn = () => {
       Alert.alert('Login failed', error.message);
     }
     else{
-      Alert.alert('Login successful', 'Welcome back to Top One.');
-      router.push('/profile');
+      router.replace('/home');
     }
 
     setisSubmitting(false);

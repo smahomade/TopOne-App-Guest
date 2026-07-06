@@ -8,6 +8,7 @@ import { Link, router } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import PasswordStrengthMeter from '../../components/PasswordStrengthMeter';
 import PhoneField from '../../components/PhoneField';
+import InfoModal from '../../components/InfoModal';
 
 const rules = [
   (v: string) => v.length >= 8,
@@ -35,6 +36,7 @@ const SignUp = () => {
 
   const [isSubmitting, setisSubmitting] = useState(false);
   const [showRequiredErrors, setShowRequiredErrors] = useState(false);
+  const [showConfirmEmailModal, setShowConfirmEmailModal] = useState(false);
 
   const requiredFieldErrors = {
     email: form.email.trim().length === 0,
@@ -96,10 +98,7 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
         router.push('/profile');
       }
     } else if (user && !session) {
-      Alert.alert(
-        'Confirm your email',
-        'A confirmation link has been sent to your email. Please verify it to complete sign up.'
-      );
+      setShowConfirmEmailModal(true);
     }
 
     setisSubmitting(false);
@@ -202,6 +201,13 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
           </View>
         </View>
       </ScrollView>
+
+      <InfoModal
+        visible={showConfirmEmailModal}
+        title="Confirm your email"
+        message="A confirmation link has been sent to your email. Please verify it to complete sign up."
+        onClose={() => setShowConfirmEmailModal(false)}
+      />
     </SafeAreaView>
   );
 };
