@@ -53,7 +53,6 @@ const SignUp = () => {
 
     if (!trimmedFirstName || !trimmedPhone || !trimmedEmail || !form.password) {
       setShowRequiredErrors(true);
-      Alert.alert('Missing required details', 'First name, phone number, email, and password are required.');
       return;
     }
 
