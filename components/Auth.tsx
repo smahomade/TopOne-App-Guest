@@ -79,7 +79,6 @@ export default function Auth() {
 
     if (!trimmedFirstName || !phoneNumber || !trimmedEmail || !password) {
       setShowRequiredErrors(true)
-      Alert.alert('Missing required details', 'First name, phone number, email, and password are required.')
       return
     }
 
