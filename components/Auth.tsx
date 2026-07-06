@@ -38,6 +38,7 @@ export default function Auth() {
   const [isSignup, setIsSignup] = useState(false)
   const [showRequiredErrors, setShowRequiredErrors] = useState(false)
   const [showConfirmEmailModal, setShowConfirmEmailModal] = useState(false)
+  const [showExistingAccountModal, setShowExistingAccountModal] = useState(false)
 
   const signUpFieldErrors = {
     email: email.trim().length === 0,
@@ -121,7 +122,11 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
         Alert.alert('Profile setup failed', profileError.message)
       }
     } else if (user && !session) {
-      setShowConfirmEmailModal(true)
+      if (user.identities && user.identities.length === 0) {
+        setShowExistingAccountModal(true)
+      } else {
+        setShowConfirmEmailModal(true)
+      }
     }
 
     setLoading(false)
@@ -270,6 +275,18 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
         title="Confirm your email"
         message="A confirmation link has been sent to your email. Please verify it to complete sign up."
         onClose={() => setShowConfirmEmailModal(false)}
+      />
+
+      <InfoModal
+        visible={showExistingAccountModal}
+        title="Account already exists"
+        message="An account with this email already exists. Try signing in instead."
+        buttonText="Go to Sign In"
+        onClose={() => {
+          setShowExistingAccountModal(false)
+          setShowRequiredErrors(false)
+          setIsSignup(false)
+        }}
       />
     </SafeAreaView>
   )

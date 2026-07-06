@@ -1,9 +1,10 @@
-import { View, Text, ScrollView, Image, AppState, Alert } from 'react-native'
+import { View, Text, ScrollView, Image, AppState } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { images } from '../../constants'
 import FormField from '../../components/FormField'
 import CustomButton from '../../components/CustomButton'
+import InfoModal from '../../components/InfoModal'
 import { Link, router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 
@@ -16,7 +17,8 @@ const SignIn = () => {
   })
 
   const [isSubmitting, setisSubmitting] = useState(false);
-  
+  const [loginError, setLoginError] = useState<string | null>(null);
+
 
   useEffect(() => {
     // Handle session auto-refresh
@@ -38,7 +40,7 @@ const SignIn = () => {
     });
 
     if (error) {
-      Alert.alert('Login failed', error.message);
+      setLoginError(error.message);
     }
     else{
       router.replace('/home');
@@ -112,6 +114,13 @@ const SignIn = () => {
           </View>
         </View>
       </ScrollView>
+
+      <InfoModal
+        visible={loginError !== null}
+        title="Login failed"
+        message={loginError ?? ''}
+        onClose={() => setLoginError(null)}
+      />
     </SafeAreaView>
   )
 }

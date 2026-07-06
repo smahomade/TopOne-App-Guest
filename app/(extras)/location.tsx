@@ -2,7 +2,7 @@ import { ActivityIndicator, Animated, Easing, FlatList, Image, ImageSourcePropTy
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRealtimeQuery } from '@/hooks/useRealtimeQuery';
 import { fetchLocations, LOCATION_CONTENT_TABLES, type LocationCard } from '@/lib/adminContent';
 import { images } from '../../constants';
@@ -11,7 +11,12 @@ import { router } from 'expo-router';
 const SAVED_LOCATION_KEY = 'topone.currentLocationId';
 
 const Location = () => {
+  const insets = useSafeAreaInsets();
   const [selectedLocation, setSelectedLocation] = useState<LocationCard | null>(null);
+  const [canScrollDetails, setCanScrollDetails] = useState(false);
+  const [isAtDetailsBottom, setIsAtDetailsBottom] = useState(false);
+  const detailsContentHeight = useRef(0);
+  const detailsContainerHeight = useRef(0);
   const [currentLocationId, setCurrentLocationId] = useState<string | null>(null);
   const pulseAnimation = useRef(new Animated.Value(0)).current;
   const fallbackLocations: LocationCard[] = [
@@ -104,6 +109,18 @@ const Location = () => {
     setSelectedLocation(null);
   };
 
+  const handleOpenLocationDetails = (location: LocationCard) => {
+    detailsContentHeight.current = 0;
+    detailsContainerHeight.current = 0;
+    setCanScrollDetails(false);
+    setIsAtDetailsBottom(false);
+    setSelectedLocation(location);
+  };
+
+  const evaluateDetailsScrollable = () => {
+    setCanScrollDetails(detailsContentHeight.current > detailsContainerHeight.current + 1);
+  };
+
   const currentLocation = useMemo(
     () => locations.find((location) => location.id === activeLocationId) ?? null,
     [activeLocationId, locations]
@@ -165,7 +182,7 @@ const Location = () => {
           return (
             <TouchableOpacity
               activeOpacity={0.9}
-              onPress={() => setSelectedLocation(item)}
+              onPress={() => handleOpenLocationDetails(item)}
               className="mx-4 mb-4 overflow-hidden rounded-2xl bg-black-100"
               style={isActiveLocation ? styles.activeCard : styles.card}
             >
@@ -244,8 +261,17 @@ const Location = () => {
         visible={selectedLocation !== null}
         onRequestClose={() => setSelectedLocation(null)}
       >
-        <View style={{ flex: 1, backgroundColor: 'rgba(7, 11, 19, 0.82)', justifyContent: 'center', padding: 20 }}>
-          <View className="overflow-hidden rounded-3xl border border-black-200 bg-black-100">
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(7, 11, 19, 0.82)',
+            justifyContent: 'center',
+            paddingTop: insets.top + 20,
+            paddingBottom: insets.bottom + 20,
+            paddingHorizontal: 20,
+          }}
+        >
+          <View className="overflow-hidden rounded-3xl border border-black-200 bg-black-100" style={{ maxHeight: '100%' }}>
             {selectedLocation ? (
               <>
                 <Image
@@ -253,11 +279,29 @@ const Location = () => {
                   style={{ width: '100%', height: 220 }}
                   resizeMode="cover"
                 />
-                <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 24 }}>
+                <View style={{ flexShrink: 1 }}>
+                <ScrollView
+                  style={{ flexShrink: 1 }}
+                  contentContainerStyle={{ padding: 20, paddingBottom: canScrollDetails ? 40 : 20 }}
+                  scrollEventThrottle={16}
+                  onLayout={(e) => {
+                    detailsContainerHeight.current = e.nativeEvent.layout.height;
+                    evaluateDetailsScrollable();
+                  }}
+                  onContentSizeChange={(_width, height) => {
+                    detailsContentHeight.current = height;
+                    evaluateDetailsScrollable();
+                  }}
+                  onScroll={(e) => {
+                    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+                    const atBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 16;
+                    setIsAtDetailsBottom(atBottom);
+                  }}
+                >
                   <Text className="font-pregular text-sm text-secondary">Location Details</Text>
                   <Text className="mt-2 font-pbold text-2xl text-white">{selectedLocation.name}</Text>
 
-                  <View className="mt-5 gap-3 pb-6">
+                  <View className="mt-5 gap-3 pb-2">
                     <View>
                       <Text className="font-psemibold text-xs text-secondary">Address</Text>
                       <Text className="mt-1 font-pregular text-sm text-gray-100">{selectedLocation.addressLine1}</Text>
@@ -287,9 +331,38 @@ const Location = () => {
                       </View>
                     ) : null}
                   </View>
+                </ScrollView>
 
-                  <View className="border-t border-black-200/60 pt-6">
-                    <View className="flex-row gap-3">
+                {canScrollDetails && !isAtDetailsBottom ? (
+                  <View
+                    pointerEvents="none"
+                    style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      alignItems: 'center',
+                      paddingBottom: 6,
+                    }}
+                  >
+                    <View
+                      style={{
+                        backgroundColor: 'rgba(12, 18, 28, 0.97)',
+                        borderRadius: 999,
+                        paddingHorizontal: 12,
+                        paddingVertical: 4,
+                      }}
+                    >
+                      <Text style={{ color: '#8ED1FC', fontSize: 11, fontFamily: 'Poppins-SemiBold' }}>
+                        Scroll for more ⌄
+                      </Text>
+                    </View>
+                  </View>
+                ) : null}
+                </View>
+
+                <View className="border-t border-black-200/60 px-5 py-4">
+                  <View className="flex-row gap-3">
                     <Pressable
                       onPress={() => setSelectedLocation(null)}
                       className={`${selectedLocation.id === activeLocationId ? 'flex-1 bg-secondary' : 'flex-1 border border-black-200 bg-primary'} items-center rounded-2xl px-4 py-4`}
@@ -305,9 +378,8 @@ const Location = () => {
                         <Text className="font-psemibold text-sm text-primary">Select Location</Text>
                       </Pressable>
                     ) : null}
-                    </View>
                   </View>
-                </ScrollView>
+                </View>
               </>
             ) : null}
           </View>

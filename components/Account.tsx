@@ -6,7 +6,8 @@ import { Session } from '@supabase/supabase-js';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import FormField from '../components/FormField'; 
+import FormField from '../components/FormField';
+import InfoModal from '../components/InfoModal';
 import { images } from '../constants';
 
 export default function Account({ session }: { session: Session }) {
@@ -14,6 +15,7 @@ export default function Account({ session }: { session: Session }) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [showUpdatedModal, setShowUpdatedModal] = useState(false);
   const emailAddress = session.user.email ?? '';
 
   useEffect(() => {
@@ -75,6 +77,8 @@ export default function Account({ session }: { session: Session }) {
       if (error) {
         throw error;
       }
+
+      setShowUpdatedModal(true);
     } catch (error) {
       if (error instanceof Error) {
         Alert.alert(error.message);
@@ -167,6 +171,13 @@ export default function Account({ session }: { session: Session }) {
       </View>
     </View>
     </ScrollView>
+
+    <InfoModal
+      visible={showUpdatedModal}
+      title="Profile updated"
+      message="Your account details have been saved."
+      onClose={() => setShowUpdatedModal(false)}
+    />
    </SafeAreaView>
   );
 }
