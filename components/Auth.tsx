@@ -144,7 +144,7 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
             <View style={styles.headerCopy}>
               <Text style={styles.headerEyebrow}>Profile</Text>
               <Text style={styles.headerTitle}>
-                {isSignup ? 'Create your account' : 'Sign in to your profile'}
+                {isSignup ? 'Create account' : 'Sign in to your profile'}
               </Text>
               <Text style={styles.accessText}>
                 Current access: <Text style={styles.accessValue}>Guest Access</Text>
