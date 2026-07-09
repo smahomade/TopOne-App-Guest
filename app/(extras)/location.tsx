@@ -221,32 +221,32 @@ const Location = () => {
           );
         }}
         ListHeaderComponent={() => (
-          <View className="px-4 pb-4 pt-4">
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center">
-                <TouchableOpacity
-                  onPress={() => router.back()}
-                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                  style={{ marginRight: 10 }}
-                >
-                  <Text style={{ color: '#8ED1FC', fontSize: 28, lineHeight: 30 }}>←</Text>
-                </TouchableOpacity>
-                <Text className="font-pregular text-sm text-gray-100">Locations</Text>
-              </View>
+          <View className="pt-4">
+            <View className="flex-row items-center justify-between px-4 pb-4">
+              <TouchableOpacity
+                onPress={() => router.back()}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                <Text style={{ color: '#8ED1FC', fontSize: 28, lineHeight: 30 }}>←</Text>
+              </TouchableOpacity>
               <Image
                 source={images.logoTopOneWhite}
                 style={{ width: 120, height: 52 }}
                 resizeMode="contain"
               />
             </View>
-            <View className="mb-6 mt-7">
-              <Text className="font-psemibold text-3xl text-white">Choose a salon</Text>
+            <View style={{ height: 1, backgroundColor: '#232533' }} />
+            <View className="px-4 pb-4 pt-5">
+              <View className="mb-6">
+                <Text className="font-pregular text-sm text-gray-100">Locations</Text>
+                <Text className="mt-1 font-psemibold text-3xl text-white">Choose a salon</Text>
+              </View>
+              <Text className="mb-2 font-pregular text-sm text-gray-100">Pick the branch you want to visit.</Text>
+              <Text className="font-pregular text-sm text-gray-100">
+                Current location:{' '}
+                <Text className="font-psemibold text-secondary">{currentLocation?.name ?? 'Not selected'}</Text>
+              </Text>
             </View>
-            <Text className="mb-2 font-pregular text-sm text-gray-100">Pick the branch you want to visit.</Text>
-            <Text className="font-pregular text-sm text-gray-100">
-              Current location:{' '}
-              <Text className="font-psemibold text-secondary">{currentLocation?.name ?? 'Not selected'}</Text>
-            </Text>
           </View>
         )}
         ListEmptyComponent={() => (
