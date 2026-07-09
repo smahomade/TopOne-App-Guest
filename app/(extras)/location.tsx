@@ -222,23 +222,23 @@ const Location = () => {
         }}
         ListHeaderComponent={() => (
           <View className="px-4 pb-4 pt-4">
-            <TouchableOpacity
-              onPress={() => router.back()}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={{ width: 38, height: 38, borderRadius: 999, backgroundColor: '#1E1E2D', borderWidth: 1, borderColor: '#232533', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}
-            >
-              <Text style={{ color: '#8ED1FC', fontSize: 22, lineHeight: 26, marginLeft: -2 }}>‹</Text>
-            </TouchableOpacity>
             <View className="mb-5 flex-row items-center justify-between">
-              <View>
-                <Text className="font-pregular text-sm text-gray-100">Locations</Text>
-                <Text className="mt-1 font-psemibold text-2xl text-white">Choose a salon</Text>
-              </View>
-              <Image 
+              <TouchableOpacity
+                onPress={() => router.back()}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={{ width: 38, height: 38, borderRadius: 999, backgroundColor: '#1E1E2D', borderWidth: 1, borderColor: '#232533', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Text style={{ color: '#8ED1FC', fontSize: 22, lineHeight: 26, marginLeft: -2 }}>‹</Text>
+              </TouchableOpacity>
+              <Image
                 source={images.logoTopOneWhite}
                 style={{ width: 120, height: 52 }}
                 resizeMode="contain"
               />
+            </View>
+            <View className="mb-5">
+              <Text className="font-pregular text-sm text-gray-100">Locations</Text>
+              <Text className="mt-1 font-psemibold text-2xl text-white">Choose a salon</Text>
             </View>
             <Text className="mb-2 font-pregular text-sm text-gray-100">Pick the branch you want to visit.</Text>
             <Text className="font-pregular text-sm text-gray-100">
