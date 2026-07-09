@@ -1,6 +1,7 @@
-import { ActivityIndicator, Animated, Easing, FlatList, Image, ImageSourcePropType, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Animated, Easing, FlatList, Image, ImageSourcePropType, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRealtimeQuery } from '@/hooks/useRealtimeQuery';
@@ -227,7 +228,11 @@ const Location = () => {
                 onPress={() => router.back()}
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               >
-                <Text style={{ color: '#8ED1FC', fontSize: 28, lineHeight: 30 }}>←</Text>
+                <Ionicons
+                  name={Platform.OS === 'ios' ? 'chevron-back' : 'arrow-back'}
+                  size={Platform.OS === 'ios' ? 30 : 26}
+                  color="#FFFFFF"
+                />
               </TouchableOpacity>
               <Image
                 source={images.logoTopOneWhite}
