@@ -1,6 +1,7 @@
-import { ActivityIndicator, Dimensions, Image, Modal, Pressable, RefreshControl, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Dimensions, Image, Modal, Platform, Pressable, RefreshControl, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useMemo, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 
 import { useRealtimeQuery } from '@/hooks/useRealtimeQuery';
 import { fetchGalleryImages, GALLERY_CONTENT_TABLES } from '@/lib/adminContent';
@@ -86,10 +87,13 @@ const Collection = () => {
           {activeBundle ? (
             <TouchableOpacity
               onPress={() => setSelectedBundle(null)}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={{ width: 38, height: 38, borderRadius: 999, backgroundColor: '#1E1E2D', borderWidth: 1, borderColor: '#232533', alignItems: 'center', justifyContent: 'center' }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
-              <Text style={{ color: '#8ED1FC', fontSize: 22, lineHeight: 26, marginLeft: -2 }}>‹</Text>
+              <Ionicons
+                name={Platform.OS === 'ios' ? 'chevron-back' : 'arrow-back'}
+                size={Platform.OS === 'ios' ? 30 : 26}
+                color="#FFFFFF"
+              />
             </TouchableOpacity>
           ) : (
             <View>
