@@ -52,6 +52,9 @@ const MESSAGE_TABLES = ['messages'];
 const MESSAGE_BODY_KEYS = ['content'];
 const BOOKING_REQUEST_PREFIX = '[BOOKING_REQUEST]';
 const SAVED_LOCATION_KEY = 'topone.currentLocationId';
+// Minimum wait between starting brand-new general enquiries, to curb spam.
+const GENERAL_ENQUIRY_COOLDOWN_MS = 10 * 60 * 1000;
+const LAST_GENERAL_ENQUIRY_KEY = 'topone.lastGeneralEnquiryAt';
 
 function generateUuid() {
 	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (character) => {
@@ -785,6 +788,24 @@ const Book = () => {
 			return;
 		}
 
+		const isNewGeneralEnquiry = !selectedConversationId;
+
+		if (isNewGeneralEnquiry) {
+			const cooldownKey = `${LAST_GENERAL_ENQUIRY_KEY}:${userId}`;
+			const lastSentRaw = await AsyncStorage.getItem(cooldownKey);
+			const lastSentAt = lastSentRaw ? Number(lastSentRaw) : 0;
+			const elapsed = Date.now() - lastSentAt;
+
+			if (lastSentAt > 0 && elapsed < GENERAL_ENQUIRY_COOLDOWN_MS) {
+				const remainingMinutes = Math.ceil((GENERAL_ENQUIRY_COOLDOWN_MS - elapsed) / 60000);
+				Alert.alert(
+					'Please wait before starting a new enquiry',
+					`To keep things spam-free you can start a new general enquiry once every ${GENERAL_ENQUIRY_COOLDOWN_MS / 60000} minutes. Please try again in ${remainingMinutes} minute${remainingMinutes === 1 ? '' : 's'}, or reply in an existing conversation.`
+				);
+				return;
+			}
+		}
+
 		const targetLocationId = await resolveAndPersistLocation();
 
 		if (!targetLocationId) {
@@ -805,6 +826,10 @@ const Book = () => {
 			setDraftMessage('');
 			setSelectedConversationId(targetConversationId);
 			await refetch();
+
+			if (isNewGeneralEnquiry) {
+				await AsyncStorage.setItem(`${LAST_GENERAL_ENQUIRY_KEY}:${userId}`, Date.now().toString());
+			}
 		} catch (sendError) {
 			const message = sendError instanceof Error ? sendError.message : 'Unable to send message.';
 
