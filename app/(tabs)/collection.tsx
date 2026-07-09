@@ -82,8 +82,8 @@ const Collection = () => {
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-primary" style={{ backgroundColor: '#161622' }}>
       {/* Top header — always visible, not scrollable */}
-      <View className="px-4 pb-4 pt-2">
-        <View className="mb-2 flex-row items-center justify-between">
+      <View className="pt-2">
+        <View className="flex-row items-center justify-between px-4 pb-3">
           {activeBundle ? (
             <TouchableOpacity
               onPress={() => setSelectedBundle(null)}
@@ -107,17 +107,18 @@ const Collection = () => {
             resizeMode="contain"
           />
         </View>
-        <Text className="mb-2 font-pregular text-sm text-gray-100">
-          {activeBundle
-            ? `Viewing all images from ${activeBundle}.`
-            : 'Choose a collection bundle to view all images in that set.'}
-        </Text>
+        <View style={{ height: 1, backgroundColor: '#232533' }} />
+        {!activeBundle ? (
+          <Text className="px-4 pb-2 pt-3 font-pregular text-sm text-gray-100">
+            Choose a collection bundle to view all images in that set.
+          </Text>
+        ) : null}
       </View>
 
       <ScrollView
         className="bg-primary"
         style={{ backgroundColor: '#161622' }}
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: 32, paddingTop: 16 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refetch} tintColor="#8ED1FC" />}
       >
 
