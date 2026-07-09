@@ -1,4 +1,4 @@
-import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, Easing, FlatList, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -963,6 +963,26 @@ const Book = () => {
 		}
 	}, [bookingSections, selectedConversationId]);
 
+	const newestHighlight = useRef(new Animated.Value(0)).current;
+
+	useEffect(() => {
+		const loop = Animated.loop(
+			Animated.sequence([
+				Animated.timing(newestHighlight, { toValue: 1, duration: 1100, easing: Easing.inOut(Easing.ease), useNativeDriver: false }),
+				Animated.timing(newestHighlight, { toValue: 0, duration: 1100, easing: Easing.inOut(Easing.ease), useNativeDriver: false }),
+			])
+		);
+
+		loop.start();
+
+		return () => loop.stop();
+	}, [newestHighlight]);
+
+	const newestBorderColor = newestHighlight.interpolate({
+		inputRange: [0, 1],
+		outputRange: ['rgba(142, 209, 252, 0.25)', 'rgba(142, 209, 252, 1)'],
+	});
+
 	if (sessionLoading) {
 		return (
 			<SafeAreaView edges={['top']} className="flex-1 items-center justify-center bg-primary" style={{ backgroundColor: '#161622' }}>
@@ -1109,8 +1129,14 @@ const Book = () => {
 						contentContainerStyle={{ flexGrow: 1, padding: 16 }}
 						refreshing={refreshing}
 						onRefresh={refetch}
-						renderItem={({ item: section }) => (
+						renderItem={({ item: section, index }) => (
 							<Pressable onPress={() => { setSelectedConversationId(section.id); void markConversationAsRead(section.id); }} className="mb-4 rounded-3xl border border-black-200 bg-black-100 px-4 py-4">
+								{index === 0 && bookingSections.length > 1 ? (
+									<Animated.View
+										pointerEvents="none"
+										style={{ position: 'absolute', top: -1, left: -1, right: -1, bottom: -1, borderRadius: 24, borderWidth: 2, borderColor: newestBorderColor }}
+									/>
+								) : null}
 								<View className="flex-row items-start justify-between gap-4">
 									<View className="flex-1">
 										<Text className="font-pbold text-lg text-white">{section.title}</Text>
@@ -1143,7 +1169,7 @@ const Book = () => {
 										)}
 									</View>
 									<View className="items-end">
-										<Text className="font-pregular text-[11px] text-gray-100">{formatTimestamp(section.lastMessageAt)}</Text>
+										<Text className="font-psemibold text-[11px] text-secondary">{formatTimestamp(section.lastMessageAt)}</Text>
 										{(() => {
 											const unreadCount = section.messages.filter((m) => m.senderRole === 'admin' && !m.isRead).length;
 											return unreadCount > 0 ? (
