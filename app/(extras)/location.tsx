@@ -222,25 +222,22 @@ const Location = () => {
         }}
         ListHeaderComponent={() => (
           <View className="px-4 pb-4 pt-4">
-            <View className="mb-5 flex-row items-center justify-between">
-              <View className="flex-1 flex-row items-center">
-                <TouchableOpacity
-                  onPress={() => router.back()}
-                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                  style={{ marginRight: 12 }}
-                >
-                  <Text style={{ color: '#8ED1FC', fontSize: 28, lineHeight: 30 }}>←</Text>
-                </TouchableOpacity>
-                <View>
-                  <Text className="font-pregular text-sm text-gray-100">Locations</Text>
-                  <Text className="mt-1 font-psemibold text-2xl text-white">Choose a salon</Text>
-                </View>
-              </View>
+            <View className="flex-row items-center justify-between">
+              <TouchableOpacity
+                onPress={() => router.back()}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                <Text style={{ color: '#8ED1FC', fontSize: 28, lineHeight: 30 }}>←</Text>
+              </TouchableOpacity>
               <Image
                 source={images.logoTopOneWhite}
                 style={{ width: 120, height: 52 }}
                 resizeMode="contain"
               />
+            </View>
+            <View className="mb-6 mt-7">
+              <Text className="font-pregular text-sm text-gray-100">Locations</Text>
+              <Text className="mt-1 font-psemibold text-3xl text-white">Choose a salon</Text>
             </View>
             <Text className="mb-2 font-pregular text-sm text-gray-100">Pick the branch you want to visit.</Text>
             <Text className="font-pregular text-sm text-gray-100">
