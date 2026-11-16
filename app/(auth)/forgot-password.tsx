@@ -8,7 +8,7 @@ import CustomButton from '../../components/CustomButton';
 import { images } from '../../constants';
 import { supabase } from '../../lib/supabase';
 
-const PASSWORD_RESET_REDIRECT_URL = 'aora://reset-password';
+const PASSWORD_RESET_REDIRECT_URL = 'topone://reset-password';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');

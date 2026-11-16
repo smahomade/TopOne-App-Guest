@@ -94,7 +94,7 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
   email: trimmedEmail,
   password,
   options: {
-    emailRedirectTo: 'aora://confirm',
+    emailRedirectTo: 'topone://confirm',
     data: {
       first_name: trimmedFirstName,
       last_name: trimmedLastName,

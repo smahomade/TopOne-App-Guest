@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Aora",
+    "name": "TopOne",
     "slug": "aora",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "aora",
+    "scheme": "topone",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash.png",
@@ -28,7 +28,7 @@
           "autoVerify": true,
           "data": [
             {
-              "scheme": "aora"
+              "scheme": "topone"
             }
           ],
           "category": [
