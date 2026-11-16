@@ -4,7 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { images } from "../constants"; 
 import CustomButton from "@/components/CustomButton";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Session } from '@supabase/supabase-js'
 import { useFocusEffect } from '@react-navigation/native';
@@ -21,29 +21,24 @@ export default function Index() {
 
   // useFocusEffect is like the awake function in C#, when your on the index page this function auto calls itself.
   // everytime your on the index page it calls itself
-    useFocusEffect(
-      //React.useCallback(()=>{} this is used to memorise the cache information and used to avoid unnessarcy re-renders)
-      React.useCallback(() => {
-        //getSession grabs the 
-        const getSession = async () => {
-          const { data: { session } } = await supabase.auth.getSession();
+  // It also runs on first load, so there's no separate effect. (One that
+  // depended on [session] used to set the session again and loop forever.)
+  useFocusEffect(
+    React.useCallback(() => {
+      let active = true;
+      const getSession = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (active) {
           setSession(session);
-        };
-        getSession();
-      }, [])
-    );
-
-  useEffect(() => {
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      //console.log("Session data:", session); // Log session data
-      setSession(session);
-      setLoading(false); // Stop loading once session is checked
-    };
-    getSession();
-
- 
-  }, [session]);
+          setLoading(false);
+        }
+      };
+      getSession();
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
 
   const handleBooking = () => {
     if (loading) return; // Prevent any navigation while loading
