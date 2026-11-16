@@ -100,7 +100,7 @@ const ForgotPassword = () => {
           </View>
 
           <Text className="mt-6 text-center font-pregular text-xs leading-5 text-gray-100">
-            This app can send reset emails from Supabase, but it cannot securely pre-check whether an email exists in auth from the public client. The reset email will only help if the address is already registered.
+            If there's an account for this email, we'll send it a link to reset your password. If it doesn't arrive within a few minutes, check your spam folder.
           </Text>
         </View>
       </ScrollView>
