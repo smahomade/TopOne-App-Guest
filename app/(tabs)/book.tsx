@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import CustomButton from '@/components/CustomButton';
 import { useRealtimeQuery } from '@/hooks/useRealtimeQuery';
 import { fetchLocations } from '@/lib/adminContent';
+import { clearPendingBooking, savePendingBooking, takePendingBooking } from '@/lib/pendingBooking';
 import { supabase } from '@/lib/supabase';
 
 type Row = Record<string, unknown>;
@@ -529,6 +530,8 @@ const Book = () => {
 	const [draftMessage, setDraftMessage] = useState('');
 	const [sending, setSending] = useState(false);
 	const [customerName, setCustomerName] = useState('Customer');
+	// Booking requests wait for this, or they can go out signed "Customer".
+	const [customerNameReady, setCustomerNameReady] = useState(false);
 	const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
 	const processedBookingKeyRef = useRef<string | null>(null);
 	const flatListRef = useRef<FlatList>(null);
@@ -631,10 +634,12 @@ const Book = () => {
 	useEffect(() => {
 		if (!session?.user?.id) {
 			setCustomerName('Customer');
+			setCustomerNameReady(false);
 			return;
 		}
 
 		let active = true;
+		setCustomerNameReady(false);
 
 		const loadCustomerName = async () => {
 			const { data } = await supabase
@@ -653,6 +658,7 @@ const Book = () => {
 			const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
 
 			setCustomerName(normalizeCustomerName(fullName || firstName || username || session.user.email?.split('@')[0] || 'Customer'));
+			setCustomerNameReady(true);
 		};
 
 		void loadCustomerName();
@@ -711,12 +717,12 @@ const Book = () => {
 			return 'Select a location to view and send messages for that salon.';
 		}
 
-		if (messageResult.sourceTable) {
+		if (messageResult.sourceTable || loading) {
 			return 'Tell the salon what service you want, which day works for you, and any stylist preference.';
 		}
 
-		return 'If sending still fails, the messages table likely uses different required columns or has row-level security blocking inserts.';
-	}, [activeLocationId, messageResult.sourceTable]);
+		return "Your messages couldn't be loaded right now. Check your connection and pull down to try again.";
+	}, [activeLocationId, loading, messageResult.sourceTable]);
 
 	const resolveAndPersistLocation = useCallback(async (preferredLocationId?: string | null) => {
 		const savedLocationId = await AsyncStorage.getItem(SAVED_LOCATION_KEY);
@@ -776,7 +782,7 @@ const Book = () => {
 		[refetch, userId]
 	);
 
-	const handleSendMessage = useCallback(async () => {
+	const sendDraftMessage = useCallback(async () => {
 		if (!userId) {
 			router.push('/sign-in');
 			return;
@@ -876,8 +882,56 @@ const Book = () => {
 		}
 	}, [draftMessage, forceResetToAvailableLocation, messageResult.conversationClosedById, refetch, resolveAndPersistLocation, selectedConversationId, userId]);
 
+	// The checks above await storage and the network before `sending` is set,
+	// so without this a quick double tap sends the message twice.
+	const sendInFlightRef = useRef(false);
+	const handleSendMessage = useCallback(async () => {
+		if (sendInFlightRef.current) {
+			return;
+		}
+
+		sendInFlightRef.current = true;
+		try {
+			await sendDraftMessage();
+		} finally {
+			sendInFlightRef.current = false;
+		}
+	}, [sendDraftMessage]);
+
+	const hasBookingParams = Boolean(bookingKey && encodedBookingServices && encodedBookingDates);
+
+	// Signed out with a booking request: keep it until they've signed in.
 	useEffect(() => {
-		if (!userId || !bookingKey || !encodedBookingServices || !encodedBookingDates || !hasResolvedSavedLocation) {
+		if (sessionLoading || session || !bookingKey || !encodedBookingServices || !encodedBookingDates) {
+			return;
+		}
+
+		void savePendingBooking({ bookingKey, bookingServices: encodedBookingServices, bookingDates: encodedBookingDates });
+	}, [bookingKey, encodedBookingDates, encodedBookingServices, session, sessionLoading]);
+
+	// Signed in with a saved request: hand it to the booking effect below.
+	useEffect(() => {
+		if (!userId || hasBookingParams) {
+			return;
+		}
+
+		let active = true;
+
+		void (async () => {
+			const pending = await takePendingBooking();
+
+			if (active && pending) {
+				router.replace({ pathname: '/book', params: pending });
+			}
+		})();
+
+		return () => {
+			active = false;
+		};
+	}, [hasBookingParams, userId]);
+
+	useEffect(() => {
+		if (!userId || !bookingKey || !encodedBookingServices || !encodedBookingDates || !hasResolvedSavedLocation || !customerNameReady) {
 			return;
 		}
 
@@ -907,6 +961,7 @@ const Book = () => {
 		}
 
 		processedBookingKeyRef.current = bookingKey;
+		void clearPendingBooking();
 		const bookingMessage = buildBookingRequestMessage(customerName, parsedServices, parsedDates);
 		void (async () => {
 			try {
@@ -976,7 +1031,7 @@ const Book = () => {
 				void router.replace('/book');
 			}
 		})();
-	}, [bookingKey, customerName, encodedBookingDates, encodedBookingServices, forceResetToAvailableLocation, hasResolvedSavedLocation, messageResult.conversationClosedById, refetch, resolveAndPersistLocation, userId]);
+	}, [bookingKey, customerName, customerNameReady, encodedBookingDates, encodedBookingServices, forceResetToAvailableLocation, hasResolvedSavedLocation, messageResult.conversationClosedById, refetch, resolveAndPersistLocation, userId]);
 
 	useEffect(() => {
 		if (!selectedConversationId) {
@@ -1023,10 +1078,12 @@ const Book = () => {
 					<View className="rounded-3xl border border-black-200 bg-black-100 px-5 py-6">
 						<Text className="font-psemibold text-2xl text-white">Messages</Text>
 						<Text className="mt-3 font-pregular text-sm text-gray-100">
-							Sign in to message the salon, ask for a booking, and receive replies from the admin team.
+							{hasBookingParams
+								? "Your booking request is saved. Sign in and we'll send it to the salon."
+								: 'Sign in to message the salon, ask for a booking, and receive replies from the salon team.'}
 						</Text>
 						<CustomButton
-							title="Sign In To Message"
+							title={hasBookingParams ? 'Sign In To Send Request' : 'Sign In To Message'}
 							handlePress={() => router.push('/sign-in')}
 							containerStyles="mt-6"
 							textStyles=""

@@ -7,6 +7,7 @@ import CustomButton from '../../components/CustomButton'
 import InfoModal from '../../components/InfoModal'
 import { Link, router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
+import { hasPendingBooking } from '../../lib/pendingBooking'
 
 
 const SignIn = () => {
@@ -58,7 +59,8 @@ const SignIn = () => {
       setLoginError(error.message);
     }
     else{
-      router.replace('/home');
+      // A booking request saved before sign-in is sent from the Messages tab.
+      router.replace((await hasPendingBooking()) ? '/book' : '/home');
     }
 
     setisSubmitting(false);
