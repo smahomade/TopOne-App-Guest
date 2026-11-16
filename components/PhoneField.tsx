@@ -41,6 +41,13 @@ type Props = {
   hasError?: boolean
 }
 
+// People type numbers the way they dial them at home, e.g. 07700 900123. The
+// leading 0 is a national prefix that's dropped after the country code
+// (+447700900123); keeping it gives a number that can't be dialled. Italy is
+// the exception, where the 0 stays.
+const toInternational = (country: typeof COUNTRIES[0], digits: string) =>
+  `${country.dial}${country.code === 'IT' ? digits : digits.replace(/^0+/, '')}`
+
 const PhoneField = ({ value, onChangePhone, OtherStyles = '', hasError = false }: Props) => {
   const [selected, setSelected] = useState(COUNTRIES[0])
   const [pickerVisible, setPickerVisible] = useState(false)
@@ -49,13 +56,13 @@ const PhoneField = ({ value, onChangePhone, OtherStyles = '', hasError = false }
   const handleNumberChange = (text: string) => {
     const digits = text.replace(/[^0-9]/g, '')
     setLocalNumber(digits)
-    onChangePhone(`${selected.dial}${digits}`)
+    onChangePhone(toInternational(selected, digits))
   }
 
   const handleCountrySelect = (country: typeof COUNTRIES[0]) => {
     setSelected(country)
     setPickerVisible(false)
-    onChangePhone(`${country.dial}${localNumber}`)
+    onChangePhone(toInternational(country, localNumber))
   }
 
   const getFlagEmoji = (code: string) => {
