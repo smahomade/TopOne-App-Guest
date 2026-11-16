@@ -139,6 +139,7 @@ const ResetPassword = () => {
 
           <FormField
             title="New Password"
+            secret
             value={password}
             handleChangeText={setPassword}
             OtherStyles="mt-6"
@@ -151,6 +152,7 @@ const ResetPassword = () => {
 
           <FormField
             title="Confirm Password"
+            secret
             value={confirmPassword}
             handleChangeText={setConfirmPassword}
             OtherStyles="mt-5"

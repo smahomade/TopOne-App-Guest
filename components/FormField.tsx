@@ -14,6 +14,9 @@ type FormFieldProps = {
   inputClassName?: string
   hasError?: boolean
   keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad'
+  // Hide what's typed, with a show/hide toggle. Defaults to on for fields
+  // titled "Password"; set it for other password fields.
+  secret?: boolean
 }
 
 const FormField = ({
@@ -27,8 +30,10 @@ const FormField = ({
   requiredReason,
   inputClassName = 'border-black-200 bg-black-100',
   hasError = false,
+  secret,
   ...props
 }: FormFieldProps) => {
+  const isSecret = secret ?? title === 'Password'
   const [showPassword, setShowPassword] = useState(false)
   const [tooltipVisible, setTooltipVisible] = useState(false)
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
@@ -78,11 +83,11 @@ const FormField = ({
           placeholder={placeholder}
           placeholderTextColor="#7b7b8b"
           onChangeText={handleChangeText}
-          secureTextEntry={title === 'Password' && !showPassword}
+          secureTextEntry={isSecret && !showPassword}
           autoCapitalize="none"
           {...props}
         />
-        {title === 'Password' && (
+        {isSecret && (
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
             <Image
               source={!showPassword ? icons.eye : icons.eyeHide}
