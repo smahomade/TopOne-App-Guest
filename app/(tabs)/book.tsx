@@ -49,6 +49,11 @@ type BookingSelection = {
 };
 
 const MESSAGE_TABLES = ['messages'];
+// Reload on new messages, and when the salon closes or reopens a conversation.
+// conversation_metadata must stay in Supabase's live updates (see
+// scripts/closed_conversations.sql); if it's taken out, the server refuses
+// this whole subscription and new messages stop arriving live too.
+const LIVE_TABLES = [...MESSAGE_TABLES, 'conversation_metadata'];
 const MESSAGE_BODY_KEYS = ['content'];
 const BOOKING_REQUEST_PREFIX = '[BOOKING_REQUEST]';
 const SAVED_LOCATION_KEY = 'topone.currentLocationId';
@@ -297,6 +302,21 @@ async function fetchLocationNameById(locationId: string | null): Promise<string 
 // otherwise send the same request.
 const claimedBookingKeys = new Set<string>();
 
+/** Whether the salon has closed this conversation, or null if we couldn't check. */
+async function fetchConversationClosed(conversationId: string): Promise<boolean | null> {
+	const { data, error } = await supabase
+		.from('conversation_metadata')
+		.select('closed_at')
+		.eq('conversation_id', conversationId)
+		.maybeSingle();
+
+	if (error) {
+		return null;
+	}
+
+	return Boolean(data?.closed_at);
+}
+
 async function sendMessageToAdmins(userId: string, messageText: string, conversationId?: string | null, locationId?: string | null) {
 	const payload: {
 		content: string;
@@ -338,6 +358,11 @@ async function sendMessageToAdmins(userId: string, messageText: string, conversa
 
 		if (error.message.includes('messages_location_id_fkey')) {
 			throw new Error('Your selected salon is no longer valid. Please choose your location again and retry.');
+		}
+
+		// Refused by the database's access rules: the conversation was closed.
+		if (error.code === '42501') {
+			throw new Error('This conversation has been closed by the salon. Start a new conversation for a new request.');
 		}
 
 		lastErrorMessage = error.message;
@@ -700,7 +725,7 @@ const Book = () => {
 			messages: [],
 			sourceTable: null,
 		},
-		tables: MESSAGE_TABLES,
+		tables: LIVE_TABLES,
 		enabled,
 	});
 
@@ -823,9 +848,18 @@ const Book = () => {
 			return;
 		}
 
-		if (selectedConversationId && messageResult.conversationClosedById[selectedConversationId]) {
-			Alert.alert('Conversation closed', 'This conversation is closed. Start a new conversation for a new request.');
-			return;
+		if (selectedConversationId) {
+			// What's on screen can be out of date (the salon may have just closed
+			// it), so ask the database, and only fall back to the screen if offline.
+			const isClosed =
+				(await fetchConversationClosed(selectedConversationId)) ??
+				Boolean(messageResult.conversationClosedById[selectedConversationId]);
+
+			if (isClosed) {
+				void refetch();
+				Alert.alert('Conversation closed', 'This conversation is closed. Start a new conversation for a new request.');
+				return;
+			}
 		}
 
 		const targetConversationId = selectedConversationId ?? generateUuid();
