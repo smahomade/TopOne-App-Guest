@@ -291,6 +291,12 @@ async function fetchLocationNameById(locationId: string | null): Promise<string 
 	return getString((data as Row) ?? {}, ['name']);
 }
 
+// Booking requests already being sent. Kept outside the component because
+// signing in can leave two copies of this screen mounted at once (the one
+// under the sign-in screen and the one sign-in opens), and each copy would
+// otherwise send the same request.
+const claimedBookingKeys = new Set<string>();
+
 async function sendMessageToAdmins(userId: string, messageText: string, conversationId?: string | null, locationId?: string | null) {
 	const payload: {
 		content: string;
@@ -532,7 +538,6 @@ const Book = () => {
 	// Booking requests wait for this, or they can go out signed "Customer".
 	const [customerNameReady, setCustomerNameReady] = useState(false);
 	const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
-	const processedBookingKeyRef = useRef<string | null>(null);
 	const flatListRef = useRef<FlatList>(null);
 	const searchParams = useLocalSearchParams<{ bookingDates?: string | string[]; bookingKey?: string | string[]; bookingServices?: string | string[] }>();
 
@@ -934,7 +939,7 @@ const Book = () => {
 			return;
 		}
 
-		if (processedBookingKeyRef.current === bookingKey) {
+		if (claimedBookingKeys.has(bookingKey)) {
 			return;
 		}
 
@@ -948,18 +953,18 @@ const Book = () => {
 			parsedDates = Array.isArray(rawDates) ? rawDates.filter((value) => typeof value === 'string' && value.trim().length > 0) : [];
 		} catch {
 			Alert.alert('Booking not created', 'The selected services could not be prepared for the booking message.');
-			processedBookingKeyRef.current = bookingKey;
+			claimedBookingKeys.add(bookingKey);
 			void router.replace('/book');
 			return;
 		}
 
 		if (parsedServices.length === 0 || parsedDates.length === 0) {
-			processedBookingKeyRef.current = bookingKey;
+			claimedBookingKeys.add(bookingKey);
 			void router.replace('/book');
 			return;
 		}
 
-		processedBookingKeyRef.current = bookingKey;
+		claimedBookingKeys.add(bookingKey);
 		void clearPendingBooking();
 		const bookingMessage = buildBookingRequestMessage(customerName, parsedServices, parsedDates);
 		void (async () => {
@@ -967,7 +972,7 @@ const Book = () => {
 				const targetLocationId = await resolveAndPersistLocation();
 
 				if (!targetLocationId) {
-					processedBookingKeyRef.current = null;
+					claimedBookingKeys.delete(bookingKey);
 					Alert.alert('Location required', 'Please choose a salon location before creating a booking request.');
 					return;
 				}
@@ -983,7 +988,7 @@ const Book = () => {
 				await refetch();
 				setSelectedConversationId(bookingKey);
 			} catch (sendError) {
-				processedBookingKeyRef.current = null;
+				claimedBookingKeys.delete(bookingKey);
 				const message = sendError instanceof Error ? sendError.message : 'Unable to send booking request.';
 
 				if (message.includes('selected salon is no longer valid')) {
