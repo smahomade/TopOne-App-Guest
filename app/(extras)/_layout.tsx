@@ -11,7 +11,7 @@ const ExtrasLayout = () => {
           options={{ headerShown: false }}
         />
       </Stack>
-      <StatusBar backgroundColor="#161622" style="light" />
+      <StatusBar style="light" />
     </>
   );
 };

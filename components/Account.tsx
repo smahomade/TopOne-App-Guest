@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { StyleSheet, View, Alert, ScrollView, Text, Image } from 'react-native';
-import { Button } from '@rneui/themed';
+import { StyleSheet, View, Alert, ScrollView, Text, Image, TouchableOpacity } from 'react-native';
+import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,6 +10,35 @@ import FormField from '../components/FormField';
 import InfoModal from '../components/InfoModal';
 import ConfirmModal from '../components/ConfirmModal';
 import { images } from '../constants';
+
+// Replaces the @rneui/themed Button, which doesn't support the safe-area version Expo SDK 58 needs.
+// Keeps the same layout and the same grey look while disabled.
+function Button({
+  title,
+  onPress,
+  disabled,
+  buttonStyle,
+  titleStyle,
+}: {
+  title: string;
+  onPress: () => void;
+  disabled?: boolean;
+  buttonStyle?: StyleProp<ViewStyle>;
+  titleStyle?: StyleProp<TextStyle>;
+}) {
+  return (
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !!disabled }}
+      activeOpacity={0.7}
+      disabled={disabled}
+      onPress={onPress}
+      style={[styles.buttonBase, buttonStyle, disabled && styles.buttonDisabled]}
+    >
+      <Text style={[styles.buttonTitleBase, titleStyle, disabled && styles.buttonTitleDisabled]}>{title}</Text>
+    </TouchableOpacity>
+  );
+}
 
 export default function Account({ session }: { session: Session }) {
   const [loading, setLoading] = useState(true);
@@ -266,6 +295,22 @@ const styles = StyleSheet.create({
   },
   mt20: {
     marginTop: 20,
+  },
+  buttonBase: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    padding: 8,
+  },
+  buttonDisabled: {
+    backgroundColor: '#E3E6E8',
+  },
+  buttonTitleBase: {
+    paddingVertical: 1,
+    textAlign: 'center',
+  },
+  buttonTitleDisabled: {
+    color: '#86939E',
   },
   primaryButton: {
     backgroundColor: '#8ED1FC',

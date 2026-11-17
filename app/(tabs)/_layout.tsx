@@ -1,10 +1,10 @@
-import { View, Text, Image, type ImageSourcePropType } from 'react-native'
+import { View, Text, Image, type ColorValue, type ImageSourcePropType } from 'react-native'
 import { Tabs } from 'expo-router'
 import { icons } from '../../constants';
 import { StatusBar } from 'expo-status-bar';
 
 type TabIconProps = {
-    color: string;
+    color: ColorValue;
     focused: boolean;
     icon: ImageSourcePropType;
     name: string;
@@ -32,14 +32,16 @@ const TabIcon = ({ icon, color, name, focused }: TabIconProps) => {
 const TabsLayout = () => {
   return (
     <>
-    <StatusBar backgroundColor='#161622' style='light'/>
+    <StatusBar style='light'/>
   
         <Tabs
-            sceneContainerStyle={{
-                backgroundColor: '#161622',
-            }}
             screenOptions={{
+                sceneStyle: {
+                    backgroundColor: '#161622',
+                },
                 tabBarShowLabel: false,
+                // The tab bar now boxes icons to 31px wide, which wraps our icon labels ("Hom/e").
+                tabBarIconStyle: { width: '100%' },
                 tabBarActiveTintColor: '#8ED1FC', //This is the 'color' variable
                 tabBarInactiveTintColor: '#CDCDE0', // this is the 'color' variable
                 tabBarStyle:{
