@@ -8,6 +8,7 @@ import CustomButton from './CustomButton'
 import PhoneField from './PhoneField'
 import PasswordStrengthMeter from './PasswordStrengthMeter'
 import InfoModal from './InfoModal'
+import GoogleSignInButton from './GoogleSignInButton'
 
 AppState.addEventListener('change', (state) => {
   if (state === 'active') {
@@ -159,6 +160,13 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
 
           {isSignup ? (
             <>
+              <GoogleSignInButton
+                returnTo="profile"
+                dividerPosition="below"
+                dividerText="or sign up with email"
+                containerStyles="mt-5"
+              />
+
               {/* First Name + Last Name side by side */}
               <View style={{ flexDirection: 'row', gap: 12, marginTop: 20 }}>
                 <View style={{ flex: 1 }}>
@@ -249,6 +257,8 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
                 containerStyles="mt-6 w-full"
                 isLoading={loading}
               />
+
+              <GoogleSignInButton returnTo="profile" dividerPosition="above" containerStyles="mt-5" />
             </>
           )}
 

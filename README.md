@@ -64,6 +64,17 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 Without these values, the app cannot authenticate users or load shared content.
 
+Optional, for "Continue with Google" (setup steps in `docs/google-sign-in-setup.md`):
+
+```env
+EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=your_web_client_id.apps.googleusercontent.com
+EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=your_ios_client_id.apps.googleusercontent.com
+```
+
+Without them the Google button is hidden. It's also hidden in Expo Go, which
+doesn't include Google sign-in's native code: test it in a development or
+preview build.
+
 ## Supabase Requirements
 
 The app depends on Supabase tables being available.

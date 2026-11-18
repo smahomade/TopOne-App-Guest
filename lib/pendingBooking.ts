@@ -58,8 +58,26 @@ export async function clearPendingBooking(): Promise<void> {
 	await AsyncStorage.removeItem(STORAGE_KEY);
 }
 
+// The Messages tab sends a saved request as soon as a session appears. A Google
+// sign-in still has to fill in the customer's name and phone number after
+// that, so it holds the request until the profile is done. The hold is only in
+// memory: if the app is closed half-way, the request is sent as usual next time.
+let isHeld = false;
+
+export function holdPendingBooking(): void {
+	isHeld = true;
+}
+
+export function releasePendingBooking(): void {
+	isHeld = false;
+}
+
 /** Returns the saved request and removes it, so it's only sent once. */
 export async function takePendingBooking(): Promise<PendingBooking | null> {
+	if (isHeld) {
+		return null;
+	}
+
 	const booking = await readPendingBooking();
 
 	if (booking) {
