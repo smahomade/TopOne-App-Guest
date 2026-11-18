@@ -1,4 +1,4 @@
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { supabase } from '@/lib/supabase';
@@ -37,6 +37,10 @@ export function useRealtimeQuery<T>({
   }, [fetcher]);
 
   useEffect(() => {
+    // Set it here too: effects can be torn down and re-run without a remount
+    // (hot reload does this), and leaving it false would ignore every
+    // result and leave the refresh spinner going forever.
+    isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
     };

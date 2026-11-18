@@ -38,7 +38,7 @@ const FormField = ({
   const [tooltipVisible, setTooltipVisible] = useState(false)
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
   const [bubbleHeight, setBubbleHeight] = useState(0)
-  const questionRef = useRef<TouchableOpacity>(null)
+  const questionRef = useRef<React.ComponentRef<typeof TouchableOpacity>>(null)
   const screenWidth = Dimensions.get('window').width
 
   const handleQuestionPress = () => {

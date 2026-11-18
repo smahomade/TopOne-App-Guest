@@ -1,8 +1,7 @@
 import { ActivityIndicator, Alert, Animated, Easing, FlatList, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Session } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -50,6 +49,11 @@ type BookingSelection = {
 };
 
 const MESSAGE_TABLES = ['messages'];
+// Reload on new messages, and when the salon closes or reopens a conversation.
+// conversation_metadata must stay in Supabase's live updates (see
+// scripts/closed_conversations.sql); if it's taken out, the server refuses
+// this whole subscription and new messages stop arriving live too.
+const LIVE_TABLES = [...MESSAGE_TABLES, 'conversation_metadata'];
 const MESSAGE_BODY_KEYS = ['content'];
 const BOOKING_REQUEST_PREFIX = '[BOOKING_REQUEST]';
 const SAVED_LOCATION_KEY = 'topone.currentLocationId';
@@ -292,6 +296,27 @@ async function fetchLocationNameById(locationId: string | null): Promise<string 
 	return getString((data as Row) ?? {}, ['name']);
 }
 
+// Booking requests already being sent. Kept outside the component because
+// signing in can leave two copies of this screen mounted at once (the one
+// under the sign-in screen and the one sign-in opens), and each copy would
+// otherwise send the same request.
+const claimedBookingKeys = new Set<string>();
+
+/** Whether the salon has closed this conversation, or null if we couldn't check. */
+async function fetchConversationClosed(conversationId: string): Promise<boolean | null> {
+	const { data, error } = await supabase
+		.from('conversation_metadata')
+		.select('closed_at')
+		.eq('conversation_id', conversationId)
+		.maybeSingle();
+
+	if (error) {
+		return null;
+	}
+
+	return Boolean(data?.closed_at);
+}
+
 async function sendMessageToAdmins(userId: string, messageText: string, conversationId?: string | null, locationId?: string | null) {
 	const payload: {
 		content: string;
@@ -333,6 +358,11 @@ async function sendMessageToAdmins(userId: string, messageText: string, conversa
 
 		if (error.message.includes('messages_location_id_fkey')) {
 			throw new Error('Your selected salon is no longer valid. Please choose your location again and retry.');
+		}
+
+		// Refused by the database's access rules: the conversation was closed.
+		if (error.code === '42501') {
+			throw new Error('This conversation has been closed by the salon. Start a new conversation for a new request.');
 		}
 
 		lastErrorMessage = error.message;
@@ -533,7 +563,6 @@ const Book = () => {
 	// Booking requests wait for this, or they can go out signed "Customer".
 	const [customerNameReady, setCustomerNameReady] = useState(false);
 	const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
-	const processedBookingKeyRef = useRef<string | null>(null);
 	const flatListRef = useRef<FlatList>(null);
 	const searchParams = useLocalSearchParams<{ bookingDates?: string | string[]; bookingKey?: string | string[]; bookingServices?: string | string[] }>();
 
@@ -696,7 +725,7 @@ const Book = () => {
 			messages: [],
 			sourceTable: null,
 		},
-		tables: MESSAGE_TABLES,
+		tables: LIVE_TABLES,
 		enabled,
 	});
 
@@ -819,9 +848,18 @@ const Book = () => {
 			return;
 		}
 
-		if (selectedConversationId && messageResult.conversationClosedById[selectedConversationId]) {
-			Alert.alert('Conversation closed', 'This conversation is closed. Start a new conversation for a new request.');
-			return;
+		if (selectedConversationId) {
+			// What's on screen can be out of date (the salon may have just closed
+			// it), so ask the database, and only fall back to the screen if offline.
+			const isClosed =
+				(await fetchConversationClosed(selectedConversationId)) ??
+				Boolean(messageResult.conversationClosedById[selectedConversationId]);
+
+			if (isClosed) {
+				void refetch();
+				Alert.alert('Conversation closed', 'This conversation is closed. Start a new conversation for a new request.');
+				return;
+			}
 		}
 
 		const targetConversationId = selectedConversationId ?? generateUuid();
@@ -935,7 +973,7 @@ const Book = () => {
 			return;
 		}
 
-		if (processedBookingKeyRef.current === bookingKey) {
+		if (claimedBookingKeys.has(bookingKey)) {
 			return;
 		}
 
@@ -949,18 +987,18 @@ const Book = () => {
 			parsedDates = Array.isArray(rawDates) ? rawDates.filter((value) => typeof value === 'string' && value.trim().length > 0) : [];
 		} catch {
 			Alert.alert('Booking not created', 'The selected services could not be prepared for the booking message.');
-			processedBookingKeyRef.current = bookingKey;
+			claimedBookingKeys.add(bookingKey);
 			void router.replace('/book');
 			return;
 		}
 
 		if (parsedServices.length === 0 || parsedDates.length === 0) {
-			processedBookingKeyRef.current = bookingKey;
+			claimedBookingKeys.add(bookingKey);
 			void router.replace('/book');
 			return;
 		}
 
-		processedBookingKeyRef.current = bookingKey;
+		claimedBookingKeys.add(bookingKey);
 		void clearPendingBooking();
 		const bookingMessage = buildBookingRequestMessage(customerName, parsedServices, parsedDates);
 		void (async () => {
@@ -968,7 +1006,7 @@ const Book = () => {
 				const targetLocationId = await resolveAndPersistLocation();
 
 				if (!targetLocationId) {
-					processedBookingKeyRef.current = null;
+					claimedBookingKeys.delete(bookingKey);
 					Alert.alert('Location required', 'Please choose a salon location before creating a booking request.');
 					return;
 				}
@@ -984,7 +1022,7 @@ const Book = () => {
 				await refetch();
 				setSelectedConversationId(bookingKey);
 			} catch (sendError) {
-				processedBookingKeyRef.current = null;
+				claimedBookingKeys.delete(bookingKey);
 				const message = sendError instanceof Error ? sendError.message : 'Unable to send booking request.';
 
 				if (message.includes('selected salon is no longer valid')) {
