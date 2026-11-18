@@ -166,7 +166,8 @@ const BannerCard = ({ banner, imageSource, index, isNewPromotion, onPress }: Ban
 };
 
 const Home = () => {
-  const [userName, setUserName] = useState('Guest');
+  // null while signed out (or before the profile loads)
+  const [userName, setUserName] = useState<string | null>(null);
   const [selectedBanner, setSelectedBanner] = useState<Banner | null>(null);
   const [savedLocationId, setSavedLocationId] = useState<string | null>(null);
   const [hasResolvedSavedLocation, setHasResolvedSavedLocation] = useState(false);
@@ -393,7 +394,7 @@ const Home = () => {
       if (session?.user) {
         void fetchUserName(session.user.id);
       } else {
-        setUserName('Guest');
+        setUserName(null);
       }
     });
 
@@ -432,8 +433,8 @@ const Home = () => {
           <View className="px-4 pb-4 pt-6">
             <View className="mb-5 flex-row items-center justify-between">
               <View>
-                <Text className="font-pregular text-sm text-gray-100">Welcome back,</Text>
-                <Text className="font-psemibold text-2xl text-white">{userName}</Text>
+                <Text className="font-pregular text-sm text-gray-100">{userName ? 'Welcome back,' : 'Welcome to'}</Text>
+                <Text className="font-psemibold text-2xl text-white">{userName ?? 'TopOne'}</Text>
               </View>
               <Image
                 source={images.logoTopOneWhite}
