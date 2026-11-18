@@ -191,7 +191,7 @@ const Collection = () => {
             <Text style={styles.emptyState}>
               {galleryResult.sourceTable
                 ? 'No gallery items have been published yet.'
-                : 'Connect the gallery table from the admin app to show collection updates here.'}
+                : "The gallery couldn't be loaded right now. Please try again later."}
             </Text>
           )}
         </View>

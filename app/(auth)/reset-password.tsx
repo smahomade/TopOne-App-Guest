@@ -9,6 +9,7 @@ import CustomButton from '../../components/CustomButton';
 import PasswordStrengthMeter from '../../components/PasswordStrengthMeter';
 import { images } from '../../constants';
 import { supabase } from '../../lib/supabase';
+import { extractTokens } from '../../lib/authLinks';
 
 const rules = [
   (v: string) => v.length >= 8,
@@ -20,18 +21,6 @@ const rules = [
 const getScore = (value: string): number => {
   return rules.filter(r => r(value)).length;
 };
-
-function extractTokens(url: string) {
-  const fragment = url.includes('#') ? url.split('#')[1] : '';
-  const query = url.includes('?') ? url.split('?')[1].split('#')[0] : '';
-  const params = new URLSearchParams(fragment || query);
-
-  return {
-    accessToken: params.get('access_token'),
-    refreshToken: params.get('refresh_token'),
-    type: params.get('type'),
-  };
-}
 
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
@@ -150,6 +139,7 @@ const ResetPassword = () => {
 
           <FormField
             title="New Password"
+            secret
             value={password}
             handleChangeText={setPassword}
             OtherStyles="mt-6"
@@ -162,6 +152,7 @@ const ResetPassword = () => {
 
           <FormField
             title="Confirm Password"
+            secret
             value={confirmPassword}
             handleChangeText={setConfirmPassword}
             OtherStyles="mt-5"

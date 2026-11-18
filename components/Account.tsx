@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import FormField from '../components/FormField';
 import InfoModal from '../components/InfoModal';
+import ConfirmModal from '../components/ConfirmModal';
 import { images } from '../constants';
 
 export default function Account({ session }: { session: Session }) {
@@ -16,6 +17,8 @@ export default function Account({ session }: { session: Session }) {
   const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [showUpdatedModal, setShowUpdatedModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteStep, setDeleteStep] = useState<'none' | 'details' | 'final'>('none');
   const emailAddress = session.user.email ?? '';
 
   useEffect(() => {
@@ -85,6 +88,30 @@ export default function Account({ session }: { session: Session }) {
       }
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function deleteAccount() {
+    try {
+      setDeleting(true);
+
+      const { error } = await supabase.rpc('delete_own_account');
+
+      if (error) {
+        throw error;
+      }
+
+      // The user row is gone, so this only clears the local session.
+      await supabase.auth.signOut();
+      setDeleteStep('none');
+      router.replace('/');
+    } catch (error) {
+      setDeleteStep('none');
+      if (error instanceof Error) {
+        Alert.alert('Delete failed', error.message);
+      }
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -169,8 +196,47 @@ export default function Account({ session }: { session: Session }) {
         titleStyle={styles.secondaryButtonText}
       />
       </View>
+
+      <View style={[styles.verticallySpaced, styles.mt20]}>
+        <Button
+          title={deleting ? 'Deleting ...' : 'Delete Account'}
+          onPress={() => setDeleteStep('details')}
+          disabled={deleting}
+          buttonStyle={styles.destructiveButton}
+          titleStyle={styles.destructiveButtonText}
+        />
+        <Text className="mt-3 text-center font-pregular text-xs leading-5 text-gray-100">
+          Deleting your account removes your details and enquiry history for good.
+        </Text>
+      </View>
     </View>
     </ScrollView>
+
+    <ConfirmModal
+      visible={deleteStep === 'details'}
+      title="Delete your account?"
+      message="This cannot be undone. We will permanently remove:"
+      bullets={[
+        'Your name, email and phone number',
+        'Your enquiry and message history',
+        'Access to this account on every device',
+      ]}
+      confirmText="Delete"
+      cancelText="Keep my account"
+      onConfirm={() => setDeleteStep('final')}
+      onCancel={() => setDeleteStep('none')}
+    />
+
+    <ConfirmModal
+      visible={deleteStep === 'final'}
+      title="Are you sure?"
+      message="Your account will be deleted straight away and cannot be recovered."
+      confirmText="Yes, delete my account"
+      cancelText="Cancel"
+      isLoading={deleting}
+      onConfirm={() => void deleteAccount()}
+      onCancel={() => setDeleteStep('none')}
+    />
 
     <InfoModal
       visible={showUpdatedModal}
@@ -220,6 +286,18 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  destructiveButton: {
+    backgroundColor: 'transparent',
+    borderColor: '#7F1D1D',
+    borderRadius: 16,
+    borderWidth: 1,
+    minHeight: 56,
+  },
+  destructiveButtonText: {
+    color: '#F87171',
     fontSize: 16,
     fontWeight: '600',
   },
