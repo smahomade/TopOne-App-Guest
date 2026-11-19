@@ -398,8 +398,11 @@ function normalizeCustomerName(value: string) {
 	return value.trim().length > 0 ? value.trim() : 'Customer';
 }
 
+// Values look like "2026-11-20", or "2026-11-20 Morning" when a time of day was picked.
 function formatPreferredDateLabel(value: string) {
-	const parsedDate = new Date(`${value}T00:00:00`);
+	const [datePart, ...timeParts] = value.trim().split(' ');
+	const timeOfDay = timeParts.join(' ');
+	const parsedDate = new Date(`${datePart}T00:00:00`);
 
 	if (Number.isNaN(parsedDate.getTime())) {
 		return value;
@@ -409,7 +412,7 @@ function formatPreferredDateLabel(value: string) {
 	const month = parsedDate.toLocaleDateString([], { month: 'short' });
 	const day = parsedDate.toLocaleDateString([], { day: 'numeric' });
 
-	return `${weekday} ${month} ${day}`;
+	return timeOfDay ? `${weekday} ${month} ${day}, ${timeOfDay}` : `${weekday} ${month} ${day}`;
 }
 
 function buildBookingRequestMessage(customerName: string, services: BookingSelection[], preferredDates: string[]) {

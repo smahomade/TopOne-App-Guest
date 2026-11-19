@@ -39,13 +39,10 @@ export default function Index() {
     }, [])
   );
 
+  // Everyone goes straight to the service menu. Signing in is only asked for
+  // when the request is sent, and the request is kept while they do it.
   const handleBooking = () => {
-    if (loading) return; // Prevent any navigation while loading
-    if (session) {
-      router.push('/home');  // Redirect to home if logged in
-    } else {
-      router.push('/sign-in');  // Redirect to sign-in if not logged in
-    }
+    router.push('/services');
   };
 
   return (
@@ -98,24 +95,26 @@ export default function Index() {
 
 
 
-          {/* Admin Text - Positioned at the bottom */}
+          {/* Sign-in link at the bottom, only for signed-out visitors */}
+      {!loading && !session ? (
       <View style={{
             position: 'absolute', 
             bottom: 30, 
             left: 0, 
             right: 0, 
-            alignItems: 'center'  // Center the admin text horizontally
+            alignItems: 'center'
           }}>
 
             <View className="flex-row gap-2">
               <Text className="text-lg text-gray-100 font-pregular">
-                Access as a Guest?
+                Already a customer?
               </Text>
-              <Link href="/home" className="text-lg font-psemibold text-secondary underline">
-                Click Here
+              <Link href="/sign-in" className="text-lg font-psemibold text-secondary underline">
+                Sign in
               </Link>
             </View>
           </View>
+      ) : null}
       </ScrollView>
       
       {/* Adds light to the status bar (top bar with battery, wifi and time) <StatusBar backgroundColor="#161622" style="light"/> */}

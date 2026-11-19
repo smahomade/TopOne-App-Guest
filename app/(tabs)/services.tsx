@@ -1,5 +1,5 @@
-import { ActivityIndicator, Image, Modal, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Image, Modal, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { router, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -10,6 +10,7 @@ import {
   LOCATION_CONTENT_TABLES,
   SERVICES_CONTENT_TABLES,
   type GroupedService,
+  type ServiceRole,
 } from '@/lib/adminContent';
 import { images } from '../../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -104,7 +105,37 @@ function formatServiceDuration(duration: number | null) {
   return `${minutes} min`;
 }
 
+// A price of 0 means the salon didn't enter one.
+function formatPrice(price: number) {
+  return price > 0 ? `£${price}` : 'Price on request';
+}
+
+function formatPriceRange(roles: ServiceRole[]) {
+  const prices = roles.map((roleItem) => roleItem.price).filter((price) => price > 0);
+
+  if (prices.length === 0) {
+    return null;
+  }
+
+  const lowestPrice = Math.min(...prices);
+
+  return lowestPrice === Math.max(...prices) ? `£${lowestPrice}` : `From £${lowestPrice}`;
+}
+
+// One booking per service, whichever stylist was picked.
+function getServiceKey(serviceCategory: string, service: string) {
+  return `${serviceCategory}::${service}`;
+}
+
+// "General" is what lib/adminContent fills in when a service has no sub-category.
+function getCategoryLabel(serviceCategory: string) {
+  return serviceCategory && serviceCategory !== 'General' ? serviceCategory : null;
+}
+
+const TIME_OPTIONS = ['Morning', 'Afternoon', 'Evening'];
+
 const Services = () => {
+  const scrollViewRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedService, setSelectedService] = useState<GroupedService | null>(null);
   const [showRolesModal, setShowRolesModal] = useState<boolean>(false);
@@ -236,26 +267,68 @@ const Services = () => {
     }
   }, [categoryNames, selectedCategory]);
 
-  const handleBook = (group: GroupedService) => {
-    setSelectedService(group);
-    setShowRolesModal(true); // Show modal to display roles
+  const selectedRoleByService = useMemo(
+    () => new Map(bookingSelections.map((selection) => [getServiceKey(selection.serviceCategory, selection.service), selection.role])),
+    [bookingSelections]
+  );
+  const bookingTotal = bookingSelections.reduce((total, selection) => total + selection.price, 0);
+
+  // Picking a stylist replaces any earlier pick for the same service.
+  const addSelection = (group: GroupedService, roleItem: ServiceRole) => {
+    const serviceKey = getServiceKey(group.serviceCategory, group.service);
+
+    setBookingSelections((currentSelections) => [
+      ...currentSelections.filter((selection) => getServiceKey(selection.serviceCategory, selection.service) !== serviceKey),
+      {
+        id: `${serviceKey}::${roleItem.role}::${Date.now()}`,
+        price: roleItem.price,
+        role: roleItem.role,
+        service: group.service,
+        serviceCategory: group.serviceCategory,
+      },
+    ]);
   };
 
-  const handleAddSelection = (role: string, price: number) => {
+  const removeService = (group: GroupedService) => {
+    const serviceKey = getServiceKey(group.serviceCategory, group.service);
+
+    setBookingSelections((currentSelections) =>
+      currentSelections.filter((selection) => getServiceKey(selection.serviceCategory, selection.service) !== serviceKey)
+    );
+  };
+
+  const handleBook = (group: GroupedService) => {
+    const isAdded = selectedRoleByService.has(getServiceKey(group.serviceCategory, group.service));
+
+    // With only one stylist option there is nothing to choose: add or remove it directly.
+    if (group.roles.length === 1) {
+      if (isAdded) {
+        removeService(group);
+      } else {
+        addSelection(group, group.roles[0]);
+      }
+      return;
+    }
+
+    setSelectedService(group);
+    setShowRolesModal(true);
+  };
+
+  const handleAddSelection = (roleItem: ServiceRole) => {
     if (!selectedService) {
       return;
     }
 
-    setBookingSelections((currentSelections) => [
-      ...currentSelections,
-      {
-        id: `${selectedService.serviceCategory}-${selectedService.service}-${role}-${Date.now()}-${currentSelections.length}`,
-        price,
-        role,
-        service: selectedService.service,
-        serviceCategory: selectedService.serviceCategory,
-      },
-    ]);
+    addSelection(selectedService, roleItem);
+    setShowRolesModal(false);
+    setSelectedService(null);
+  };
+
+  const handleRemoveFromModal = () => {
+    if (selectedService) {
+      removeService(selectedService);
+    }
+
     setShowRolesModal(false);
     setSelectedService(null);
   };
@@ -329,8 +402,9 @@ const Services = () => {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-primary" style={{ backgroundColor: '#161622' }}>
+    <SafeAreaView className="flex-1 bg-primary" style={{ backgroundColor: '#161622' }} edges={['top', 'left', 'right']}>
       <ScrollView
+        ref={scrollViewRef}
         className="bg-primary"
         style={{ backgroundColor: '#161622' }}
         contentContainerStyle={{ paddingBottom: 32 }}
@@ -379,36 +453,45 @@ const Services = () => {
         </View>
 
         <View className="px-4">
-          {selectedServices.map((group, index) => (
-            <View key={`${group.serviceCategory}-${group.service}-${index}`} className="mb-4 rounded-2xl border border-black-200 bg-black-100 px-5 py-5">
-              <View className="flex-row items-start justify-between gap-4">
-                <View className="flex-1">
-                  <Text className="font-pbold text-base text-white">{group.service}</Text>
-                  {formatServiceDuration(group.duration) ? (
-                    <Text className="mt-1 font-pregular text-sm text-gray-100">{formatServiceDuration(group.duration)}</Text>
-                  ) : null}
+          {selectedServices.map((group, index) => {
+            const duration = formatServiceDuration(group.duration);
+            const priceRange = formatPriceRange(group.roles);
+            const addedRole = selectedRoleByService.get(getServiceKey(group.serviceCategory, group.service));
+            const details = [priceRange, duration].filter(Boolean).join(' · ');
+
+            return (
+              <View key={`${group.serviceCategory}-${group.service}-${index}`} className="mb-4 rounded-2xl border border-black-200 bg-black-100 px-5 py-5">
+                <View className="flex-row items-center justify-between gap-4">
+                  <View className="flex-1">
+                    <Text className="font-pbold text-base text-white">{group.service}</Text>
+                    {details ? (
+                      <Text className="mt-1 font-pregular text-sm text-gray-100">{details}</Text>
+                    ) : null}
+                    {addedRole && group.roles.length > 1 ? (
+                      <Text className="mt-1 font-pregular text-xs text-secondary">With {addedRole}</Text>
+                    ) : null}
+                  </View>
+                  <TouchableOpacity
+                    activeOpacity={0.82}
+                    className={`rounded-xl px-4 py-3 ${addedRole ? 'border border-secondary' : 'bg-secondary'}`}
+                    onPress={() => handleBook(group)}
+                  >
+                    <Text className={`font-psemibold text-sm ${addedRole ? 'text-secondary' : 'text-primary'}`}>
+                      {addedRole ? 'Added ✓' : 'Add'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                  activeOpacity={0.82}
-                  className="rounded-xl bg-secondary px-4 py-3"
-                  onPress={() => handleBook(group)}
-                >
-                  <Text className="font-psemibold text-sm text-primary">Add</Text>
-                </TouchableOpacity>
               </View>
-            </View>
-          ))}
+            );
+          })}
         </View>
 
         {bookingSelections.length > 0 ? (
           <View className="mx-4 mt-2 rounded-2xl border border-black-200 bg-black-100 px-5 py-5">
-            <View className="flex-row items-center justify-between">
-              <View>
-                <Text className="font-psemibold text-lg text-white">Booking List</Text>
-                <Text className="mt-1 font-pregular text-sm text-gray-100">These services will be sent to Messages as a new booking request.</Text>
-              </View>
-              <Text className="font-psemibold text-secondary">{bookingSelections.length} selected</Text>
-            </View>
+            <Text className="font-psemibold text-lg text-white">Your booking</Text>
+            <Text className="mt-1 font-pregular text-sm text-gray-100">
+              You'll pick dates next. The salon replies in Messages to confirm a time.
+            </Text>
 
             <View className="mt-4 gap-3">
               {bookingSelections.map((selection) => (
@@ -417,7 +500,7 @@ const Services = () => {
                     <View className="flex-1">
                       <Text className="font-psemibold text-sm text-white">{selection.service}</Text>
                       <Text className="mt-1 font-pregular text-xs text-gray-100">
-                        {selection.serviceCategory} · {selection.role} · £{selection.price}
+                        {[getCategoryLabel(selection.serviceCategory), selection.role, formatPrice(selection.price)].filter(Boolean).join(' · ')}
                       </Text>
                     </View>
 
@@ -432,14 +515,6 @@ const Services = () => {
                 </View>
               ))}
             </View>
-
-            <TouchableOpacity
-              activeOpacity={0.82}
-              className="mt-5 items-center rounded-xl bg-secondary px-4 py-4"
-              onPress={handleBookSelections}
-            >
-              <Text className="font-psemibold text-sm text-primary">Book Selected Services</Text>
-            </TouchableOpacity>
           </View>
         ) : null}
 
@@ -461,9 +536,11 @@ const Services = () => {
         >
           <View className="flex-1 items-center justify-center bg-black/70 px-5">
             <View className="w-full rounded-2xl border border-black-200 bg-black-100 p-6">
-              <Text className="mb-1 font-psemibold text-xl text-white">Select a Role</Text>
+              <Text className="mb-1 font-psemibold text-xl text-white">Choose your stylist</Text>
               <Text className="font-pregular text-sm text-gray-100">{selectedService?.service}</Text>
-              <Text className="mt-1 font-pregular text-sm text-secondary">{selectedService?.serviceCategory}</Text>
+              {selectedService && getCategoryLabel(selectedService.serviceCategory) ? (
+                <Text className="mt-1 font-pregular text-sm text-secondary">{getCategoryLabel(selectedService.serviceCategory)}</Text>
+              ) : null}
               {selectedService && formatServiceDuration(selectedService.duration) ? (
                 <Text className="mb-5 mt-1 font-pregular text-sm text-gray-100">
                   Duration: {formatServiceDuration(selectedService.duration)}
@@ -472,24 +549,41 @@ const Services = () => {
                 <View className="mb-5" />
               )}
               
-              {selectedService?.roles.map((roleItem, index) => (
-                <View key={index} className="mb-3 rounded-xl border border-white/10 bg-primary px-4 py-4">
-                  <View className="flex-row items-center justify-between gap-3">
-                    <View className="flex-1">
-                      <Text className="font-psemibold text-base text-white">{roleItem.role}</Text>
-                      <Text className="mt-1 font-pregular text-sm text-gray-100">£{roleItem.price}</Text>
-                    </View>
+              {selectedService?.roles.map((roleItem, index) => {
+                const isChosen =
+                  selectedRoleByService.get(getServiceKey(selectedService.serviceCategory, selectedService.service)) === roleItem.role;
 
-                    <TouchableOpacity
-                      activeOpacity={0.82}
-                      className="rounded-xl bg-secondary px-4 py-3"
-                      onPress={() => handleAddSelection(roleItem.role, roleItem.price)}
-                    >
-                      <Text className="font-psemibold text-sm text-primary">Add</Text>
-                    </TouchableOpacity>
+                return (
+                  <View key={index} className="mb-3 rounded-xl border border-white/10 bg-primary px-4 py-4">
+                    <View className="flex-row items-center justify-between gap-3">
+                      <View className="flex-1">
+                        <Text className="font-psemibold text-base text-white">{roleItem.role}</Text>
+                        <Text className="mt-1 font-pregular text-sm text-gray-100">{formatPrice(roleItem.price)}</Text>
+                      </View>
+
+                      <TouchableOpacity
+                        activeOpacity={0.82}
+                        className={`rounded-xl px-4 py-3 ${isChosen ? 'border border-secondary' : 'bg-secondary'}`}
+                        onPress={() => handleAddSelection(roleItem)}
+                      >
+                        <Text className={`font-psemibold text-sm ${isChosen ? 'text-secondary' : 'text-primary'}`}>
+                          {isChosen ? 'Chosen ✓' : 'Choose'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
-              ))}
+                );
+              })}
+
+              {selectedService && selectedRoleByService.has(getServiceKey(selectedService.serviceCategory, selectedService.service)) ? (
+                <TouchableOpacity
+                  activeOpacity={0.82}
+                  className="mt-2 items-center rounded-xl border border-white/10 px-4 py-3"
+                  onPress={handleRemoveFromModal}
+                >
+                  <Text className="font-psemibold text-sm text-gray-100">Remove from booking</Text>
+                </TouchableOpacity>
+              ) : null}
 
               <TouchableOpacity
                 activeOpacity={0.82}
@@ -592,22 +686,30 @@ const Services = () => {
               </View>
 
               {selectedBookingDates.length > 0 ? (
-                <View className="mt-3 flex-row items-center gap-3">
-                  <View style={{ flex: 1 }}>
-                    <Text className="font-psemibold text-xs text-gray-100 mb-1">Selected</Text>
-                    {selectedBookingDates.map((dateValue) => (
-                      <Text key={dateValue} className="font-pregular text-xs text-white">{formatDateLabel(dateValue)}</Text>
-                    ))}
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text className="font-psemibold text-xs text-gray-100 mb-1">Time (optional)</Text>
-                    <TextInput
-                      value={preferredTime ?? ''}
-                      onChangeText={(value) => setPreferredTime(value || null)}
-                      placeholder="e.g. 2:30 PM"
-                      placeholderTextColor="#7b7b8b"
-                      style={{ color: '#ffffff', fontFamily: 'Poppins-Regular', fontSize: 13, borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7 }}
-                    />
+                <View className="mt-3">
+                  <Text className="font-psemibold text-xs text-gray-100 mb-1">Selected</Text>
+                  <Text className="font-pregular text-xs text-white">
+                    {selectedBookingDates.map(formatDateLabel).join(' · ')}
+                  </Text>
+
+                  <Text className="font-psemibold text-xs text-gray-100 mb-2 mt-3">Time of day</Text>
+                  <View className="flex-row flex-wrap gap-2">
+                    {[null, ...TIME_OPTIONS].map((option) => {
+                      const isSelected = preferredTime === option;
+
+                      return (
+                        <TouchableOpacity
+                          key={option ?? 'any'}
+                          activeOpacity={0.82}
+                          className={`rounded-full border px-3 py-2 ${isSelected ? 'border-secondary bg-secondary' : 'border-white/20'}`}
+                          onPress={() => setPreferredTime(option)}
+                        >
+                          <Text className={`font-psemibold text-xs ${isSelected ? 'text-primary' : 'text-white'}`}>
+                            {option ?? 'Any time'}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
                   </View>
                 </View>
               ) : (
@@ -630,6 +732,30 @@ const Services = () => {
           </View>
         </Modal>
       </ScrollView>
+
+      {/* Always on screen once something is added, so nobody has to scroll to find the next step */}
+      {bookingSelections.length > 0 ? (
+        <View className="flex-row items-center gap-3 border-t border-black-200 bg-black-100 px-4 py-3">
+          <TouchableOpacity
+            activeOpacity={0.82}
+            style={{ flex: 1 }}
+            onPress={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+          >
+            <Text className="font-psemibold text-sm text-white">
+              {bookingSelections.length} {bookingSelections.length === 1 ? 'service' : 'services'}
+              {bookingTotal > 0 ? ` · £${bookingTotal}` : ''}
+            </Text>
+            <Text className="font-pregular text-xs text-gray-100">View booking</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.82}
+            className="rounded-xl bg-secondary px-5 py-3"
+            onPress={handleBookSelections}
+          >
+            <Text className="font-psemibold text-sm text-primary">Choose dates</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 };
