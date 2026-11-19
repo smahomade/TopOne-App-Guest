@@ -1,7 +1,7 @@
-import { ActivityIndicator, Alert, Animated, Easing, FlatList, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, AppState, Easing, FlatList, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useIsFocused, useLocalSearchParams } from 'expo-router';
 import { Session } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -747,7 +747,7 @@ const Book = () => {
 		}
 
 		if (messageResult.sourceTable || loading) {
-			return 'Tell the salon what service you want, which day works for you, and any stylist preference.';
+			return "Tell the salon what service you want, which day works for you, and any stylist preference. If you miss their reply, we'll email you.";
 		}
 
 		return "Your messages couldn't be loaded right now. Check your connection and pull down to try again.";
@@ -810,6 +810,47 @@ const Book = () => {
 		},
 		[refetch, userId]
 	);
+
+	// Whether the customer can actually see this screen: it's the open tab and
+	// the app is in the foreground.
+	const isFocused = useIsFocused();
+	const [appActive, setAppActive] = useState(AppState.currentState === 'active');
+
+	useEffect(() => {
+		const subscription = AppState.addEventListener('change', (state) => setAppActive(state === 'active'));
+
+		return () => subscription.remove();
+	}, []);
+
+	// Salon replies in the open conversation have been seen once it's on
+	// screen, including ones that arrive while it's open. Anything left unread
+	// is emailed to the customer (scripts/message_notifications.sql).
+	// Each reply is tried once per opening, so a failed update can't loop.
+	const markedReadIdsRef = useRef(new Set<string>());
+
+	useEffect(() => {
+		markedReadIdsRef.current.clear();
+	}, [selectedConversationId]);
+
+	useEffect(() => {
+		if (!selectedConversation || !isFocused || !appActive) {
+			return;
+		}
+
+		const unseenReplies = selectedConversation.messages.filter(
+			(message) => message.senderRole === 'admin' && !message.isRead && !markedReadIdsRef.current.has(message.id)
+		);
+
+		if (unseenReplies.length === 0) {
+			return;
+		}
+
+		for (const message of unseenReplies) {
+			markedReadIdsRef.current.add(message.id);
+		}
+
+		void markConversationAsRead(selectedConversation.id);
+	}, [appActive, isFocused, markConversationAsRead, selectedConversation]);
 
 	const sendDraftMessage = useCallback(async () => {
 		if (!userId) {
@@ -1250,7 +1291,7 @@ const Book = () => {
 						refreshing={refreshing}
 						onRefresh={refetch}
 						renderItem={({ item: section, index }) => (
-							<Pressable onPress={() => { setSelectedConversationId(section.id); void markConversationAsRead(section.id); }} className="mb-4 rounded-3xl border border-black-200 bg-black-100 px-4 py-4">
+							<Pressable onPress={() => setSelectedConversationId(section.id)} className="mb-4 rounded-3xl border border-black-200 bg-black-100 px-4 py-4">
 								{index === 0 && bookingSections.length > 1 ? (
 									<Animated.View
 										pointerEvents="none"
