@@ -5,15 +5,53 @@ what the code actually does, or you get rejected (and it counts as a policy
 breach if it is wrong later).
 
 These answers were derived from the code: `sign-up.tsx`, `Account.tsx`,
-`book.tsx`, and `lib/supabase.ts`. **Re-check them if you add Google sign-in,
-push notifications, analytics, or payments** — any of those changes the answers.
+`book.tsx`, `lib/supabase.ts`, and (for Google sign-in, added 18 November
+2026) `lib/googleSignIn.ts` and `add-phone.tsx`. **Re-check them if you add
+Sign in with Apple, push notifications, analytics, or payments**: any of those
+changes the answers.
 
 Key facts that drive every answer below:
 
 - No advertising SDKs, no analytics SDKs, no tracking.
 - No device location, camera, contacts, or photo access.
 - Data goes to Supabase (database/auth) and Resend (email) only.
+- Customers sign in with email and password, or with "Continue with Google"
+  (see [Google sign-in](#google-sign-in) below). Both ask for the same data:
+  Google users are asked for their phone number once, because Google doesn't
+  share it.
 - Account deletion is available in-app at Profile → Delete Account.
+
+## Google sign-in
+
+What it adds, and why the answers below barely change:
+
+- **Google passes the app** the customer's name, email address, Google account
+  ID, and a link to their Google profile picture. All of it arrives in the ID
+  token that Supabase Auth checks.
+- **Name, email, phone, user ID:** the same types as an email sign-up, so
+  they're already declared.
+- **Profile picture link:** Supabase Auth keeps it in the Google identity
+  record. The `handle_new_user` database trigger also copies it into
+  `profiles.avatar_url`. Neither app shows or uses it. **Before release,
+  decide between:**
+  - (a) changing the trigger so it stops copying `avatar_url` (one line;
+    needs a database change), or
+  - (b) declaring it.
+
+  (a) keeps both forms as they are.
+- **Nothing goes from the app to Google** apart from the sign-in itself, which
+  happens in Google's own account picker. It isn't "sharing" in the stores'
+  sense: Google is where the data comes from.
+- **Google's SDK:** the app ships Google's sign-in library (Google Play
+  services on Android, GoogleSignIn on iOS).
+  - Google lists what Play services declares at
+    <https://developers.google.com/android/guides/play-data-disclosure>. Check
+    it when you fill in the Play form.
+  - On iOS, GoogleSignIn ships its own privacy manifest, which App Store
+    Connect reads at upload.
+- **Apple guideline 4.8:** an iOS app that offers Google sign-in must also
+  offer Sign in with Apple (or an equivalent). See
+  `docs/google-sign-in-setup.md`. Adding Apple changes these answers again.
 
 ---
 
@@ -29,6 +67,8 @@ Key facts that drive every answer below:
 | Email address | Yes | No | Required | App functionality, Account management |
 | Phone number | Yes | No | Required | App functionality |
 | User IDs | Yes | No | Required | App functionality, Account management |
+
+*(User IDs include the Google account ID for customers who use Google sign-in.)*
 
 ### Messages
 
@@ -94,4 +134,6 @@ have to hunt for it — a reviewer who cannot find it will reject the build.
 - **Support URL / contact email.**
 - **App Review notes with a working test account** (email and password). Create
   a throwaway account for this and confirm it is email-confirmed before you
-  submit, or review gets stuck at your login screen.
+  submit, or review gets stuck at your login screen. Reviewers can't use
+  your Google account, so the email test account is still needed with Google
+  sign-in on.

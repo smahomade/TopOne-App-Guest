@@ -5,6 +5,7 @@ import { images } from '../../constants'
 import FormField from '../../components/FormField'
 import CustomButton from '../../components/CustomButton'
 import InfoModal from '../../components/InfoModal'
+import GoogleSignInButton from '../../components/GoogleSignInButton'
 import { Link, router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { hasPendingBooking } from '../../lib/pendingBooking'
@@ -116,6 +117,8 @@ const SignIn = () => {
             containerStyles="mt-7 w-full"
             isLoading={isSubmitting}
           />
+
+          <GoogleSignInButton returnTo="home" dividerPosition="above" containerStyles="mt-5" />
 
           <View className="justify-center pt-5 flex-row gap-2">
             <Text className="text-lg text-gray-100 font-pregular">
