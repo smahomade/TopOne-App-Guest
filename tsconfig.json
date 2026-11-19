@@ -17,7 +17,8 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-, "components/CustomButton.tsx"  ]
+, "components/CustomButton.tsx"  ],
+  "exclude": ["node_modules", "supabase/functions"]
 }
 
 

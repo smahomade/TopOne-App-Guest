@@ -22,7 +22,7 @@ When you create an account and use the app:
 
 | Data | Why we collect it |
 | --- | --- |
-| Email address | Signing in, password resets, account confirmation |
+| Email address | Signing in, password resets, account confirmation, and emailing you when the salon replies to a message you haven't read |
 | Password | Signing in with email. Stored only as a secure hash — we never see it |
 | First and last name | Identifying your booking to salon staff |
 | Phone number | Contacting you about your appointment |
@@ -55,7 +55,7 @@ service for us:
 
 - **Supabase** — database, account storage, and authentication. Your data is
   held in the **United Kingdom (London)** region.
-- **Resend** — sending account confirmation and password-reset emails. This
+- **Resend** — sending account confirmation, password-reset and reply notification emails. This
   involves your email address being processed **outside the UK (United
   States)** under the safeguards in their data processing terms.
 These providers act on our instructions.
