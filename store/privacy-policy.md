@@ -23,11 +23,17 @@ When you create an account and use the app:
 | Data | Why we collect it |
 | --- | --- |
 | Email address | Signing in, password resets, account confirmation, and emailing you when the salon replies to a message you haven't read |
-| Password | Signing in. Stored only as a secure hash — we never see it |
+| Password | Signing in with email. Stored only as a secure hash — we never see it |
 | First and last name | Identifying your booking to salon staff |
 | Phone number | Contacting you about your appointment |
 | Enquiry and message content | Answering the enquiries you send us |
 | Enquiry history and timestamps | Managing your bookings |
+
+If you choose **Continue with Google** instead of an email and password,
+Google tells us your name, email address and Google account ID, plus a link to
+your Google profile picture, which the app doesn't show or use. We don't
+receive your Google password or anything else in your Google account. Google
+doesn't share your phone number, so the app asks you for it once.
 
 We do **not** collect your device location, contacts, photos, or camera. We do
 **not** use advertising or tracking technology, and we do not build advertising

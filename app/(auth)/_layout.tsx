@@ -35,6 +35,15 @@ const AuthLayout = () => {
           headerShown: false
         }} 
       />
+
+      {/* After a Google sign-in; no swipe back (see add-phone.tsx) */}
+      <Stack.Screen
+        name='add-phone'
+        options={{
+          headerShown: false,
+          gestureEnabled: false,
+        }}
+      />
     </Stack>
     
 

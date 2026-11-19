@@ -9,6 +9,7 @@ import { supabase } from '../../lib/supabase';
 import PasswordStrengthMeter from '../../components/PasswordStrengthMeter';
 import PhoneField from '../../components/PhoneField';
 import InfoModal from '../../components/InfoModal';
+import GoogleSignInButton from '../../components/GoogleSignInButton';
 
 const rules = [
   (v: string) => v.length >= 8,
@@ -133,6 +134,13 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
               Fill in your details to book appointments.
             </Text>
           </View>
+
+          <GoogleSignInButton
+            returnTo="home"
+            dividerPosition="below"
+            dividerText="or sign up with email"
+            containerStyles="mt-6"
+          />
 
           {/* First Name + Last Name side by side */}
           <View style={{ flexDirection: 'row', gap: 12, marginTop: 24 }}>

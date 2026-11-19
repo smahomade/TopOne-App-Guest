@@ -5,6 +5,7 @@ import { images } from '../../constants'
 import FormField from '../../components/FormField'
 import CustomButton from '../../components/CustomButton'
 import InfoModal from '../../components/InfoModal'
+import GoogleSignInButton from '../../components/GoogleSignInButton'
 import { Link, router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { hasPendingBooking } from '../../lib/pendingBooking'
@@ -117,9 +118,11 @@ const SignIn = () => {
             isLoading={isSubmitting}
           />
 
+          <GoogleSignInButton returnTo="home" dividerPosition="above" containerStyles="mt-5" />
+
           <View className="justify-center pt-5 flex-row gap-2">
             <Text className="text-lg text-gray-100 font-pregular">
-              Dont have an Account?
+              Don't have an account?
             </Text>
             <Link href={"/sign-up"} className="text-lg font-psemibold text-secondary underline">Sign up</Link>
           </View>
