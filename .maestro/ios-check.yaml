@@ -73,22 +73,78 @@ name: iPhone signed-out check
     timeout: 10000
 - waitForAnimationToEnd
 - takeScreenshot: 08-sign-in
-- tapOn: "Sign up"
+
+# The text links ("Sign up", "Sign in", "Click Here") are checked without
+# stopping the run: if one doesn't open its screen, a "did-not-open"
+# screenshot is saved and the rest carries on.
+- tapOn:
+    text: "Sign up"
+    retryTapIfNoChange: true
 - extendedWaitUntil:
     visible: "First Name"
     timeout: 10000
-- waitForAnimationToEnd
-- takeScreenshot: 09-sign-up
-
-# Keyboard over the form: tapping a field only opens the keyboard, nothing is typed
-- tapOn:
-    text: "Create a password"
     optional: true
-- waitForAnimationToEnd
-- takeScreenshot: 10-sign-up-keyboard
+- runFlow:
+    when:
+      notVisible: "First Name"
+    commands:
+      - takeScreenshot: 09-sign-up-did-not-open
+- runFlow:
+    when:
+      visible: "First Name"
+    commands:
+      - waitForAnimationToEnd
+      - takeScreenshot: 09-sign-up
+      # Keyboard over the form: tapping a field only opens the keyboard, nothing is typed
+      - tapOn:
+          text: "Create a password"
+          optional: true
+      - waitForAnimationToEnd
+      - takeScreenshot: 10-sign-up-keyboard
 
-# The other tabs. Restarting the app is the simplest way out of the sign-up
-# screen. Tab buttons read like "Home, tab, 1 of 5" to VoiceOver.
+# The start screen's "Sign in" link, then "Forgot Password? Click Here".
+# Restarting the app is the simplest way back to the start screen.
+- launchApp
+- extendedWaitUntil:
+    visible: "Book Appointment"
+    timeout: 30000
+- tapOn:
+    text: "Sign in"
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    visible: "Log in to Top One"
+    timeout: 10000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Log in to Top One"
+    commands:
+      - takeScreenshot: 11-sign-in-link-did-not-open
+- runFlow:
+    when:
+      visible: "Log in to Top One"
+    commands:
+      - waitForAnimationToEnd
+      - tapOn:
+          text: "Click Here"
+          retryTapIfNoChange: true
+      - extendedWaitUntil:
+          visible: "Send Reset Email"
+          timeout: 10000
+          optional: true
+      - runFlow:
+          when:
+            notVisible: "Send Reset Email"
+          commands:
+            - takeScreenshot: 11-forgot-password-did-not-open
+      - runFlow:
+          when:
+            visible: "Send Reset Email"
+          commands:
+            - waitForAnimationToEnd
+            - takeScreenshot: 11-forgot-password
+
+# The other tabs. Tab buttons read like "Home, tab, 1 of 5" to VoiceOver.
 - launchApp
 - extendedWaitUntil:
     visible: "Book Appointment"
@@ -99,13 +155,13 @@ name: iPhone signed-out check
     timeout: 30000
 - tapOn: "Home(, tab.*)?"
 - waitForAnimationToEnd
-- takeScreenshot: 11-home
+- takeScreenshot: 12-home
 - tapOn: "Collection(, tab.*)?"
 - waitForAnimationToEnd
-- takeScreenshot: 12-collection
+- takeScreenshot: 13-collection
 - tapOn: "Profile(, tab.*)?"
 - waitForAnimationToEnd
-- takeScreenshot: 13-profile
+- takeScreenshot: 14-profile
 - tapOn: "Messages(, tab.*)?"
 - waitForAnimationToEnd
-- takeScreenshot: 14-messages
+- takeScreenshot: 15-messages

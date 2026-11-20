@@ -44,10 +44,21 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      # The build takes most of the run, so the built app is reused until the
+      # app's own code or packages change (editing only .maestro/ reuses it)
+      - name: Reuse the last build
+        id: app-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: build/Build/Products/Release-iphonesimulator
+          key: ios-sim-app-${{ hashFiles('app/**', 'components/**', 'lib/**', 'hooks/**', 'constants/**', 'assets/**', 'package-lock.json', 'app.json', 'app.config.js', 'babel.config.js', 'tailwind.config.js', 'tsconfig.json') }}
+
       - name: Install packages
+        if: steps.app-cache.outputs.cache-hit != 'true'
         run: npm ci
 
       - name: Write .env
+        if: steps.app-cache.outputs.cache-hit != 'true'
         run: |
           if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ] || [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
             echo "::error::Add the EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY repository secrets first."
@@ -60,10 +71,12 @@ jobs:
         run: xcodebuild -version
 
       - name: Generate the iOS project
+        if: steps.app-cache.outputs.cache-hit != 'true'
         run: npx expo prebuild --platform ios
 
       # A Release build has the JavaScript bundled in, so no dev server is needed
       - name: Build for the simulator
+        if: steps.app-cache.outputs.cache-hit != 'true'
         run: |
           set -o pipefail
           workspace="$(ls -d ios/*.xcworkspace | head -1)"
@@ -71,8 +84,19 @@ jobs:
           xcodebuild -workspace "$workspace" -scheme "$scheme" -configuration Release \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build CODE_SIGNING_ALLOWED=NO -quiet
+
+      # Saved straight after the build, so it's kept even if the tap-through fails
+      - name: Keep this build for next time
+        if: steps.app-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: build/Build/Products/Release-iphonesimulator
+          key: ${{ steps.app-cache.outputs.cache-primary-key }}
+
+      - name: Find the app
+        run: |
           app="$(ls -d build/Build/Products/Release-iphonesimulator/*.app | head -1)"
-          echo "Built $app"
+          echo "Using $app"
           echo "APP_PATH=$app" >> "$GITHUB_ENV"
 
       - name: Install Maestro

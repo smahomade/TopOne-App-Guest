@@ -24,6 +24,15 @@ small="$(pick '^iPhone ([0-9]+e|SE)')"
 [ -n "$pro" ] || pro="$(pick '^iPhone')"
 if [ "$small" = "$pro" ]; then small=""; fi
 
+# A simulator's first boot takes a minute or two, so start both now and let
+# the second one finish booting while the first is being tested.
+for entry in "$pro" "$small"; do
+  [ -n "$entry" ] && xcrun simctl boot "${entry%%|*}" || true
+done
+
+# Maestro's iPhone driver can be slow to start on a freshly booted simulator
+export MAESTRO_DRIVER_STARTUP_TIMEOUT="${MAESTRO_DRIVER_STARTUP_TIMEOUT:-300000}"
+
 status=0
 for entry in "$pro" "$small"; do
   [ -n "$entry" ] || continue
@@ -33,7 +42,6 @@ for entry in "$pro" "$small"; do
   mkdir -p "$out"
   echo "::group::$name"
 
-  xcrun simctl boot "$udid" || true
   xcrun simctl bootstatus "$udid" -b
   # A fixed clock and full bars, so screenshots compare cleanly between runs
   xcrun simctl status_bar "$udid" override --time 9:41 --batteryState charged --batteryLevel 100 || true
