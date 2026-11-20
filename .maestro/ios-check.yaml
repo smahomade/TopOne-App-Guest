@@ -76,10 +76,9 @@ name: iPhone signed-out check
 
 # The text links ("Sign up", "Sign in", "Click Here") are checked without
 # stopping the run: if one doesn't open its screen, a "did-not-open"
-# screenshot is saved and the rest carries on.
-- tapOn:
-    text: "Sign up"
-    retryTapIfNoChange: true
+# screenshot is saved and the rest carries on. Each gets one tap, no retries,
+# because a link that needs a second tap is the problem being checked for.
+- tapOn: "Sign up"
 - extendedWaitUntil:
     visible: "First Name"
     timeout: 10000
@@ -108,9 +107,7 @@ name: iPhone signed-out check
 - extendedWaitUntil:
     visible: "Book Appointment"
     timeout: 30000
-- tapOn:
-    text: "Sign in"
-    retryTapIfNoChange: true
+- tapOn: "Sign in"
 - extendedWaitUntil:
     visible: "Log in to Top One"
     timeout: 10000
@@ -125,9 +122,7 @@ name: iPhone signed-out check
       visible: "Log in to Top One"
     commands:
       - waitForAnimationToEnd
-      - tapOn:
-          text: "Click Here"
-          retryTapIfNoChange: true
+      - tapOn: "Click Here"
       - extendedWaitUntil:
           visible: "Send Reset Email"
           timeout: 10000
@@ -143,6 +138,30 @@ name: iPhone signed-out check
           commands:
             - waitForAnimationToEnd
             - takeScreenshot: 11-forgot-password
+            # A button tapped while the keyboard is open should work first
+            # time, not just close the keyboard. The email is left empty, so
+            # the app only says it's missing and nothing is sent.
+            - tapOn:
+                text: "Enter your email"
+                optional: true
+            - waitForAnimationToEnd
+            - takeScreenshot: 11-forgot-password-keyboard
+            - tapOn: "Send Reset Email"
+            - extendedWaitUntil:
+                visible: "Missing email"
+                timeout: 5000
+                optional: true
+            - runFlow:
+                when:
+                  visible: "Missing email"
+                commands:
+                  - takeScreenshot: 11-forgot-password-tap-worked
+                  - tapOn: "OK"
+            - runFlow:
+                when:
+                  notVisible: "Missing email"
+                commands:
+                  - takeScreenshot: 11-forgot-password-tap-did-nothing
 
 # The other tabs. Tab buttons read like "Home, tab, 1 of 5" to VoiceOver.
 - launchApp

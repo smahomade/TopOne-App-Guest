@@ -1,9 +1,10 @@
-import { Link, router, useFocusEffect } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { images } from "../constants"; 
+import { images } from "../constants";
 import CustomButton from "@/components/CustomButton";
+import TextLink from "@/components/TextLink";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Session } from '@supabase/supabase-js'
@@ -74,8 +75,15 @@ export default function Index() {
         <View className="w-full items-center justify-center min-h-[85vh] px-4 mt-14">
 
           
-          <View className="relative mt-5">
-            <Text className="text-3xl text-white font-bold text-center">
+          <View className="relative mt-5 w-full">
+            {/* One line on every iPhone: shrinks a little on narrow ones
+                instead of leaving "TopOne" on a line of its own */}
+            <Text
+              className="text-3xl text-white font-bold text-center"
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+            >
               Book with Ease at TopOne
             </Text>
             <Text className="text-3xl text-secondary-100 font-bold text-center">
@@ -105,13 +113,11 @@ export default function Index() {
             alignItems: 'center'
           }}>
 
-            <View className="flex-row gap-2">
+            <View className="flex-row items-center gap-2">
               <Text className="text-lg text-gray-100 font-pregular">
                 Already a customer?
               </Text>
-              <Link href="/sign-in" className="text-lg font-psemibold text-secondary underline">
-                Sign in
-              </Link>
+              <TextLink label="Sign in" href="/sign-in" />
             </View>
           </View>
       ) : null}

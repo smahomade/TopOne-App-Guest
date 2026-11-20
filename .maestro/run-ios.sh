@@ -37,8 +37,21 @@ for model in "$@"; do
   echo "Creating $model on $runtime_id"
 
   udid="$(xcrun simctl create "$model check" "$type_id" "$runtime_id")"
+
+  # Show the on-screen keyboard like a real iPhone, instead of acting as if the
+  # Mac's keyboard is plugged in (which hides it). The Simulator app reads this
+  # both as a default and per device.
+  plist="$HOME/Library/Preferences/com.apple.iphonesimulator.plist"
+  defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool false
+  /usr/libexec/PlistBuddy -c "Add :DevicePreferences dict" "$plist" 2>/dev/null || true
+  /usr/libexec/PlistBuddy -c "Add :DevicePreferences:$udid dict" "$plist" 2>/dev/null || true
+  /usr/libexec/PlistBuddy -c "Add :DevicePreferences:$udid:ConnectHardwareKeyboard bool false" "$plist" 2>/dev/null \
+    || /usr/libexec/PlistBuddy -c "Set :DevicePreferences:$udid:ConnectHardwareKeyboard false" "$plist" || true
+
   xcrun simctl boot "$udid"
   xcrun simctl bootstatus "$udid" -b
+  # The keyboard setting only applies with the Simulator app open on this device
+  open -a Simulator --args -CurrentDeviceUDID "$udid" || true
   # A fixed clock and full bars, so screenshots compare cleanly between runs
   xcrun simctl status_bar "$udid" override --time 9:41 --batteryState charged --batteryLevel 100 || true
   xcrun simctl install "$udid" "$app"

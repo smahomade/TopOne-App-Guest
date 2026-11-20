@@ -9,6 +9,7 @@ import PhoneField from './PhoneField'
 import PasswordStrengthMeter from './PasswordStrengthMeter'
 import InfoModal from './InfoModal'
 import GoogleSignInButton from './GoogleSignInButton'
+import TextLink from './TextLink'
 
 AppState.addEventListener('change', (state) => {
   if (state === 'active') {
@@ -138,14 +139,18 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
         bounces={false}
         alwaysBounceVertical={false}
         overScrollMode="never"
+        // Without this, a tap while the keyboard is open only closes the
+        // keyboard, so buttons and links seem to need two taps
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.container}>
           <View style={styles.headerRow}>
             <View style={styles.headerCopy}>
               <Text style={styles.headerEyebrow}>Profile</Text>
-              <Text style={styles.headerTitle}>
-                {isSignup ? 'Create account' : 'Sign in to your profile'}
+              {/* Kept short so it stays on one line beside the logo, even on small iPhones */}
+              <Text style={styles.headerTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+                {isSignup ? 'Create account' : 'Sign in'}
               </Text>
               <Text style={styles.accessText}>
                 Current access: <Text style={styles.accessValue}>Guest Access</Text>
@@ -266,15 +271,14 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
             <Text style={styles.switchLabel}>
               {isSignup ? 'Already have an account?' : "Don't have an account?"}
             </Text>
-            <Text
-              style={styles.switchAction}
+            <TextLink
+              label={isSignup ? 'Sign In' : 'Sign Up'}
+              sizeClassName="text-sm"
               onPress={() => {
                 setShowRequiredErrors(false)
                 setIsSignup(!isSignup)
               }}
-            >
-              {isSignup ? 'Sign In' : 'Sign Up'}
-            </Text>
+            />
           </View>
         </View>
       </ScrollView>
@@ -353,18 +357,14 @@ const styles = StyleSheet.create({
   switchRow: {
     alignItems: 'center',
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
     justifyContent: 'center',
-    marginTop: 20,
+    marginTop: 12,
   },
   switchLabel: {
     color: '#CDCDE0',
     fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-  },
-  switchAction: {
-    color: '#8ED1FC',
-    fontFamily: 'Poppins-SemiBold',
     fontSize: 14,
   },
 })

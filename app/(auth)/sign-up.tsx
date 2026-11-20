@@ -1,10 +1,11 @@
-import { Alert, View, Text, ScrollView, Image } from 'react-native';
+import { Alert, View, Text, ScrollView, Image, useWindowDimensions } from 'react-native';
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { images } from '../../constants';
 import FormField from '../../components/FormField';
 import CustomButton from '../../components/CustomButton';
-import { Link, router } from 'expo-router';
+import TextLink from '../../components/TextLink';
+import { router } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import PasswordStrengthMeter from '../../components/PasswordStrengthMeter';
 import PhoneField from '../../components/PhoneField';
@@ -39,6 +40,10 @@ const SignUp = () => {
   const [showRequiredErrors, setShowRequiredErrors] = useState(false);
   const [showConfirmEmailModal, setShowConfirmEmailModal] = useState(false);
   const [showExistingAccountModal, setShowExistingAccountModal] = useState(false);
+  // On short phones like the iPhone SE, a smaller logo brings the Sign Up
+  // button closer to the screen
+  const { height } = useWindowDimensions();
+  const logoHeight = height < 700 ? 56 : 85;
 
   const requiredFieldErrors = {
     email: form.email.trim().length === 0,
@@ -115,6 +120,9 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
         bounces={false}
         alwaysBounceVertical={false}
         overScrollMode="never"
+        // Without this, a tap while the keyboard is open only closes the
+        // keyboard, so buttons and links seem to need two taps
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ flexGrow: 1 }}
       >
         <View className="px-5 pb-4 pt-4">
@@ -122,12 +130,18 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
             <Image
               source={images.logoTopOneWhite}
               resizeMode="contain"
-              className="w-[150px] h-[85px]"
+              style={{ width: 150, height: logoHeight }}
             />
           </View>
 
-          <View className="mt-2 items-center px-3">
-            <Text className="text-3xl text-white font-psemibold">
+          <View className="mt-2 items-center">
+            {/* One line on every iPhone: shrinks a little on narrow ones */}
+            <Text
+              className="text-3xl text-white font-psemibold text-center"
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+            >
               Create your account
             </Text>
             <Text className="mt-2 text-center font-pregular text-sm text-gray-100">
@@ -203,13 +217,11 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
             isLoading={isSubmitting}
           />
 
-          <View className="justify-center pt-5 flex-row gap-2">
+          <View className="pt-3 flex-row flex-wrap items-center justify-center gap-2">
             <Text className="text-base text-gray-100 font-pregular">
               Have an account already?
             </Text>
-            <Link href="/sign-in" className="text-base font-psemibold text-secondary underline">
-              Sign in
-            </Link>
+            <TextLink label="Sign in" href="/sign-in" sizeClassName="text-base" />
           </View>
         </View>
       </ScrollView>
