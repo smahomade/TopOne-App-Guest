@@ -1,0 +1,93 @@
+name: iPhone simulator check
+
+# Builds the customer app for the iPhone simulator on one of GitHub's Macs,
+# taps through the signed-out screens with Maestro (.maestro/ios-check.yaml),
+# and saves screenshots as the "iphone-screenshots" artifact.
+#
+# Start it from the Actions tab (Run workflow), or with:
+#   gh workflow run ios-simulator-check.yml --ref <branch>
+#
+# It needs two repository secrets, the same values as in .env:
+# EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY (the publishable
+# key, which ships inside the app anyway).
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ios-simulator-check]
+
+concurrency:
+  group: ios-simulator-check-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  iphone:
+    runs-on: macos-26
+    timeout-minutes: 75
+    env:
+      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      # Maestro runs on Java
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install packages
+        run: npm ci
+
+      - name: Write .env
+        run: |
+          if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ] || [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
+            echo "::error::Add the EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY repository secrets first."
+            exit 1
+          fi
+          printf 'EXPO_PUBLIC_SUPABASE_URL=%s\nEXPO_PUBLIC_SUPABASE_ANON_KEY=%s\n' \
+            "$EXPO_PUBLIC_SUPABASE_URL" "$EXPO_PUBLIC_SUPABASE_ANON_KEY" > .env
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Generate the iOS project
+        run: npx expo prebuild --platform ios
+
+      # A Release build has the JavaScript bundled in, so no dev server is needed
+      - name: Build for the simulator
+        run: |
+          set -o pipefail
+          workspace="$(ls -d ios/*.xcworkspace | head -1)"
+          scheme="$(basename "$workspace" .xcworkspace)"
+          xcodebuild -workspace "$workspace" -scheme "$scheme" -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO -quiet
+          app="$(ls -d build/Build/Products/Release-iphonesimulator/*.app | head -1)"
+          echo "Built $app"
+          echo "APP_PATH=$app" >> "$GITHUB_ENV"
+
+      - name: Install Maestro
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Tap through the app
+        run: bash .maestro/run-ios.sh "$APP_PATH"
+
+      - name: Save screenshots
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: iphone-screenshots
+          path: maestro-out/
+          if-no-files-found: warn
+          retention-days: 14
