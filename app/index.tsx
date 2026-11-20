@@ -113,7 +113,7 @@ export default function Index() {
             alignItems: 'center'
           }}>
 
-            <View className="flex-row items-center gap-2">
+            <View className="flex-row items-center" style={{ columnGap: 8 }}>
               <Text className="text-lg text-gray-100 font-pregular">
                 Already a customer?
               </Text>

@@ -217,7 +217,7 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
             isLoading={isSubmitting}
           />
 
-          <View className="pt-3 flex-row flex-wrap items-center justify-center gap-2">
+          <View className="pt-3 flex-row flex-wrap items-center justify-center" style={{ columnGap: 8 }}>
             <Text className="text-base text-gray-100 font-pregular">
               Have an account already?
             </Text>

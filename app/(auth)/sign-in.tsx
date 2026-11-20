@@ -124,14 +124,14 @@ const SignIn = () => {
 
           <GoogleSignInButton returnTo="home" dividerPosition="above" containerStyles="mt-5" />
 
-          <View className="pt-3 flex-row flex-wrap items-center justify-center gap-2">
+          <View className="pt-3 flex-row flex-wrap items-center justify-center" style={{ columnGap: 8 }}>
             <Text className="text-lg text-gray-100 font-pregular">
               Don't have an account?
             </Text>
             <TextLink label="Sign up" href="/sign-up" />
           </View>
 
-          <View className="pt-16 flex-row flex-wrap items-center justify-center gap-2">
+          <View className="pt-16 flex-row flex-wrap items-center justify-center" style={{ columnGap: 8 }}>
             <Text className="text-lg text-gray-100 font-pregular">
               Forgot Password?
             </Text>

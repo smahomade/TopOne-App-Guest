@@ -99,7 +99,7 @@ const ForgotPassword = () => {
           />
 
           {/* On narrow phones the link moves to its own line instead of running edge to edge */}
-          <View className="pt-3 flex-row flex-wrap items-center justify-center gap-2">
+          <View className="pt-3 flex-row flex-wrap items-center justify-center" style={{ columnGap: 8 }}>
             <Text className="text-base text-gray-100 font-pregular">
               Remembered your password?
             </Text>

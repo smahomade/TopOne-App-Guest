@@ -15,6 +15,10 @@ type TextLinkProps = {
 // as its letters (about 28pt, where Apple asks for 44pt), so a tap on an iPhone
 // could land just outside it and do nothing. This gives the words a full-height
 // tap area that also reaches a little past them.
+//
+// To space it from the words before it, give the row style={{ columnGap: 8 }}.
+// NativeWind's gap-2 class only spaces children that have a className, so it
+// leaves no space before this one.
 const TextLink = ({ label, href, onPress, sizeClassName = 'text-lg' }: TextLinkProps) => (
   <Pressable
     accessibilityRole="link"

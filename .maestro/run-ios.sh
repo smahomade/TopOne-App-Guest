@@ -56,10 +56,15 @@ for model in "$@"; do
   xcrun simctl status_bar "$udid" override --time 9:41 --batteryState charged --batteryLevel 100 || true
   xcrun simctl install "$udid" "$app"
 
-  # takeScreenshot saves next to where Maestro runs, so run it from $out
+  # takeScreenshot saves next to where Maestro runs, so run it from $out.
+  # One retry, because Maestro's driver sometimes hangs on GitHub's Macs; a
+  # real problem in the app fails both times.
   if ! (cd "$out" && maestro --device "$udid" test "$flow" --test-output-dir "$out/debug"); then
-    echo "::error::The check failed on $model"
-    status=1
+    echo "::warning::The check stopped on $model, so it runs once more"
+    if ! (cd "$out" && maestro --device "$udid" test "$flow" --test-output-dir "$out/debug-retry"); then
+      echo "::error::The check failed on $model"
+      status=1
+    fi
   fi
 
   xcrun simctl shutdown "$udid" || true
