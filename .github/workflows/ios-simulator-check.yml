@@ -1,0 +1,158 @@
+name: iPhone simulator check
+
+# Builds the customer app for the iPhone simulator on one of GitHub's Macs,
+# then taps through the signed-out screens with Maestro (.maestro/ios-check.yaml)
+# on every iPhone screen size, each on its own Mac. Screenshots are saved as one
+# "iphone-<model>" artifact per model.
+#
+# Start it from the Actions tab (Run workflow), or with:
+#   gh workflow run ios-simulator-check.yml --ref <branch>
+#
+# It needs two repository secrets, the same values as in .env:
+# EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY (the publishable
+# key, which ships inside the app anyway).
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ios-simulator-check]
+
+# A new run waits for the one before it instead of cancelling it
+concurrency:
+  group: ios-simulator-check-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build the app
+    runs-on: macos-26
+    timeout-minutes: 60
+    env:
+      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      # The build takes most of the run, so the built app is reused until the
+      # app's own code or packages change (editing only .maestro/ reuses it)
+      - name: Reuse the last build
+        id: app-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: build/Build/Products/Release-iphonesimulator
+          key: ios-sim-app-${{ hashFiles('app/**', 'components/**', 'lib/**', 'hooks/**', 'constants/**', 'assets/**', 'package-lock.json', 'app.json', 'app.config.js', 'babel.config.js', 'tailwind.config.js', 'tsconfig.json') }}
+
+      - name: Install packages
+        if: steps.app-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Write .env
+        if: steps.app-cache.outputs.cache-hit != 'true'
+        run: |
+          if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ] || [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
+            echo "::error::Add the EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY repository secrets first."
+            exit 1
+          fi
+          printf 'EXPO_PUBLIC_SUPABASE_URL=%s\nEXPO_PUBLIC_SUPABASE_ANON_KEY=%s\n' \
+            "$EXPO_PUBLIC_SUPABASE_URL" "$EXPO_PUBLIC_SUPABASE_ANON_KEY" > .env
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Generate the iOS project
+        if: steps.app-cache.outputs.cache-hit != 'true'
+        run: npx expo prebuild --platform ios
+
+      # A Release build has the JavaScript bundled in, so no dev server is needed
+      - name: Build for the simulator
+        if: steps.app-cache.outputs.cache-hit != 'true'
+        run: |
+          set -o pipefail
+          workspace="$(ls -d ios/*.xcworkspace | head -1)"
+          scheme="$(basename "$workspace" .xcworkspace)"
+          xcodebuild -workspace "$workspace" -scheme "$scheme" -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO -quiet
+
+      - name: Keep this build for next time
+        if: steps.app-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: build/Build/Products/Release-iphonesimulator
+          key: ${{ steps.app-cache.outputs.cache-primary-key }}
+
+      # Zipped with ditto so the app keeps its file permissions on the way
+      - name: Pack the app
+        run: |
+          app="$(ls -d build/Build/Products/Release-iphonesimulator/*.app | head -1)"
+          echo "Packing $app"
+          ditto -c -k --keepParent "$app" simulator-app.zip
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: simulator-app
+          path: simulator-app.zip
+          retention-days: 3
+
+  iphones:
+    name: ${{ matrix.iphone }}
+    needs: build
+    runs-on: macos-26
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        # One of each iPhone screen size, smallest to largest (width x height in points)
+        iphone:
+          - iPhone SE (3rd generation)   # 375 x 667, home button
+          - iPhone 13 mini               # 375 x 812
+          - iPhone 12 Pro                # 390 x 844, also 12, 13, 14, 16e
+          - iPhone 15                    # 393 x 852, also 14 Pro, 15 Pro, 16
+          - iPhone 17 Pro                # 402 x 874, also 16 Pro, 17
+          - iPhone Air                   # 420 x 912
+          - iPhone 16 Plus               # 430 x 932, also 14 Pro Max, 15 Plus, 15 Pro Max
+          - iPhone 17 Pro Max            # 440 x 956, also 16 Pro Max
+    steps:
+      - uses: actions/checkout@v5
+
+      # Maestro runs on Java
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: simulator-app
+
+      - name: Unpack the app
+        run: |
+          ditto -x -k simulator-app.zip app
+          echo "APP_PATH=$(ls -d app/*.app | head -1)" >> "$GITHUB_ENV"
+
+      - name: Install Maestro
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Tap through the app
+        env:
+          IPHONE: ${{ matrix.iphone }}
+        run: bash .maestro/run-ios.sh "$APP_PATH" "$IPHONE"
+
+      - name: Save screenshots
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: iphone-${{ matrix.iphone }}
+          path: maestro-out/
+          if-no-files-found: warn
+          retention-days: 14

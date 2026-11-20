@@ -117,6 +117,9 @@ const ResetPassword = () => {
         bounces={false}
         alwaysBounceVertical={false}
         overScrollMode="never"
+        // Without this, a tap while the keyboard is open only closes the
+        // keyboard, so buttons seem to need two taps
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ flexGrow: 1 }}
       >
         <View className="px-5 pb-4 pt-4">
@@ -128,8 +131,14 @@ const ResetPassword = () => {
             />
           </View>
 
-          <View className="mt-2 items-center px-3">
-            <Text className="text-3xl text-white font-psemibold">
+          <View className="mt-2 items-center">
+            {/* One line on every iPhone: shrinks a little on narrow ones */}
+            <Text
+              className="text-3xl text-white font-psemibold text-center"
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+            >
               Create a new password
             </Text>
             <Text className="mt-2 text-center font-pregular text-sm text-gray-100">

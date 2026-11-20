@@ -1,0 +1,188 @@
+# Signed-out tap-through of the customer app on an iPhone simulator.
+# The GitHub workflow .github/workflows/ios-simulator-check.yml runs it, and
+# each takeScreenshot is saved for someone to look over. Nothing here signs in
+# or sends anything: the booking stops at "Sign In To Send Request".
+#
+# Services, dates and locations come from the live database, so the flow picks
+# whatever is first on screen rather than naming a service.
+appId: com.topone.app
+name: iPhone signed-out check
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Book Appointment"
+    timeout: 60000
+- takeScreenshot: 01-start
+
+# Services, prices and the booking bar
+- tapOn: "Book Appointment"
+- extendedWaitUntil:
+    visible: "Available Services"
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: 02-services
+- tapOn:
+    text: "Add"
+    index: 0
+- runFlow:
+    when:
+      visible: "Choose your stylist"
+    commands:
+      - takeScreenshot: 03-choose-stylist
+      - tapOn:
+          text: "Choose"
+          index: 0
+- waitForAnimationToEnd
+- takeScreenshot: 04-booking-bar
+
+# Dates and time of day. The 15th of next month is always in the future;
+# if the salon is closed that weekday, the next days are tried.
+- tapOn: "Choose dates"
+- extendedWaitUntil:
+    visible: "Choose preferred dates"
+    timeout: 10000
+- waitForAnimationToEnd
+- takeScreenshot: 05-calendar
+- tapOn: "›"
+- tapOn: "15"
+- runFlow:
+    when:
+      visible: "Tap a date to select it."
+    commands:
+      - tapOn: "16"
+- runFlow:
+    when:
+      visible: "Tap a date to select it."
+    commands:
+      - tapOn: "17"
+- tapOn:
+    text: "Afternoon"
+    optional: true
+- takeScreenshot: 06-date-and-time
+- tapOn: "Continue booking"
+
+# Signed out, the request is kept and the customer is asked to sign in
+- extendedWaitUntil:
+    visible: "Sign In To Send Request"
+    timeout: 15000
+- takeScreenshot: 07-messages-signed-out
+- tapOn: "Sign In To Send Request"
+- extendedWaitUntil:
+    visible: "Sign up"
+    timeout: 10000
+- waitForAnimationToEnd
+- takeScreenshot: 08-sign-in
+
+# The text links ("Sign up", "Sign in", "Click Here") are checked without
+# stopping the run: if one doesn't open its screen, a "did-not-open"
+# screenshot is saved and the rest carries on. Each gets one tap, no retries,
+# because a link that needs a second tap is the problem being checked for.
+- tapOn: "Sign up"
+- extendedWaitUntil:
+    visible: "First Name"
+    timeout: 10000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "First Name"
+    commands:
+      - takeScreenshot: 09-sign-up-did-not-open
+- runFlow:
+    when:
+      visible: "First Name"
+    commands:
+      - waitForAnimationToEnd
+      - takeScreenshot: 09-sign-up
+      # Keyboard over the form: tapping a field only opens the keyboard, nothing is typed
+      - tapOn:
+          text: "Enter your email"
+          optional: true
+      - waitForAnimationToEnd
+      - takeScreenshot: 10-sign-up-keyboard
+
+# The start screen's "Sign in" link, then "Forgot Password? Click Here".
+# Restarting the app is the simplest way back to the start screen.
+- launchApp
+- extendedWaitUntil:
+    visible: "Book Appointment"
+    timeout: 30000
+- tapOn: "Sign in"
+- extendedWaitUntil:
+    visible: "Log in to Top One"
+    timeout: 10000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Log in to Top One"
+    commands:
+      - takeScreenshot: 11-sign-in-link-did-not-open
+- runFlow:
+    when:
+      visible: "Log in to Top One"
+    commands:
+      - waitForAnimationToEnd
+      - tapOn: "Click Here"
+      - extendedWaitUntil:
+          visible: "Send Reset Email"
+          timeout: 10000
+          optional: true
+      - runFlow:
+          when:
+            notVisible: "Send Reset Email"
+          commands:
+            - takeScreenshot: 11-forgot-password-did-not-open
+      - runFlow:
+          when:
+            visible: "Send Reset Email"
+          commands:
+            - waitForAnimationToEnd
+            - takeScreenshot: 11-forgot-password
+            # A button tapped while the keyboard is open should work first
+            # time, not just close the keyboard. The email is left empty, so
+            # the app only says it's missing and nothing is sent.
+            - tapOn:
+                text: "Enter your email"
+                optional: true
+            - waitForAnimationToEnd
+            - takeScreenshot: 11-forgot-password-keyboard
+            - tapOn: "Send Reset Email"
+            - extendedWaitUntil:
+                visible: "Missing email"
+                timeout: 5000
+                optional: true
+            # "did nothing" is checked first: once OK closes the message, it
+            # would wrongly look like nothing happened
+            - runFlow:
+                when:
+                  notVisible: "Missing email"
+                commands:
+                  - takeScreenshot: 11-forgot-password-tap-did-nothing
+            - runFlow:
+                when:
+                  visible: "Missing email"
+                commands:
+                  - takeScreenshot: 11-forgot-password-tap-worked
+                  - tapOn: "OK"
+
+# The other tabs. Tab buttons read like "Home, tab, 1 of 5" to VoiceOver.
+- launchApp
+- extendedWaitUntil:
+    visible: "Book Appointment"
+    timeout: 30000
+- tapOn: "Book Appointment"
+- extendedWaitUntil:
+    visible: "Available Services"
+    timeout: 30000
+- tapOn: "Home(, tab.*)?"
+- waitForAnimationToEnd
+- takeScreenshot: 12-home
+- tapOn: "Collection(, tab.*)?"
+- waitForAnimationToEnd
+- takeScreenshot: 13-collection
+- tapOn: "Profile(, tab.*)?"
+- waitForAnimationToEnd
+- takeScreenshot: 14-profile
+- tapOn: "Messages(, tab.*)?"
+- waitForAnimationToEnd
+- takeScreenshot: 15-messages

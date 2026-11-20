@@ -6,7 +6,8 @@ import FormField from '../../components/FormField'
 import CustomButton from '../../components/CustomButton'
 import InfoModal from '../../components/InfoModal'
 import GoogleSignInButton from '../../components/GoogleSignInButton'
-import { Link, router } from 'expo-router'
+import TextLink from '../../components/TextLink'
+import { router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { hasPendingBooking } from '../../lib/pendingBooking'
 
@@ -73,6 +74,9 @@ const SignIn = () => {
         bounces={false}
         alwaysBounceVertical={false}
         overScrollMode="never"
+        // Without this, a tap while the keyboard is open only closes the
+        // keyboard, so buttons and links seem to need two taps
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ flexGrow: 1 }}
       >
         <View className="flex-1 justify-center items-center px-4">
@@ -120,23 +124,18 @@ const SignIn = () => {
 
           <GoogleSignInButton returnTo="home" dividerPosition="above" containerStyles="mt-5" />
 
-          <View className="justify-center pt-5 flex-row gap-2">
+          <View className="pt-3 flex-row flex-wrap items-center justify-center" style={{ columnGap: 8 }}>
             <Text className="text-lg text-gray-100 font-pregular">
               Don't have an account?
             </Text>
-            <Link href={"/sign-up"} className="text-lg font-psemibold text-secondary underline">Sign up</Link>
+            <TextLink label="Sign up" href="/sign-up" />
           </View>
 
-          <View className=" justify-center pt-20 flex-row gap-2">
+          <View className="pt-16 flex-row flex-wrap items-center justify-center" style={{ columnGap: 8 }}>
             <Text className="text-lg text-gray-100 font-pregular">
               Forgot Password?
             </Text>
-            <Text
-              className="text-lg font-psemibold text-secondary underline"
-              onPress={() => router.push('/(auth)/forgot-password' as never)}
-            >
-              Click Here
-            </Text>
+            <TextLink label="Click Here" href="/forgot-password" />
           </View>
         </View>
       </ScrollView>

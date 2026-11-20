@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { Alert, Image, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Link } from 'expo-router';
-
 import FormField from '../../components/FormField';
 import CustomButton from '../../components/CustomButton';
+import TextLink from '../../components/TextLink';
 import { images } from '../../constants';
 import { supabase } from '../../lib/supabase';
 
@@ -51,6 +50,9 @@ const ForgotPassword = () => {
         bounces={false}
         alwaysBounceVertical={false}
         overScrollMode="never"
+        // Without this, a tap while the keyboard is open only closes the
+        // keyboard, so buttons and links seem to need two taps
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ flexGrow: 1 }}
       >
         <View className="px-5 pb-4 pt-4">
@@ -62,8 +64,14 @@ const ForgotPassword = () => {
             />
           </View>
 
-          <View className="mt-2 items-center px-3">
-            <Text className="text-3xl text-white font-psemibold">
+          <View className="mt-2 items-center">
+            {/* One line on every iPhone: shrinks a little on narrow ones */}
+            <Text
+              className="text-3xl text-white font-psemibold text-center"
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+            >
               Reset your password
             </Text>
             <Text className="mt-2 text-center font-pregular text-sm text-gray-100">
@@ -90,13 +98,12 @@ const ForgotPassword = () => {
             isLoading={isSubmitting}
           />
 
-          <View className="justify-center pt-5 flex-row gap-2">
+          {/* On narrow phones the link moves to its own line instead of running edge to edge */}
+          <View className="pt-3 flex-row flex-wrap items-center justify-center" style={{ columnGap: 8 }}>
             <Text className="text-base text-gray-100 font-pregular">
               Remembered your password?
             </Text>
-            <Link href="/sign-in" className="text-base font-psemibold text-secondary underline">
-              Back to sign in
-            </Link>
+            <TextLink label="Back to sign in" href="/sign-in" sizeClassName="text-base" />
           </View>
 
           <Text className="mt-6 text-center font-pregular text-xs leading-5 text-gray-100">
