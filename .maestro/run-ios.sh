@@ -1,47 +1,43 @@
 #!/usr/bin/env bash
-# Runs .maestro/ios-check.yaml on two iPhone simulators: a current Pro model
-# (Dynamic Island) and the smallest phone the Mac has. Screenshots land in
-# maestro-out/<device name>/, with Maestro's own logs in a debug folder there.
+# Runs .maestro/ios-check.yaml on simulators of the iPhone models named, each
+# on the newest iOS the Mac has for that model. Screenshots land in
+# maestro-out/<model>/, with Maestro's own logs in a debug folder there.
 #
-# Usage: .maestro/run-ios.sh path/to/TopOne.app
+# Usage: .maestro/run-ios.sh path/to/TopOne.app "iPhone 12 Pro" ["iPhone SE (3rd generation)" ...]
 set -euo pipefail
 
 app="$1"
+shift
 root="$(pwd)"
 flow="$root/.maestro/ios-check.yaml"
-
-devices_json="$(xcrun simctl list devices available --json)"
-runtime="$(jq -r '.devices | keys[] | select(test("iOS"))' <<<"$devices_json" | sort -V | tail -1)"
-echo "Using simulator runtime: $runtime"
-
-pick() {
-  jq -r --arg rt "$runtime" --arg re "$1" \
-    '.devices[$rt][] | select(.name | test($re)) | "\(.udid)|\(.name)"' <<<"$devices_json" | head -1
-}
-
-pro="$(pick '^iPhone [0-9]+ Pro$')"
-small="$(pick '^iPhone ([0-9]+e|SE)')"
-[ -n "$pro" ] || pro="$(pick '^iPhone')"
-if [ "$small" = "$pro" ]; then small=""; fi
-
-# A simulator's first boot takes a minute or two, so start both now and let
-# the second one finish booting while the first is being tested.
-for entry in "$pro" "$small"; do
-  [ -n "$entry" ] && xcrun simctl boot "${entry%%|*}" || true
-done
 
 # Maestro's iPhone driver can be slow to start on a freshly booted simulator
 export MAESTRO_DRIVER_STARTUP_TIMEOUT="${MAESTRO_DRIVER_STARTUP_TIMEOUT:-300000}"
 
-status=0
-for entry in "$pro" "$small"; do
-  [ -n "$entry" ] || continue
-  udid="${entry%%|*}"
-  name="${entry#*|}"
-  out="$root/maestro-out/${name// /-}"
-  mkdir -p "$out"
-  echo "::group::$name"
+runtimes_json="$(xcrun simctl list runtimes --json)"
+devicetypes_json="$(xcrun simctl list devicetypes --json)"
 
+status=0
+for model in "$@"; do
+  echo "::group::$model"
+  out="$root/maestro-out/${model//[ ()]/-}"
+  mkdir -p "$out"
+
+  type_id="$(jq -r --arg n "$model" '.devicetypes[] | select(.name == $n) | .identifier' <<<"$devicetypes_json" | head -1)"
+  runtime_id="$(jq -r --arg n "$model" '
+    [.runtimes[] | select(.platform == "iOS" and .isAvailable and any(.supportedDeviceTypes[]; .name == $n))]
+    | sort_by(.version | split(".") | map(tonumber)) | last | .identifier // empty' <<<"$runtimes_json")"
+
+  if [ -z "$type_id" ] || [ -z "$runtime_id" ]; then
+    echo "::error::This Mac has no simulator for $model"
+    status=1
+    echo "::endgroup::"
+    continue
+  fi
+  echo "Creating $model on $runtime_id"
+
+  udid="$(xcrun simctl create "$model check" "$type_id" "$runtime_id")"
+  xcrun simctl boot "$udid"
   xcrun simctl bootstatus "$udid" -b
   # A fixed clock and full bars, so screenshots compare cleanly between runs
   xcrun simctl status_bar "$udid" override --time 9:41 --batteryState charged --batteryLevel 100 || true
@@ -49,7 +45,7 @@ for entry in "$pro" "$small"; do
 
   # takeScreenshot saves next to where Maestro runs, so run it from $out
   if ! (cd "$out" && maestro --device "$udid" test "$flow" --test-output-dir "$out/debug"); then
-    echo "::error::The check failed on $name"
+    echo "::error::The check failed on $model"
     status=1
   fi
 

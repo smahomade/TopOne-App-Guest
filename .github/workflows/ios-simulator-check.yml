@@ -1,8 +1,9 @@
 name: iPhone simulator check
 
 # Builds the customer app for the iPhone simulator on one of GitHub's Macs,
-# taps through the signed-out screens with Maestro (.maestro/ios-check.yaml),
-# and saves screenshots as the "iphone-screenshots" artifact.
+# then taps through the signed-out screens with Maestro (.maestro/ios-check.yaml)
+# on every iPhone screen size, each on its own Mac. Screenshots are saved as one
+# "iphone-<model>" artifact per model.
 #
 # Start it from the Actions tab (Run workflow), or with:
 #   gh workflow run ios-simulator-check.yml --ref <branch>
@@ -16,17 +17,19 @@ on:
   push:
     branches: [ios-simulator-check]
 
+# A new run waits for the one before it instead of cancelling it
 concurrency:
   group: ios-simulator-check-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
 
 jobs:
-  iphone:
+  build:
+    name: Build the app
     runs-on: macos-26
-    timeout-minutes: 75
+    timeout-minutes: 60
     env:
       EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
       EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
@@ -37,12 +40,6 @@ jobs:
         with:
           node-version: 24
           cache: npm
-
-      # Maestro runs on Java
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: 17
 
       # The build takes most of the run, so the built app is reused until the
       # app's own code or packages change (editing only .maestro/ reuses it)
@@ -85,7 +82,6 @@ jobs:
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build CODE_SIGNING_ALLOWED=NO -quiet
 
-      # Saved straight after the build, so it's kept even if the tap-through fails
       - name: Keep this build for next time
         if: steps.app-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
@@ -93,11 +89,54 @@ jobs:
           path: build/Build/Products/Release-iphonesimulator
           key: ${{ steps.app-cache.outputs.cache-primary-key }}
 
-      - name: Find the app
+      # Zipped with ditto so the app keeps its file permissions on the way
+      - name: Pack the app
         run: |
           app="$(ls -d build/Build/Products/Release-iphonesimulator/*.app | head -1)"
-          echo "Using $app"
-          echo "APP_PATH=$app" >> "$GITHUB_ENV"
+          echo "Packing $app"
+          ditto -c -k --keepParent "$app" simulator-app.zip
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: simulator-app
+          path: simulator-app.zip
+          retention-days: 3
+
+  iphones:
+    name: ${{ matrix.iphone }}
+    needs: build
+    runs-on: macos-26
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        # One of each iPhone screen size, smallest to largest (width x height in points)
+        iphone:
+          - iPhone SE (3rd generation)   # 375 x 667, home button
+          - iPhone 13 mini               # 375 x 812
+          - iPhone 12 Pro                # 390 x 844, also 12, 13, 14, 16e
+          - iPhone 15                    # 393 x 852, also 14 Pro, 15 Pro, 16
+          - iPhone 17 Pro                # 402 x 874, also 16 Pro, 17
+          - iPhone Air                   # 420 x 912
+          - iPhone 16 Plus               # 430 x 932, also 14 Pro Max, 15 Plus, 15 Pro Max
+          - iPhone 17 Pro Max            # 440 x 956, also 16 Pro Max
+    steps:
+      - uses: actions/checkout@v5
+
+      # Maestro runs on Java
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: simulator-app
+
+      - name: Unpack the app
+        run: |
+          ditto -x -k simulator-app.zip app
+          echo "APP_PATH=$(ls -d app/*.app | head -1)" >> "$GITHUB_ENV"
 
       - name: Install Maestro
         run: |
@@ -105,13 +144,15 @@ jobs:
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
       - name: Tap through the app
-        run: bash .maestro/run-ios.sh "$APP_PATH"
+        env:
+          IPHONE: ${{ matrix.iphone }}
+        run: bash .maestro/run-ios.sh "$APP_PATH" "$IPHONE"
 
       - name: Save screenshots
         if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: iphone-screenshots
+          name: iphone-${{ matrix.iphone }}
           path: maestro-out/
           if-no-files-found: warn
           retention-days: 14
