@@ -5,7 +5,9 @@ name: iPhone simulator check
 # on every iPhone screen size, each on its own Mac. Screenshots are saved as one
 # "iphone-<model>" artifact per model.
 #
-# Start it from the Actions tab (Run workflow), or with:
+# It runs on every pull request and on every push to main, unless the change
+# only touches files the app doesn't use (notes, store pages, database scripts,
+# server functions). Start it by hand from the Actions tab (Run workflow), or:
 #   gh workflow run ios-simulator-check.yml --ref <branch>
 #
 # It needs two repository secrets, the same values as in .env:
@@ -14,13 +16,28 @@ name: iPhone simulator check
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'store/**'
+      - 'scripts/**'
+      - 'supabase/**'
+  # Runs on main also save the build where every pull request can reuse it
   push:
-    branches: [ios-simulator-check]
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'store/**'
+      - 'scripts/**'
+      - 'supabase/**'
 
-# A new run waits for the one before it instead of cancelling it
+# A new push to a pull request cancels its older run, whose result no longer
+# matters. On main, a new run waits for the one before it instead.
 concurrency:
   group: ios-simulator-check-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -28,6 +45,9 @@ permissions:
 jobs:
   build:
     name: Build the app
+    # Pull requests from someone else's copy of the repo can't read the
+    # secrets the build needs, so they skip the check rather than fail it
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: macos-26
     timeout-minutes: 60
     env:
