@@ -1,7 +1,8 @@
 import { BackHandler, Image, ScrollView, Text, View } from 'react-native'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
+import type { User } from '@supabase/supabase-js'
 import { images } from '../../constants'
 import PhoneField from '../../components/PhoneField'
 import CustomButton from '../../components/CustomButton'
@@ -17,9 +18,23 @@ import { continueAfterSignIn, savePhoneNumber } from '../../lib/googleSignIn'
 // PhoneField reports the country code plus the digits typed, e.g. +447700900123.
 const FULL_NUMBER = /^\+\d{8,15}$/
 
+type SignedInAs = { firstName: string; email: string }
+
+// Google sign-in copies the first name into first_name (an email sign-up sets
+// it too). Before that's saved, Google's own full_name or name is all there is.
+function firstNameOf(user: User): string {
+  const details = user.user_metadata ?? {}
+  const candidates = [details.first_name, details.full_name, details.name]
+  const found = candidates.find((value): value is string => typeof value === 'string' && value.trim() !== '')
+  return found ? found.trim().split(/\s+/)[0] : ''
+}
+
 const AddPhone = () => {
   // 'profile' when Google sign-in started on the Profile tab.
   const { next } = useLocalSearchParams<{ next?: string }>()
+  // Null until the session is read, which takes a moment: the greeting stays
+  // hidden until then so it doesn't change in front of the customer.
+  const [signedInAs, setSignedInAs] = useState<SignedInAs | null>(null)
   const [phone, setPhone] = useState('')
   const [showRequiredError, setShowRequiredError] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -34,6 +49,25 @@ const AddPhone = () => {
       return () => subscription.remove()
     }, [])
   )
+
+  // Greets the customer by name and shows which Google account they used, so
+  // they can tell the sign-in worked and spot the wrong account.
+  useEffect(() => {
+    let isMounted = true
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (isMounted) {
+        setSignedInAs({
+          firstName: session ? firstNameOf(session.user) : '',
+          email: session?.user.email?.trim() ?? '',
+        })
+      }
+    })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const save = async () => {
     if (!FULL_NUMBER.test(phone)) {
@@ -96,10 +130,34 @@ const AddPhone = () => {
         </View>
 
         <View className="flex-1 justify-center px-4 pb-14">
-          <Text className="text-2xl text-white font-psemibold text-center mt-4">
-            Add your phone number
+          <View
+            style={{ opacity: signedInAs ? 1 : 0 }}
+            accessibilityElementsHidden={!signedInAs}
+            importantForAccessibility={signedInAs ? 'auto' : 'no-hide-descendants'}
+          >
+            <Text
+              accessibilityRole="header"
+              className="text-2xl text-white font-psemibold text-center mt-4"
+            >
+              {signedInAs?.firstName ? `Welcome, ${signedInAs.firstName}!` : 'Welcome!'}
+            </Text>
+            <Text className="mt-2 text-center font-pregular text-sm text-gray-100">
+              {signedInAs && !signedInAs.email ? "You're signed in with Google." : "You're signed in with Google as"}
+            </Text>
+            {/* On its own line, so a long address isn't split across two. While
+                the session loads, a blank line holds its place so nothing
+                below moves when the address appears. */}
+            {!signedInAs || signedInAs.email ? (
+              <Text className="text-center font-psemibold text-sm text-white">
+                {signedInAs?.email ?? ' '}
+              </Text>
+            ) : null}
+          </View>
+
+          <Text className="mt-6 text-center font-psemibold text-lg text-white">
+            One more step: add your phone number
           </Text>
-          <Text className="mt-2 text-center font-pregular text-sm text-gray-100">
+          <Text className="mt-1 text-center font-pregular text-sm text-gray-100">
             The salon uses it to confirm your bookings. Google doesn't share it with us.
           </Text>
 
