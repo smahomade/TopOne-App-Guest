@@ -5,6 +5,13 @@
 #
 # Services, dates and locations come from the live database, so the flow picks
 # whatever is first on screen rather than naming a service.
+#
+# The waits are long on purpose. GitHub's Macs are sometimes slow enough that a
+# screen loading from the database, or even a tab switch, takes far longer than
+# on a phone. On 22 Nov 2026 one iPhone failed on time alone: its screenshot
+# showed the screen it was waiting for. The waits that stop the run if a screen
+# never appears allow 60-90 seconds. The link checks further down keep short
+# waits, because they only save a screenshot.
 appId: com.topone.app
 name: iPhone signed-out check
 ---
@@ -15,11 +22,11 @@ name: iPhone signed-out check
     timeout: 60000
 - takeScreenshot: 01-start
 
-# Services, prices and the booking bar
+# Services, prices and the booking bar (loaded from the database)
 - tapOn: "Book Appointment"
 - extendedWaitUntil:
     visible: "Available Services"
-    timeout: 30000
+    timeout: 90000
 - waitForAnimationToEnd
 - takeScreenshot: 02-services
 - tapOn:
@@ -41,7 +48,7 @@ name: iPhone signed-out check
 - tapOn: "Choose dates"
 - extendedWaitUntil:
     visible: "Choose preferred dates"
-    timeout: 10000
+    timeout: 60000
 - waitForAnimationToEnd
 - takeScreenshot: 05-calendar
 - tapOn: "›"
@@ -65,12 +72,12 @@ name: iPhone signed-out check
 # Signed out, the request is kept and the customer is asked to sign in
 - extendedWaitUntil:
     visible: "Sign In To Send Request"
-    timeout: 15000
+    timeout: 60000
 - takeScreenshot: 07-messages-signed-out
 - tapOn: "Sign In To Send Request"
 - extendedWaitUntil:
     visible: "Sign up"
-    timeout: 10000
+    timeout: 60000
 - waitForAnimationToEnd
 - takeScreenshot: 08-sign-in
 
@@ -106,7 +113,7 @@ name: iPhone signed-out check
 - launchApp
 - extendedWaitUntil:
     visible: "Book Appointment"
-    timeout: 30000
+    timeout: 60000
 - tapOn: "Sign in"
 - extendedWaitUntil:
     visible: "Log in to Top One"
@@ -169,11 +176,11 @@ name: iPhone signed-out check
 - launchApp
 - extendedWaitUntil:
     visible: "Book Appointment"
-    timeout: 30000
+    timeout: 60000
 - tapOn: "Book Appointment"
 - extendedWaitUntil:
     visible: "Available Services"
-    timeout: 30000
+    timeout: 90000
 - tapOn: "Home(, tab.*)?"
 - waitForAnimationToEnd
 - takeScreenshot: 12-home
