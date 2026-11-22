@@ -8,7 +8,7 @@ import TextLink from '../../components/TextLink';
 import { router } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import PasswordStrengthMeter from '../../components/PasswordStrengthMeter';
-import PhoneField from '../../components/PhoneField';
+import PhoneField, { isFullPhoneNumber } from '../../components/PhoneField';
 import InfoModal from '../../components/InfoModal';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
 
@@ -49,7 +49,9 @@ const SignUp = () => {
     email: form.email.trim().length === 0,
     firstName: form.firstName.trim().length === 0,
     password: form.password.length === 0,
-    phone: form.phone.trim().length === 0,
+    // A field typed in and then cleared still reports its country code
+    // ("+44"), so it must be a whole number, not just something
+    phone: !isFullPhoneNumber(form.phone.trim()),
   };
 
   const submit = async () => {
@@ -57,7 +59,7 @@ const SignUp = () => {
     const trimmedPhone = form.phone.trim();
     const trimmedEmail = form.email.trim().toLowerCase();
 
-    if (!trimmedFirstName || !trimmedPhone || !trimmedEmail || !form.password) {
+    if (!trimmedFirstName || requiredFieldErrors.phone || !trimmedEmail || !form.password) {
       setShowRequiredErrors(true);
       return;
     }
@@ -185,6 +187,11 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
   OtherStyles="mt-5"
   hasError={showRequiredErrors && requiredFieldErrors.phone}
 />
+{showRequiredErrors && requiredFieldErrors.phone && (
+  <Text className="mt-2 font-pregular text-sm text-[#FF8A8A]">
+    Enter your full phone number.
+  </Text>
+)}
 
           <FormField
             title="Email"

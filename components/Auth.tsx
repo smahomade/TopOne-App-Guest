@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { images } from '../constants'
 import FormField from './FormField'
 import CustomButton from './CustomButton'
-import PhoneField from './PhoneField'
+import PhoneField, { isFullPhoneNumber } from './PhoneField'
 import PasswordStrengthMeter from './PasswordStrengthMeter'
 import InfoModal from './InfoModal'
 import GoogleSignInButton from './GoogleSignInButton'
@@ -47,7 +47,9 @@ export default function Auth() {
     email: email.trim().length === 0,
     firstName: firstName.trim().length === 0,
     password: password.length === 0,
-    phoneNumber: phoneNumber.trim().length === 0,
+    // A field typed in and then cleared still reports its country code
+    // ("+44"), so it must be a whole number, not just something
+    phoneNumber: !isFullPhoneNumber(phoneNumber.trim()),
   }
 
   const signInFieldErrors = {
@@ -79,7 +81,7 @@ export default function Auth() {
     const trimmedFirstName = firstName.trim()
     const trimmedLastName = lastName.trim()
 
-    if (!trimmedFirstName || !phoneNumber || !trimmedEmail || !password) {
+    if (!trimmedFirstName || signUpFieldErrors.phoneNumber || !trimmedEmail || !password) {
       setShowRequiredErrors(true)
       return
     }
@@ -201,6 +203,11 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
                 OtherStyles="mt-4"
                 hasError={showRequiredErrors && signUpFieldErrors.phoneNumber}
               />
+              {showRequiredErrors && signUpFieldErrors.phoneNumber && (
+                <Text className="mt-2 font-pregular text-sm text-[#FF8A8A]">
+                  Enter your full phone number.
+                </Text>
+              )}
 
               <FormField
                 title="Email"
