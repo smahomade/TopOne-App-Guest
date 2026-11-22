@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import type { User } from '@supabase/supabase-js'
 import { images } from '../../constants'
-import PhoneField from '../../components/PhoneField'
+import PhoneField, { isFullPhoneNumber } from '../../components/PhoneField'
 import CustomButton from '../../components/CustomButton'
 import InfoModal from '../../components/InfoModal'
 import { supabase } from '../../lib/supabase'
@@ -17,9 +17,6 @@ import { continueAfterSignIn, savePhoneNumber } from '../../lib/googleSignIn'
 // a tab (hooks/useRequirePhoneNumber.ts), say after closing the app on this
 // screen. Once it's saved, the profile has one and this screen doesn't come up
 // again.
-
-// PhoneField reports the country code plus the digits typed, e.g. +447700900123.
-const FULL_NUMBER = /^\+\d{8,15}$/
 
 type SignedInAs = { firstName: string; email: string; withGoogle: boolean }
 
@@ -81,7 +78,7 @@ const AddPhone = () => {
   }, [])
 
   const save = async () => {
-    if (!FULL_NUMBER.test(phone)) {
+    if (!isFullPhoneNumber(phone)) {
       setShowRequiredError(true)
       return
     }

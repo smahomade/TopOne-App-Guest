@@ -7,6 +7,7 @@ import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import FormField from '../components/FormField';
+import PhoneField, { isFullPhoneNumber } from '../components/PhoneField';
 import InfoModal from '../components/InfoModal';
 import ConfirmModal from '../components/ConfirmModal';
 import { images } from '../constants';
@@ -45,6 +46,10 @@ export default function Account({ session }: { session: Session }) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  // The number as saved, so an untouched older number (e.g. "07700 900123")
+  // can still be saved alongside a name change without being rejected.
+  const [savedPhoneNumber, setSavedPhoneNumber] = useState('');
+  const [showPhoneError, setShowPhoneError] = useState(false);
   const [showUpdatedModal, setShowUpdatedModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteStep, setDeleteStep] = useState<'none' | 'details' | 'final'>('none');
@@ -72,6 +77,7 @@ export default function Account({ session }: { session: Session }) {
         setFirstName(data.first_name ?? '');
         setLastName(data.last_name ?? '');
         setPhoneNumber(data.phone_number ?? '');
+        setSavedPhoneNumber(data.phone_number ?? '');
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -110,6 +116,7 @@ export default function Account({ session }: { session: Session }) {
         throw error;
       }
 
+      setSavedPhoneNumber(phone_number);
       setShowUpdatedModal(true);
     } catch (error) {
       if (error instanceof Error) {
@@ -188,26 +195,38 @@ export default function Account({ session }: { session: Session }) {
           <Text className="font-psemibold text-base text-white">{emailAddress || 'No email available'}</Text>
         </View>
       </View>
-      <FormField
-        title="Phone Number"
+      {/* The same field as sign-up, so the saved number shows with its flag
+          and country code, and a new one is saved in the same +44… form */}
+      <PhoneField
         value={phoneNumber}
-        handleChangeText={setPhoneNumber}
-        placeholder="Enter your phone number"
+        onChangePhone={setPhoneNumber}
         OtherStyles="mt-5"
-        keyboardType="phone-pad"
-        titleColor="text-gray-100"
+        hasError={showPhoneError}
       />
+      {showPhoneError && (
+        <Text className="mt-2 font-pregular text-sm text-[#FF8A8A]">
+          Enter your full phone number.
+        </Text>
+      )}
 
       <View style={[styles.verticallySpaced, styles.mt20]}>
         <Button
           title={loading ? 'Loading ...' : 'Update'}
-          onPress={() =>
+          onPress={() => {
+            // A cleared field still reports its country code ("+44"), so a
+            // changed number must be a whole one before it's saved
+            if (phoneNumber !== savedPhoneNumber && !isFullPhoneNumber(phoneNumber)) {
+              setShowPhoneError(true);
+              return;
+            }
+
+            setShowPhoneError(false);
             updateProfile({
               first_name: firstName,
               last_name: lastName,
               phone_number: phoneNumber,
-            })
-          }
+            });
+          }}
           disabled={loading}
           buttonStyle={styles.primaryButton}
           titleStyle={styles.primaryButtonText}
