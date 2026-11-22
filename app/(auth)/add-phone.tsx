@@ -12,13 +12,16 @@ import { releasePendingBooking } from '../../lib/pendingBooking'
 import { continueAfterSignIn, savePhoneNumber } from '../../lib/googleSignIn'
 
 // Shown after a Google sign-in when the profile has no phone number. Google
-// doesn't share it, and the salon needs it to confirm bookings. Once it's
-// saved, the profile has one and this screen doesn't come up again.
+// doesn't share it, and the salon needs it to confirm bookings. It also comes
+// back whenever a signed-in customer still has no number and opens the app or
+// a tab (hooks/useRequirePhoneNumber.ts), say after closing the app on this
+// screen. Once it's saved, the profile has one and this screen doesn't come up
+// again.
 
 // PhoneField reports the country code plus the digits typed, e.g. +447700900123.
 const FULL_NUMBER = /^\+\d{8,15}$/
 
-type SignedInAs = { firstName: string; email: string }
+type SignedInAs = { firstName: string; email: string; withGoogle: boolean }
 
 // Google sign-in copies the first name into first_name (an email sign-up sets
 // it too). Before that's saved, Google's own full_name or name is all there is.
@@ -27,6 +30,13 @@ function firstNameOf(user: User): string {
   const candidates = [details.first_name, details.full_name, details.name]
   const found = candidates.find((value): value is string => typeof value === 'string' && value.trim() !== '')
   return found ? found.trim().split(/\s+/)[0] : ''
+}
+
+// Nearly everyone here signed in with Google. The rest are older email accounts
+// saved before a number was required, so the screen doesn't mention Google then.
+function hasGoogle(user: User): boolean {
+  const providers = user.app_metadata?.providers
+  return Array.isArray(providers) ? providers.includes('google') : user.app_metadata?.provider === 'google'
 }
 
 const AddPhone = () => {
@@ -50,8 +60,8 @@ const AddPhone = () => {
     }, [])
   )
 
-  // Greets the customer by name and shows which Google account they used, so
-  // they can tell the sign-in worked and spot the wrong account.
+  // Greets the customer by name and shows which account they used, so they can
+  // tell the sign-in worked and spot the wrong account.
   useEffect(() => {
     let isMounted = true
 
@@ -60,6 +70,7 @@ const AddPhone = () => {
         setSignedInAs({
           firstName: session ? firstNameOf(session.user) : '',
           email: session?.user.email?.trim() ?? '',
+          withGoogle: session ? hasGoogle(session.user) : true,
         })
       }
     })
@@ -112,6 +123,9 @@ const AddPhone = () => {
     }
   }
 
+  // Assume Google until the session is read: it nearly always is.
+  const withGoogle = signedInAs?.withGoogle ?? true
+
   return (
     <SafeAreaView className="bg-primary h-full">
       <ScrollView
@@ -142,7 +156,7 @@ const AddPhone = () => {
               {signedInAs?.firstName ? `Welcome, ${signedInAs.firstName}!` : 'Welcome!'}
             </Text>
             <Text className="mt-2 text-center font-pregular text-sm text-gray-100">
-              {signedInAs && !signedInAs.email ? "You're signed in with Google." : "You're signed in with Google as"}
+              {`You're signed in${withGoogle ? ' with Google' : ''}${signedInAs && !signedInAs.email ? '.' : ' as'}`}
             </Text>
             {/* On its own line, so a long address isn't split across two. While
                 the session loads, a blank line holds its place so nothing
@@ -158,7 +172,7 @@ const AddPhone = () => {
             One more step: add your phone number
           </Text>
           <Text className="mt-1 text-center font-pregular text-sm text-gray-100">
-            The salon uses it to confirm your bookings. Google doesn't share it with us.
+            {`The salon uses it to confirm your bookings.${withGoogle ? " Google doesn't share it with us." : ''}`}
           </Text>
 
           <PhoneField

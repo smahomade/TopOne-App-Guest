@@ -3,6 +3,7 @@ import { Tabs } from 'expo-router'
 import { icons } from '../../constants';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRequirePhoneNumber } from '@/hooks/useRequirePhoneNumber';
 
 // Height of the icon-and-label area, not counting the phone's own navigation
 // bar or home indicator underneath it.
@@ -38,6 +39,10 @@ const TabsLayout = () => {
   // Android now draws the app under the system navigation bar (as iOS always
   // has), and the tab bar pads itself by that much, so add it on top.
   const { bottom } = useSafeAreaInsets();
+
+  // No way into booking or messages without a phone number: the salon needs
+  // it to confirm a booking request.
+  useRequirePhoneNumber('replace');
 
   return (
     <>

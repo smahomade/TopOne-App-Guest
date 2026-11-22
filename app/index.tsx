@@ -7,6 +7,7 @@ import CustomButton from "@/components/CustomButton";
 import TextLink from "@/components/TextLink";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useRequirePhoneNumber } from "@/hooks/useRequirePhoneNumber";
 import { Session } from '@supabase/supabase-js'
 import React from "react";
 
@@ -39,6 +40,10 @@ export default function Index() {
       };
     }, [])
   );
+
+  // A signed-in customer with no phone number (say, one who closed the app
+  // half-way through a Google sign-in) is asked for it when the app opens.
+  useRequirePhoneNumber('push');
 
   // Everyone goes straight to the service menu. Signing in is only asked for
   // when the request is sent, and the request is kept while they do it.
