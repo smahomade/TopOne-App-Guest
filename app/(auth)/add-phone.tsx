@@ -1,7 +1,8 @@
 import { BackHandler, Image, ScrollView, Text, View } from 'react-native'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
+import type { User } from '@supabase/supabase-js'
 import { images } from '../../constants'
 import PhoneField from '../../components/PhoneField'
 import CustomButton from '../../components/CustomButton'
@@ -11,15 +12,39 @@ import { releasePendingBooking } from '../../lib/pendingBooking'
 import { continueAfterSignIn, savePhoneNumber } from '../../lib/googleSignIn'
 
 // Shown after a Google sign-in when the profile has no phone number. Google
-// doesn't share it, and the salon needs it to confirm bookings. Once it's
-// saved, the profile has one and this screen doesn't come up again.
+// doesn't share it, and the salon needs it to confirm bookings. It also comes
+// back whenever a signed-in customer still has no number and opens the app or
+// a tab (hooks/useRequirePhoneNumber.ts), say after closing the app on this
+// screen. Once it's saved, the profile has one and this screen doesn't come up
+// again.
 
 // PhoneField reports the country code plus the digits typed, e.g. +447700900123.
 const FULL_NUMBER = /^\+\d{8,15}$/
 
+type SignedInAs = { firstName: string; email: string; withGoogle: boolean }
+
+// Google sign-in copies the first name into first_name (an email sign-up sets
+// it too). Before that's saved, Google's own full_name or name is all there is.
+function firstNameOf(user: User): string {
+  const details = user.user_metadata ?? {}
+  const candidates = [details.first_name, details.full_name, details.name]
+  const found = candidates.find((value): value is string => typeof value === 'string' && value.trim() !== '')
+  return found ? found.trim().split(/\s+/)[0] : ''
+}
+
+// Nearly everyone here signed in with Google. The rest are older email accounts
+// saved before a number was required, so the screen doesn't mention Google then.
+function hasGoogle(user: User): boolean {
+  const providers = user.app_metadata?.providers
+  return Array.isArray(providers) ? providers.includes('google') : user.app_metadata?.provider === 'google'
+}
+
 const AddPhone = () => {
   // 'profile' when Google sign-in started on the Profile tab.
   const { next } = useLocalSearchParams<{ next?: string }>()
+  // Null until the session is read, which takes a moment: the greeting stays
+  // hidden until then so it doesn't change in front of the customer.
+  const [signedInAs, setSignedInAs] = useState<SignedInAs | null>(null)
   const [phone, setPhone] = useState('')
   const [showRequiredError, setShowRequiredError] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -34,6 +59,26 @@ const AddPhone = () => {
       return () => subscription.remove()
     }, [])
   )
+
+  // Greets the customer by name and shows which account they used, so they can
+  // tell the sign-in worked and spot the wrong account.
+  useEffect(() => {
+    let isMounted = true
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (isMounted) {
+        setSignedInAs({
+          firstName: session ? firstNameOf(session.user) : '',
+          email: session?.user.email?.trim() ?? '',
+          withGoogle: session ? hasGoogle(session.user) : true,
+        })
+      }
+    })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const save = async () => {
     if (!FULL_NUMBER.test(phone)) {
@@ -78,6 +123,9 @@ const AddPhone = () => {
     }
   }
 
+  // Assume Google until the session is read: it nearly always is.
+  const withGoogle = signedInAs?.withGoogle ?? true
+
   return (
     <SafeAreaView className="bg-primary h-full">
       <ScrollView
@@ -96,11 +144,35 @@ const AddPhone = () => {
         </View>
 
         <View className="flex-1 justify-center px-4 pb-14">
-          <Text className="text-2xl text-white font-psemibold text-center mt-4">
-            Add your phone number
+          <View
+            style={{ opacity: signedInAs ? 1 : 0 }}
+            accessibilityElementsHidden={!signedInAs}
+            importantForAccessibility={signedInAs ? 'auto' : 'no-hide-descendants'}
+          >
+            <Text
+              accessibilityRole="header"
+              className="text-2xl text-white font-psemibold text-center mt-4"
+            >
+              {signedInAs?.firstName ? `Welcome, ${signedInAs.firstName}!` : 'Welcome!'}
+            </Text>
+            <Text className="mt-2 text-center font-pregular text-sm text-gray-100">
+              {`You're signed in${withGoogle ? ' with Google' : ''}${signedInAs && !signedInAs.email ? '.' : ' as'}`}
+            </Text>
+            {/* On its own line, so a long address isn't split across two. While
+                the session loads, a blank line holds its place so nothing
+                below moves when the address appears. */}
+            {!signedInAs || signedInAs.email ? (
+              <Text className="text-center font-psemibold text-sm text-white">
+                {signedInAs?.email ?? ' '}
+              </Text>
+            ) : null}
+          </View>
+
+          <Text className="mt-6 text-center font-psemibold text-lg text-white">
+            One more step: add your phone number
           </Text>
-          <Text className="mt-2 text-center font-pregular text-sm text-gray-100">
-            The salon uses it to confirm your bookings. Google doesn't share it with us.
+          <Text className="mt-1 text-center font-pregular text-sm text-gray-100">
+            {`The salon uses it to confirm your bookings.${withGoogle ? " Google doesn't share it with us." : ''}`}
           </Text>
 
           <PhoneField

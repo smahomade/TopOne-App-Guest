@@ -61,7 +61,9 @@ export async function clearPendingBooking(): Promise<void> {
 // The Messages tab sends a saved request as soon as a session appears. A Google
 // sign-in still has to fill in the customer's name and phone number after
 // that, so it holds the request until the profile is done. The hold is only in
-// memory: if the app is closed half-way, the request is sent as usual next time.
+// memory: if the app is closed half-way, the app asks for the phone number when
+// it next opens (hooks/useRequirePhoneNumber.ts), and the add-phone screen
+// sends the request once the number is saved.
 let isHeld = false;
 
 export function holdPendingBooking(): void {
