@@ -1,5 +1,5 @@
 import { View, Text, TextInput, TouchableOpacity, Modal, FlatList, SafeAreaView } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 const COUNTRIES = [
   { code: 'GB', name: 'United Kingdom', dial: '+44' },
@@ -48,21 +48,67 @@ type Props = {
 const toInternational = (country: typeof COUNTRIES[0], digits: string) =>
   `${country.dial}${country.code === 'IT' ? digits : digits.replace(/^0+/, '')}`
 
+/** A whole number as this field reports it: +, country code and number, e.g. +447700900123. */
+export const isFullPhoneNumber = (value: string) => /^\+\d{8,15}$/.test(value)
+
+// Splits a saved number back into its country and the rest, so a number shown
+// again (on the Profile tab) gets its flag. Longer country codes are tried
+// first, so one can't be mistaken for a shorter code it starts with; +1 shows
+// the US flag, as Canada shares it. Anything not in international form, like
+// an old "07700 900123", is shown as typed under the UK.
+const fromSaved = (value: string) => {
+  const trimmed = value.trim()
+
+  if (/^(\+|00)/.test(trimmed)) {
+    const digits = trimmed.replace(/[^0-9]/g, '').replace(/^00/, '')
+    const country = [...COUNTRIES]
+      .sort((a, b) => b.dial.length - a.dial.length)
+      .find((candidate) => digits.startsWith(candidate.dial.slice(1)))
+
+    if (country) {
+      return { country, localNumber: digits.slice(country.dial.length - 1) }
+    }
+  }
+
+  return { country: COUNTRIES[0], localNumber: trimmed.replace(/[^0-9]/g, '') }
+}
+
 const PhoneField = ({ value, onChangePhone, OtherStyles = '', hasError = false }: Props) => {
-  const [selected, setSelected] = useState(COUNTRIES[0])
+  const [selected, setSelected] = useState(() => fromSaved(value).country)
   const [pickerVisible, setPickerVisible] = useState(false)
-  const [localNumber, setLocalNumber] = useState('')
+  const [localNumber, setLocalNumber] = useState(() => fromSaved(value).localNumber)
+
+  // The number this field last reported. When `value` comes back as that, it's
+  // the screen echoing what was typed; anything else (a saved number that has
+  // just loaded) is shown in the field.
+  const lastReported = useRef(value)
+
+  useEffect(() => {
+    if (value === lastReported.current) {
+      return
+    }
+
+    lastReported.current = value
+    const saved = fromSaved(value)
+    setSelected(saved.country)
+    setLocalNumber(saved.localNumber)
+  }, [value])
+
+  const report = (full: string) => {
+    lastReported.current = full
+    onChangePhone(full)
+  }
 
   const handleNumberChange = (text: string) => {
     const digits = text.replace(/[^0-9]/g, '')
     setLocalNumber(digits)
-    onChangePhone(toInternational(selected, digits))
+    report(toInternational(selected, digits))
   }
 
   const handleCountrySelect = (country: typeof COUNTRIES[0]) => {
     setSelected(country)
     setPickerVisible(false)
-    onChangePhone(toInternational(country, localNumber))
+    report(toInternational(country, localNumber))
   }
 
   const getFlagEmoji = (code: string) => {
