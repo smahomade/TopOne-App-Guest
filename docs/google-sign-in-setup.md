@@ -160,8 +160,9 @@ client ID changes, because the ID is built into the app's JavaScript.
 ### Test checklist
 
 1. **New customer, sign-up screen.** Tap **Continue with Google** and pick an
-   account. The **Add your phone number** screen appears. Enter a number and
-   tap **Continue**. You land on Home.
+   account. The phone screen appears, saying "Welcome, {first name}!" with the
+   Gmail address. Enter a number and tap **Finish signing up**. You land on
+   Home.
 
    In Supabase → Table editor → `profiles`, that row should have:
    - first and last name from Google
@@ -183,8 +184,11 @@ client ID changes, because the ID is built into the app's JavaScript.
    sign in with email.
 7. **Email and password** sign-in and sign-up still work as before.
 8. **Phone screen exits.** The back button and swipe-back are blocked on the
-   phone screen. "Use a different account" signs out. Either way, nobody ends
-   up signed in without a number.
+   phone screen. "Use a different account" signs out.
+9. **Closed on the phone screen.** Sign in with a new Google account, then
+   close the app on the phone screen without adding a number. Open the app
+   again: it goes straight back to the phone screen, still signed in. Opening
+   any tab does the same until a number is saved.
 
 If Android says *"Google sign-in isn't set up for this build of the app
 yet"*, Google doesn't know the build's SHA-1. Check step 2 against the

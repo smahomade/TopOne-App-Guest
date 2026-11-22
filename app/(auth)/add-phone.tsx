@@ -50,7 +50,7 @@ const AddPhone = () => {
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  // Leaving is by "Continue" or "Use a different account". The back button
+  // Leaving is by "Finish signing up" or "Use a different account". The back button
   // would leave a signed-in customer with no number, and the Messages tab
   // would then send a waiting booking request without one.
   useFocusEffect(
@@ -135,23 +135,29 @@ const AddPhone = () => {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ flexGrow: 1 }}
       >
-        <View className="flex-1 justify-center items-center px-4">
-          <Image
-            source={images.logoTopOneWhite}
-            resizeMode="contain"
-            className="w-[150px] h-[85px]"
-          />
-        </View>
+        {/* One group, a third of the way down: the spare height is split 1:2
+            above and below it, and on a short phone both shrink to nothing.
+            (Splitting the screen into a logo half and a form half, as Log in
+            does, left this short form with a big empty gap under the logo.) */}
+        <View style={{ flexGrow: 1 }} />
+        <View className="px-4 py-6">
+          <View className="items-center">
+            <Image
+              source={images.logoTopOneWhite}
+              resizeMode="contain"
+              className="w-[150px] h-[85px]"
+            />
+          </View>
 
-        <View className="flex-1 justify-center px-4 pb-14">
           <View
+            className="mt-8"
             style={{ opacity: signedInAs ? 1 : 0 }}
             accessibilityElementsHidden={!signedInAs}
             importantForAccessibility={signedInAs ? 'auto' : 'no-hide-descendants'}
           >
             <Text
               accessibilityRole="header"
-              className="text-2xl text-white font-psemibold text-center mt-4"
+              className="text-2xl text-white font-psemibold text-center"
             >
               {signedInAs?.firstName ? `Welcome, ${signedInAs.firstName}!` : 'Welcome!'}
             </Text>
@@ -168,27 +174,28 @@ const AddPhone = () => {
             ) : null}
           </View>
 
-          <Text className="mt-6 text-center font-psemibold text-lg text-white">
-            One more step: add your phone number
-          </Text>
-          <Text className="mt-1 text-center font-pregular text-sm text-gray-100">
-            {`The salon uses it to confirm your bookings.${withGoogle ? " Google doesn't share it with us." : ''}`}
-          </Text>
-
-          <PhoneField
-            value={phone}
-            onChangePhone={setPhone}
-            OtherStyles="mt-7"
-            hasError={showRequiredError}
-          />
+          {/* The field's own "Phone Number" label is the step's heading; why
+              it's needed sits underneath, where it's read while typing. */}
+          <View className="mt-8">
+            <PhoneField
+              value={phone}
+              onChangePhone={setPhone}
+              hasError={showRequiredError}
+            />
+          </View>
           {showRequiredError && (
             <Text className="mt-2 font-pregular text-sm text-[#FF8A8A]">
               Enter your full phone number.
             </Text>
           )}
+          <Text className="mt-2 font-pregular text-sm text-gray-100">
+            {`The salon uses it to confirm your bookings.${withGoogle ? " Google doesn't share it with us." : ''}`}
+          </Text>
 
           <CustomButton
-            title="Continue"
+            // Says the number is the last step. An older email account isn't
+            // signing up, so it just saves.
+            title={withGoogle ? 'Finish signing up' : 'Save and continue'}
             handlePress={save}
             containerStyles="mt-7 w-full"
             isLoading={isSaving}
@@ -206,6 +213,7 @@ const AddPhone = () => {
             </Text>
           </View>
         </View>
+        <View style={{ flexGrow: 2 }} />
       </ScrollView>
 
       <InfoModal
