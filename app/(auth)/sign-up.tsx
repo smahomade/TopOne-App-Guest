@@ -1,6 +1,7 @@
 import { Alert, View, Text, ScrollView, Image, useWindowDimensions } from 'react-native';
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AvoidKeyboard from '../../components/AvoidKeyboard';
 import { images } from '../../constants';
 import FormField from '../../components/FormField';
 import CustomButton from '../../components/CustomButton';
@@ -118,6 +119,7 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
 
   return (
     <SafeAreaView className="bg-primary h-full">
+      <AvoidKeyboard>
       <ScrollView
         bounces={false}
         alwaysBounceVertical={false}
@@ -232,6 +234,7 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
           </View>
         </View>
       </ScrollView>
+      </AvoidKeyboard>
 
       <InfoModal
         visible={showConfirmEmailModal}

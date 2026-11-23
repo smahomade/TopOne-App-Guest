@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Image, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AvoidKeyboard from '../../components/AvoidKeyboard';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 
@@ -113,6 +114,7 @@ const ResetPassword = () => {
 
   return (
     <SafeAreaView className="bg-primary h-full">
+      <AvoidKeyboard>
       <ScrollView
         bounces={false}
         alwaysBounceVertical={false}
@@ -183,6 +185,7 @@ const ResetPassword = () => {
           </Text>
         </View>
       </ScrollView>
+      </AvoidKeyboard>
     </SafeAreaView>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Alert, Image, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AvoidKeyboard from '../../components/AvoidKeyboard';
 import FormField from '../../components/FormField';
 import CustomButton from '../../components/CustomButton';
 import TextLink from '../../components/TextLink';
@@ -46,6 +47,7 @@ const ForgotPassword = () => {
 
   return (
     <SafeAreaView className="bg-primary h-full">
+      <AvoidKeyboard>
       <ScrollView
         bounces={false}
         alwaysBounceVertical={false}
@@ -111,6 +113,7 @@ const ForgotPassword = () => {
           </Text>
         </View>
       </ScrollView>
+      </AvoidKeyboard>
     </SafeAreaView>
   );
 };

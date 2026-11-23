@@ -1,6 +1,7 @@
 import { BackHandler, Image, ScrollView, Text, View } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import AvoidKeyboard from '../../components/AvoidKeyboard'
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import type { User } from '@supabase/supabase-js'
 import { images } from '../../constants'
@@ -125,6 +126,7 @@ const AddPhone = () => {
 
   return (
     <SafeAreaView className="bg-primary h-full">
+      <AvoidKeyboard>
       <ScrollView
         bounces={false}
         alwaysBounceVertical={false}
@@ -212,6 +214,7 @@ const AddPhone = () => {
         </View>
         <View style={{ flexGrow: 2 }} />
       </ScrollView>
+      </AvoidKeyboard>
 
       <InfoModal
         visible={saveError !== null}

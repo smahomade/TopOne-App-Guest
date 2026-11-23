@@ -5,6 +5,7 @@ import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AvoidKeyboard from './AvoidKeyboard';
 
 import FormField from '../components/FormField';
 import PhoneField, { isFullPhoneNumber } from '../components/PhoneField';
@@ -153,6 +154,7 @@ export default function Account({ session }: { session: Session }) {
 
   return (
   <SafeAreaView edges={['top']} className="flex-1 bg-primary" style={{ backgroundColor: '#161622' }}>
+    <AvoidKeyboard>
     <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
     <View style={styles.container}>
     <View style={styles.headerRow}>
@@ -259,6 +261,7 @@ export default function Account({ session }: { session: Session }) {
       </View>
     </View>
     </ScrollView>
+    </AvoidKeyboard>
 
     <ConfirmModal
       visible={deleteStep === 'details'}

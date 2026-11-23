@@ -1,6 +1,7 @@
 import { View, Text, ScrollView, Image, AppState } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import AvoidKeyboard from '../../components/AvoidKeyboard'
 import { images } from '../../constants'
 import FormField from '../../components/FormField'
 import CustomButton from '../../components/CustomButton'
@@ -70,6 +71,7 @@ const SignIn = () => {
 
   return (
     <SafeAreaView className="bg-primary h-full">
+      <AvoidKeyboard>
       <ScrollView
         bounces={false}
         alwaysBounceVertical={false}
@@ -139,6 +141,7 @@ const SignIn = () => {
           </View>
         </View>
       </ScrollView>
+      </AvoidKeyboard>
 
       <InfoModal
         visible={loginError !== null}
