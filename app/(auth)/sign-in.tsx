@@ -1,6 +1,7 @@
 import { View, Text, ScrollView, Image, AppState } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import AvoidKeyboard from '../../components/AvoidKeyboard'
 import { images } from '../../constants'
 import FormField from '../../components/FormField'
 import CustomButton from '../../components/CustomButton'
@@ -10,6 +11,7 @@ import TextLink from '../../components/TextLink'
 import { router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { hasPendingBooking } from '../../lib/pendingBooking'
+import SalonLogo from '../../components/SalonLogo';
 
 
 const SignIn = () => {
@@ -70,6 +72,7 @@ const SignIn = () => {
 
   return (
     <SafeAreaView className="bg-primary h-full">
+      <AvoidKeyboard>
       <ScrollView
         bounces={false}
         alwaysBounceVertical={false}
@@ -80,10 +83,9 @@ const SignIn = () => {
         contentContainerStyle={{ flexGrow: 1 }}
       >
         <View className="flex-1 justify-center items-center px-4">
-          <Image 
-            source={images.logoTopOneWhite}
+          <SalonLogo 
             resizeMode='contain' 
-            className="w-[150px] h-[85px]"
+            style={{ width: 150, height: 85 }}
           />
         </View>
 
@@ -139,6 +141,7 @@ const SignIn = () => {
           </View>
         </View>
       </ScrollView>
+      </AvoidKeyboard>
 
       <InfoModal
         visible={loginError !== null}

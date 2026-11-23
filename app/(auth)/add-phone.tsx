@@ -1,6 +1,7 @@
 import { BackHandler, Image, ScrollView, Text, View } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import AvoidKeyboard from '../../components/AvoidKeyboard'
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import type { User } from '@supabase/supabase-js'
 import { images } from '../../constants'
@@ -10,6 +11,7 @@ import InfoModal from '../../components/InfoModal'
 import { supabase } from '../../lib/supabase'
 import { releasePendingBooking } from '../../lib/pendingBooking'
 import { continueAfterSignIn, savePhoneNumber } from '../../lib/googleSignIn'
+import SalonLogo from '../../components/SalonLogo';
 
 // Shown after a Google sign-in when the profile has no phone number. Google
 // doesn't share it, and the salon needs it to confirm bookings. It also comes
@@ -125,6 +127,7 @@ const AddPhone = () => {
 
   return (
     <SafeAreaView className="bg-primary h-full">
+      <AvoidKeyboard>
       <ScrollView
         bounces={false}
         alwaysBounceVertical={false}
@@ -139,10 +142,9 @@ const AddPhone = () => {
         <View style={{ flexGrow: 1 }} />
         <View className="px-4 py-6">
           <View className="items-center">
-            <Image
-              source={images.logoTopOneWhite}
+            <SalonLogo
               resizeMode="contain"
-              className="w-[150px] h-[85px]"
+              style={{ width: 150, height: 85 }}
             />
           </View>
 
@@ -212,6 +214,7 @@ const AddPhone = () => {
         </View>
         <View style={{ flexGrow: 2 }} />
       </ScrollView>
+      </AvoidKeyboard>
 
       <InfoModal
         visible={saveError !== null}

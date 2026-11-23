@@ -8,6 +8,7 @@ import { useRealtimeQuery } from '@/hooks/useRealtimeQuery';
 import { fetchLocations, LOCATION_CONTENT_TABLES, type LocationCard } from '@/lib/adminContent';
 import { images } from '../../constants';
 import { router } from 'expo-router';
+import SalonLogo from '../../components/SalonLogo';
 
 const SAVED_LOCATION_KEY = 'topone.currentLocationId';
 
@@ -234,8 +235,7 @@ const Location = () => {
                   color="#FFFFFF"
                 />
               </TouchableOpacity>
-              <Image
-                source={images.logoTopOneWhite}
+              <SalonLogo
                 style={{ width: 120, height: 52 }}
                 resizeMode="contain"
               />

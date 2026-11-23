@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Alert, StyleSheet, View, AppState, Text, Image, ScrollView } from 'react-native'
 import { supabase } from '../lib/supabase'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import AvoidKeyboard from './AvoidKeyboard'
 import { images } from '../constants'
 import FormField from './FormField'
 import CustomButton from './CustomButton'
@@ -10,6 +11,7 @@ import PasswordStrengthMeter from './PasswordStrengthMeter'
 import InfoModal from './InfoModal'
 import GoogleSignInButton from './GoogleSignInButton'
 import TextLink from './TextLink'
+import SalonLogo from './SalonLogo';
 
 AppState.addEventListener('change', (state) => {
   if (state === 'active') {
@@ -137,6 +139,7 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <AvoidKeyboard>
       <ScrollView
         bounces={false}
         alwaysBounceVertical={false}
@@ -158,8 +161,7 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
                 Current access: <Text style={styles.accessValue}>Guest Access</Text>
               </Text>
             </View>
-            <Image
-              source={images.logoTopOneWhite}
+            <SalonLogo
               style={{ width: 140, height: 56 }}
               resizeMode="contain"
             />
@@ -289,6 +291,7 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
           </View>
         </View>
       </ScrollView>
+      </AvoidKeyboard>
 
       <InfoModal
         visible={showConfirmEmailModal}

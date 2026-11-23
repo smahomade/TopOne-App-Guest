@@ -417,7 +417,18 @@ function formatPreferredDateLabel(value: string) {
 
 function buildBookingRequestMessage(customerName: string, services: BookingSelection[], preferredDates: string[]) {
 	const normalizedName = normalizeCustomerName(customerName);
-	const summary = services.map((service) => `${service.service} (${service.role})`).join('\n');
+	// A service booked for more than one person comes once per person, and the
+	// salon sees it as "2 × Highlights (Colour tech)".
+	const peoplePerLine = new Map<string, number>();
+
+	for (const service of services) {
+		const line = `${service.service} (${service.role})`;
+		peoplePerLine.set(line, (peoplePerLine.get(line) ?? 0) + 1);
+	}
+
+	const summary = [...peoplePerLine]
+		.map(([line, people]) => (people > 1 ? `${people} × ${line}` : line))
+		.join('\n');
 	const preferredDatesSummary = preferredDates.map(formatPreferredDateLabel).join('\n');
 
 	return `${BOOKING_REQUEST_PREFIX} ${normalizedName} would like to book for\n${summary}\n\nPreferred dates:\n${preferredDatesSummary}\n\n(Please ${normalizedName} wait for an admin to respond)`;

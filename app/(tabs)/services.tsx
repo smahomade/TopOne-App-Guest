@@ -1,5 +1,5 @@
 import { ActivityIndicator, Image, Modal, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { router, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -14,6 +14,7 @@ import {
 } from '@/lib/adminContent';
 import { images } from '../../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import SalonLogo from '../../components/SalonLogo';
 
 const SAVED_LOCATION_KEY = 'topone.currentLocationId';
 
@@ -105,16 +106,16 @@ function formatServiceDuration(duration: number | null) {
   return `${minutes} min`;
 }
 
-// A price of 0 means the salon didn't enter one.
+// A price of 0 means the salon didn't enter one: the website's "Price on consultation".
 function formatPrice(price: number) {
-  return price > 0 ? `£${price}` : 'Price on request';
+  return price > 0 ? `£${price}` : 'Price on consultation';
 }
 
 function formatPriceRange(roles: ServiceRole[]) {
   const prices = roles.map((roleItem) => roleItem.price).filter((price) => price > 0);
 
   if (prices.length === 0) {
-    return null;
+    return 'Price on consultation';
   }
 
   const lowestPrice = Math.min(...prices);
@@ -122,7 +123,8 @@ function formatPriceRange(roles: ServiceRole[]) {
   return lowestPrice === Math.max(...prices) ? `£${lowestPrice}` : `From £${lowestPrice}`;
 }
 
-// One booking per service, whichever stylist was picked.
+// One line per service, whichever stylist was picked. Booking it for more
+// people (say a parent and child) raises its quantity instead.
 function getServiceKey(serviceCategory: string, service: string) {
   return `${serviceCategory}::${service}`;
 }
@@ -132,10 +134,39 @@ function getCategoryLabel(serviceCategory: string) {
   return serviceCategory && serviceCategory !== 'General' ? serviceCategory : null;
 }
 
+// A service's options are usually stylist levels, but laser is priced by
+// number of sessions and waxing by type of wax.
+function isSessionOption(role: string) {
+  return /session/i.test(role);
+}
+
+function getChoiceTitle(roles: ServiceRole[]) {
+  if (roles.length > 0 && roles.every((roleItem) => isSessionOption(roleItem.role))) {
+    return 'How many sessions?';
+  }
+
+  if (roles.length > 0 && roles.every((roleItem) => /stylist|director|colour|specialist|apprentice/i.test(roleItem.role))) {
+    return 'Choose your stylist';
+  }
+
+  return 'Choose an option';
+}
+
 const TIME_OPTIONS = ['Morning', 'Afternoon', 'Evening'];
 
+// How many people one request can book the same service for.
+const MAX_QUANTITY = 10;
+
+type BookingSelection = {
+  id: string;
+  price: number;
+  quantity: number;
+  role: string;
+  service: string;
+  serviceCategory: string;
+};
+
 const Services = () => {
-  const scrollViewRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedService, setSelectedService] = useState<GroupedService | null>(null);
   const [showRolesModal, setShowRolesModal] = useState<boolean>(false);
@@ -145,15 +176,8 @@ const Services = () => {
   const [visibleMonth, setVisibleMonth] = useState<Date>(getMonthStart(new Date()));
   const [savedLocationId, setSavedLocationId] = useState<string | null>(null);
   const [hasResolvedSavedLocation, setHasResolvedSavedLocation] = useState<boolean>(false);
-  const [bookingSelections, setBookingSelections] = useState<
-    Array<{
-      id: string;
-      price: number;
-      role: string;
-      service: string;
-      serviceCategory: string;
-    }>
-  >([]);
+  const [bookingSelections, setBookingSelections] = useState<BookingSelection[]>([]);
+  const [showEditModal, setShowEditModal] = useState<boolean>(false);
   const { data: locationResult } = useRealtimeQuery({
     fetcher: fetchLocations,
     initialData: {
@@ -267,26 +291,55 @@ const Services = () => {
     }
   }, [categoryNames, selectedCategory]);
 
-  const selectedRoleByService = useMemo(
-    () => new Map(bookingSelections.map((selection) => [getServiceKey(selection.serviceCategory, selection.service), selection.role])),
+  const selectionByService = useMemo(
+    () => new Map(bookingSelections.map((selection) => [getServiceKey(selection.serviceCategory, selection.service), selection])),
     [bookingSelections]
   );
-  const bookingTotal = bookingSelections.reduce((total, selection) => total + selection.price, 0);
+  const bookingTotal = bookingSelections.reduce((total, selection) => total + selection.price * selection.quantity, 0);
+  const bookingCount = bookingSelections.reduce((count, selection) => count + selection.quantity, 0);
 
-  // Picking a stylist replaces any earlier pick for the same service.
+  // The pop-up has nothing to edit once the last service is taken off.
+  useEffect(() => {
+    if (bookingSelections.length === 0) {
+      setShowEditModal(false);
+    }
+  }, [bookingSelections.length]);
+
+  // Picking a stylist replaces any earlier pick for the same service, keeping
+  // how many people it's for.
   const addSelection = (group: GroupedService, roleItem: ServiceRole) => {
     const serviceKey = getServiceKey(group.serviceCategory, group.service);
 
-    setBookingSelections((currentSelections) => [
-      ...currentSelections.filter((selection) => getServiceKey(selection.serviceCategory, selection.service) !== serviceKey),
-      {
-        id: `${serviceKey}::${roleItem.role}::${Date.now()}`,
-        price: roleItem.price,
-        role: roleItem.role,
-        service: group.service,
-        serviceCategory: group.serviceCategory,
-      },
-    ]);
+    setBookingSelections((currentSelections) => {
+      const earlierPick = currentSelections.find(
+        (selection) => getServiceKey(selection.serviceCategory, selection.service) === serviceKey
+      );
+
+      return [
+        ...currentSelections.filter((selection) => selection !== earlierPick),
+        {
+          id: `${serviceKey}::${roleItem.role}::${Date.now()}`,
+          price: roleItem.price,
+          quantity: earlierPick?.quantity ?? 1,
+          role: roleItem.role,
+          service: group.service,
+          serviceCategory: group.serviceCategory,
+        },
+      ];
+    });
+  };
+
+  // Below one, the service comes off the booking.
+  const changeQuantity = (selectionId: string, change: number) => {
+    setBookingSelections((currentSelections) =>
+      currentSelections
+        .map((selection) =>
+          selection.id === selectionId
+            ? { ...selection, quantity: Math.min(selection.quantity + change, MAX_QUANTITY) }
+            : selection
+        )
+        .filter((selection) => selection.quantity > 0)
+    );
   };
 
   const removeService = (group: GroupedService) => {
@@ -298,7 +351,7 @@ const Services = () => {
   };
 
   const handleBook = (group: GroupedService) => {
-    const isAdded = selectedRoleByService.has(getServiceKey(group.serviceCategory, group.service));
+    const isAdded = selectionByService.has(getServiceKey(group.serviceCategory, group.service));
 
     // With only one stylist option there is nothing to choose: add or remove it directly.
     if (group.roles.length === 1) {
@@ -331,10 +384,6 @@ const Services = () => {
 
     setShowRolesModal(false);
     setSelectedService(null);
-  };
-
-  const handleRemoveSelection = (selectionId: string) => {
-    setBookingSelections((currentSelections) => currentSelections.filter((selection) => selection.id !== selectionId));
   };
 
   const handleBookSelections = () => {
@@ -373,13 +422,17 @@ const Services = () => {
       pathname: '/book',
       params: {
         bookingKey: conversationId,
+        // One entry per person, so a service booked for two is listed twice
+        // and Messages writes it as "2 × …" in the request.
         bookingServices: JSON.stringify(
-          bookingSelections.map((selection) => ({
-            price: selection.price,
-            role: selection.role,
-            service: selection.service,
-            serviceCategory: selection.serviceCategory,
-          }))
+          bookingSelections.flatMap((selection) =>
+            Array.from({ length: selection.quantity }, () => ({
+              price: selection.price,
+              role: selection.role,
+              service: selection.service,
+              serviceCategory: selection.serviceCategory,
+            }))
+          )
         ),
         bookingDates: JSON.stringify(
           selectedBookingDates.map((date) => preferredTime ? `${date} ${preferredTime}` : date)
@@ -404,7 +457,6 @@ const Services = () => {
   return (
     <SafeAreaView className="flex-1 bg-primary" style={{ backgroundColor: '#161622' }} edges={['top', 'left', 'right']}>
       <ScrollView
-        ref={scrollViewRef}
         className="bg-primary"
         style={{ backgroundColor: '#161622' }}
         contentContainerStyle={{ paddingBottom: 32 }}
@@ -416,8 +468,7 @@ const Services = () => {
               <Text className="font-pregular text-sm text-gray-100">Service Menu</Text>
               <Text className="mt-1 font-psemibold text-2xl text-white">TopOne Salon</Text>
             </View>
-            <Image 
-              source={images.logoTopOneWhite} 
+            <SalonLogo 
               style={{ width: 120, height: 52 }}
               resizeMode="contain"
             />
@@ -456,11 +507,22 @@ const Services = () => {
           {selectedServices.map((group, index) => {
             const duration = formatServiceDuration(group.duration);
             const priceRange = formatPriceRange(group.roles);
-            const addedRole = selectedRoleByService.get(getServiceKey(group.serviceCategory, group.service));
+            const addedSelection = selectionByService.get(getServiceKey(group.serviceCategory, group.service));
+            const addedRole = addedSelection?.role;
             const details = [priceRange, duration].filter(Boolean).join(' · ');
+            // A heading starts each section (Ladies, Gents, Face, Arms…), like
+            // the tables on the salon's price list.
+            const sectionLabel = getCategoryLabel(group.serviceCategory);
+            const startsSection = Boolean(sectionLabel) && selectedServices[index - 1]?.serviceCategory !== group.serviceCategory;
 
             return (
-              <View key={`${group.serviceCategory}-${group.service}-${index}`} className="mb-4 rounded-2xl border border-black-200 bg-black-100 px-5 py-5">
+              <React.Fragment key={`${group.serviceCategory}-${group.service}-${index}`}>
+              {startsSection ? (
+                <Text className={`mb-3 font-psemibold text-xs uppercase tracking-widest text-secondary ${index > 0 ? 'mt-4' : ''}`}>
+                  {sectionLabel}
+                </Text>
+              ) : null}
+              <View className="mb-4 rounded-2xl border border-black-200 bg-black-100 px-5 py-5">
                 <View className="flex-row items-center justify-between gap-4">
                   <View className="flex-1">
                     <Text className="font-pbold text-base text-white">{group.service}</Text>
@@ -468,7 +530,9 @@ const Services = () => {
                       <Text className="mt-1 font-pregular text-sm text-gray-100">{details}</Text>
                     ) : null}
                     {addedRole && group.roles.length > 1 ? (
-                      <Text className="mt-1 font-pregular text-xs text-secondary">With {addedRole}</Text>
+                      <Text className="mt-1 font-pregular text-xs text-secondary">
+                        {isSessionOption(addedRole) ? addedRole : `With ${addedRole}`}
+                      </Text>
                     ) : null}
                   </View>
                   <TouchableOpacity
@@ -477,46 +541,15 @@ const Services = () => {
                     onPress={() => handleBook(group)}
                   >
                     <Text className={`font-psemibold text-sm ${addedRole ? 'text-secondary' : 'text-primary'}`}>
-                      {addedRole ? 'Added ✓' : 'Add'}
+                      {!addedSelection ? 'Add' : addedSelection.quantity > 1 ? `Added ×${addedSelection.quantity}` : 'Added ✓'}
                     </Text>
                   </TouchableOpacity>
                 </View>
               </View>
+              </React.Fragment>
             );
           })}
         </View>
-
-        {bookingSelections.length > 0 ? (
-          <View className="mx-4 mt-2 rounded-2xl border border-black-200 bg-black-100 px-5 py-5">
-            <Text className="font-psemibold text-lg text-white">Your booking</Text>
-            <Text className="mt-1 font-pregular text-sm text-gray-100">
-              You'll pick dates next. The salon replies in Messages to confirm a time.
-            </Text>
-
-            <View className="mt-4 gap-3">
-              {bookingSelections.map((selection) => (
-                <View key={selection.id} className="rounded-xl border border-white/10 bg-primary px-4 py-4">
-                  <View className="flex-row items-start justify-between gap-3">
-                    <View className="flex-1">
-                      <Text className="font-psemibold text-sm text-white">{selection.service}</Text>
-                      <Text className="mt-1 font-pregular text-xs text-gray-100">
-                        {[getCategoryLabel(selection.serviceCategory), selection.role, formatPrice(selection.price)].filter(Boolean).join(' · ')}
-                      </Text>
-                    </View>
-
-                    <TouchableOpacity
-                      activeOpacity={0.82}
-                      className="rounded-lg border border-white/10 px-3 py-2"
-                      onPress={() => handleRemoveSelection(selection.id)}
-                    >
-                      <Text className="font-psemibold text-xs text-gray-100">Remove</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ))}
-            </View>
-          </View>
-        ) : null}
 
         {categoryNames.length === 0 ? (
           <View className="items-center px-4 py-10">
@@ -536,7 +569,9 @@ const Services = () => {
         >
           <View className="flex-1 items-center justify-center bg-black/70 px-5">
             <View className="w-full rounded-2xl border border-black-200 bg-black-100 p-6">
-              <Text className="mb-1 font-psemibold text-xl text-white">Choose your stylist</Text>
+              <Text className="mb-1 font-psemibold text-xl text-white">
+                {getChoiceTitle(selectedService?.roles ?? [])}
+              </Text>
               <Text className="font-pregular text-sm text-gray-100">{selectedService?.service}</Text>
               {selectedService && getCategoryLabel(selectedService.serviceCategory) ? (
                 <Text className="mt-1 font-pregular text-sm text-secondary">{getCategoryLabel(selectedService.serviceCategory)}</Text>
@@ -551,7 +586,7 @@ const Services = () => {
               
               {selectedService?.roles.map((roleItem, index) => {
                 const isChosen =
-                  selectedRoleByService.get(getServiceKey(selectedService.serviceCategory, selectedService.service)) === roleItem.role;
+                  selectionByService.get(getServiceKey(selectedService.serviceCategory, selectedService.service))?.role === roleItem.role;
 
                 return (
                   <View key={index} className="mb-3 rounded-xl border border-white/10 bg-primary px-4 py-4">
@@ -575,7 +610,7 @@ const Services = () => {
                 );
               })}
 
-              {selectedService && selectedRoleByService.has(getServiceKey(selectedService.serviceCategory, selectedService.service)) ? (
+              {selectedService && selectionByService.has(getServiceKey(selectedService.serviceCategory, selectedService.service)) ? (
                 <TouchableOpacity
                   activeOpacity={0.82}
                   className="mt-2 items-center rounded-xl border border-white/10 px-4 py-3"
@@ -735,27 +770,109 @@ const Services = () => {
 
       {/* Always on screen once something is added, so nobody has to scroll to find the next step */}
       {bookingSelections.length > 0 ? (
-        <View className="flex-row items-center gap-3 border-t border-black-200 bg-black-100 px-4 py-3">
+        <View className="flex-row items-center border-t border-black-200 bg-black-100 px-4 py-3" style={{ columnGap: 10 }}>
+          <View style={{ flex: 1 }}>
+            <Text className="font-psemibold text-sm text-white">
+              {bookingCount} {bookingCount === 1 ? 'service' : 'services'}
+            </Text>
+            {bookingTotal > 0 ? (
+              <Text className="font-pregular text-xs text-gray-100">£{bookingTotal}</Text>
+            ) : null}
+          </View>
           <TouchableOpacity
             activeOpacity={0.82}
-            style={{ flex: 1 }}
-            onPress={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+            className="rounded-xl px-3.5 py-3"
+            style={{ backgroundColor: '#F87171' }}
+            onPress={() => setShowEditModal(true)}
           >
-            <Text className="font-psemibold text-sm text-white">
-              {bookingSelections.length} {bookingSelections.length === 1 ? 'service' : 'services'}
-              {bookingTotal > 0 ? ` · £${bookingTotal}` : ''}
-            </Text>
-            <Text className="font-pregular text-xs text-gray-100">View booking</Text>
+            <Text className="font-psemibold text-sm text-primary">Edit services</Text>
           </TouchableOpacity>
           <TouchableOpacity
             activeOpacity={0.82}
-            className="rounded-xl bg-secondary px-5 py-3"
+            className="rounded-xl bg-secondary px-3.5 py-3"
             onPress={handleBookSelections}
           >
             <Text className="font-psemibold text-sm text-primary">Choose dates</Text>
           </TouchableOpacity>
         </View>
       ) : null}
+
+      <Modal
+        visible={showEditModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowEditModal(false)}
+      >
+        <View className="flex-1 items-center justify-center bg-black/70 px-5">
+          <View className="w-full rounded-2xl border border-black-200 bg-black-100" style={{ maxHeight: '85%' }}>
+            <ScrollView contentContainerStyle={{ padding: 24 }}>
+              <Text className="font-psemibold text-xl text-white">Your services</Text>
+              <Text className="mt-1 font-pregular text-sm text-gray-100">
+                You'll pick dates next. The salon replies in Messages to confirm a time.
+              </Text>
+
+              <View className="mt-5" style={{ rowGap: 12 }}>
+                {bookingSelections.map((selection) => (
+                  <View key={selection.id} className="rounded-xl border border-white/10 bg-primary px-4 py-4">
+                    <View className="flex-row items-center justify-between" style={{ columnGap: 12 }}>
+                      <View className="flex-1">
+                        <Text className="font-psemibold text-sm text-white">{selection.service}</Text>
+                        <Text className="mt-1 font-pregular text-xs text-gray-100">
+                          {[
+                            getCategoryLabel(selection.serviceCategory),
+                            selection.role,
+                            selection.quantity > 1 && selection.price > 0 ? `${formatPrice(selection.price)} each` : formatPrice(selection.price),
+                          ].filter(Boolean).join(' · ')}
+                        </Text>
+                      </View>
+
+                      <View className="flex-row items-center" style={{ columnGap: 10 }}>
+                        <TouchableOpacity
+                          activeOpacity={0.82}
+                          accessibilityLabel={selection.quantity === 1 ? `Remove ${selection.service}` : `One fewer ${selection.service}`}
+                          className="h-9 w-9 items-center justify-center rounded-full border border-white/20"
+                          onPress={() => changeQuantity(selection.id, -1)}
+                        >
+                          <Text className="font-psemibold text-lg text-white">−</Text>
+                        </TouchableOpacity>
+                        <Text className="min-w-[16px] text-center font-psemibold text-base text-white">{selection.quantity}</Text>
+                        <TouchableOpacity
+                          activeOpacity={0.82}
+                          accessibilityLabel={`Add ${selection.service} for one more person`}
+                          disabled={selection.quantity >= MAX_QUANTITY}
+                          className={`h-9 w-9 items-center justify-center rounded-full bg-secondary ${selection.quantity >= MAX_QUANTITY ? 'opacity-40' : ''}`}
+                          onPress={() => changeQuantity(selection.id, 1)}
+                        >
+                          <Text className="font-psemibold text-lg text-primary">+</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                ))}
+              </View>
+
+              <Text className="mt-4 font-pregular text-xs text-gray-100">
+                Booking for someone else too? Tap + to add the same service again. Tap − to take it off.
+              </Text>
+
+              {bookingTotal > 0 ? (
+                <View className="mt-4 flex-row items-center justify-between border-t border-white/10 pt-4">
+                  <Text className="font-psemibold text-sm text-white">Total</Text>
+                  <Text className="font-psemibold text-sm text-white">£{bookingTotal}</Text>
+                </View>
+              ) : null}
+
+              <TouchableOpacity
+                activeOpacity={0.82}
+                className="mt-5 items-center rounded-xl bg-secondary px-4 py-3"
+                onPress={() => setShowEditModal(false)}
+              >
+                <Text className="font-psemibold text-sm text-primary">Done</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
