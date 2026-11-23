@@ -1,7 +1,7 @@
 import { ActivityIndicator, FlatList, Image, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import React, { useCallback, useMemo, useState } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 
@@ -16,11 +16,14 @@ function getImageCaption(image: GalleryImage) {
 }
 
 const Collection = () => {
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const { width: windowWidth } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const [selectedBundle, setSelectedBundle] = useState<string | null>(null);
   // Which image the full-screen viewer opened on, and which one is showing now.
   const [viewerStartIndex, setViewerStartIndex] = useState<number | null>(null);
   const [viewerIndex, setViewerIndex] = useState(0);
+  // The space between the viewer's top and bottom bars, measured on screen.
+  const [viewerAreaHeight, setViewerAreaHeight] = useState(0);
 
   // Leaving the tab closes the open bundle, so coming back shows every bundle.
   useFocusEffect(
@@ -164,10 +167,15 @@ const Collection = () => {
             activeBundle ? (
               <View style={styles.yearSection}>
                 <Text style={styles.yearTitle}>{activeBundle}</Text>
+                {/* One line under the name. The year is left out when the
+                    bundle is already named after it ("2021"). */}
                 <Text style={styles.yearSubtitle}>
-                  {[activeBundleYearLabel, activeBundleSubtitle].filter(Boolean).join(' · ') || 'No details'}
+                  {[
+                    activeBundleYearLabel !== activeBundle ? activeBundleYearLabel : null,
+                    activeBundleSubtitle,
+                    `${activeBundleImages.length} ${activeBundleImages.length === 1 ? 'image' : 'images'}`,
+                  ].filter(Boolean).join(' · ')}
                 </Text>
-                <Text style={styles.yearSubtitle}>{activeBundleImages.length} images in this bundle</Text>
 
                 <View style={styles.collage}>
                   {activeBundleImages.map((item, index) => {
@@ -204,7 +212,9 @@ const Collection = () => {
                 }
 
                 const bundleSubtitle = bundleImages.find((image) => Boolean(image.subtitle))?.subtitle ?? null;
-                const bundleSubText = [bundleYears.join(' · '), bundleSubtitle].filter(Boolean).join(' · ');
+                // The year isn't repeated under a bundle named after it ("2021").
+                const yearText = bundleYears.join(' · ');
+                const bundleSubText = [yearText !== bundleTitle ? yearText : null, bundleSubtitle].filter(Boolean).join(' · ');
 
                 return (
                   <Pressable key={bundleTitle} style={styles.yearBundleCard} onPress={() => setSelectedBundle(bundleTitle)}>
@@ -216,9 +226,11 @@ const Collection = () => {
                   <View style={styles.yearBundleOverlay} />
                   <View style={styles.yearBundleContent}>
                     <Text style={styles.yearBundleTitle}>{bundleTitle}</Text>
-                    {bundleSubText ? <Text style={styles.yearBundleMeta}>{bundleSubText}</Text> : null}
-                    <Text style={styles.yearBundleMeta}>{bundleImages.length} images</Text>
-                    <Text style={styles.yearBundleHint}>Tap to open this bundle</Text>
+                    {bundleSubText ? <Text style={styles.yearBundleMeta} numberOfLines={1}>{bundleSubText}</Text> : null}
+                    <Text style={styles.yearBundleMeta}>
+                      {bundleImages.length} {bundleImages.length === 1 ? 'image' : 'images'}
+                      <Text style={styles.yearBundleHint}>  ·  Tap to open</Text>
+                    </Text>
                   </View>
                 </Pressable>
                 );
@@ -242,46 +254,51 @@ const Collection = () => {
         onRequestClose={closeViewer}
         statusBarTranslucent
       >
+        {/* The counter and ✕ sit in a bar above the photo and the text in a
+            bar below it, so nothing covers the picture (the salon's photos
+            have the TopOne mark in a corner). */}
         <View style={styles.fullscreenOverlay}>
-          {viewerStartIndex !== null ? (
-            <FlatList
-              data={activeBundleImages}
-              keyExtractor={(item) => item.id}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              initialScrollIndex={Math.min(viewerStartIndex, activeBundleImages.length - 1)}
-              getItemLayout={(_, index) => ({ length: windowWidth, offset: windowWidth * index, index })}
-              onMomentumScrollEnd={handleViewerScrollEnd}
-              renderItem={({ item }) => (
-                <View style={{ width: windowWidth, height: windowHeight, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={[styles.viewerTopBar, { paddingTop: insets.top + 8 }]}>
+            <Text style={styles.fullscreenCounterText}>
+              {activeBundleImages.length > 1
+                ? `${Math.min(viewerIndex + 1, activeBundleImages.length)} / ${activeBundleImages.length}`
+                : ''}
+            </Text>
+            <TouchableOpacity
+              style={styles.fullscreenClose}
+              onPress={closeViewer}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+            >
+              <Text style={styles.fullscreenCloseText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={{ flex: 1 }} onLayout={(event) => setViewerAreaHeight(event.nativeEvent.layout.height)}>
+            {viewerStartIndex !== null && viewerAreaHeight > 0 ? (
+              <FlatList
+                data={activeBundleImages}
+                keyExtractor={(item) => item.id}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                initialScrollIndex={Math.min(viewerStartIndex, activeBundleImages.length - 1)}
+                getItemLayout={(_, index) => ({ length: windowWidth, offset: windowWidth * index, index })}
+                onMomentumScrollEnd={handleViewerScrollEnd}
+                renderItem={({ item }) => (
                   <Image
                     source={{ uri: item.imageUrl }}
-                    style={{ width: windowWidth, height: windowHeight }}
+                    style={{ width: windowWidth, height: viewerAreaHeight }}
                     resizeMode="contain"
                   />
-                </View>
-              )}
-            />
-          ) : null}
+                )}
+              />
+            ) : null}
+          </View>
 
-          {activeBundleImages.length > 1 ? (
-            <View style={styles.fullscreenCounter} pointerEvents="none">
-              <Text style={styles.fullscreenCounterText}>
-                {Math.min(viewerIndex + 1, activeBundleImages.length)} / {activeBundleImages.length}
-              </Text>
-            </View>
-          ) : null}
-
-          <TouchableOpacity style={styles.fullscreenClose} onPress={closeViewer}>
-            <Text style={styles.fullscreenCloseText}>✕</Text>
-          </TouchableOpacity>
-
-          {viewerCaption ? (
-            <View style={styles.fullscreenCaption} pointerEvents="none">
-              <Text style={styles.fullscreenCaptionText}>{viewerCaption}</Text>
-            </View>
-          ) : null}
+          <View style={[styles.viewerBottomBar, { paddingBottom: insets.bottom + 16 }]}>
+            {viewerCaption ? <Text style={styles.fullscreenCaptionText}>{viewerCaption}</Text> : null}
+          </View>
         </View>
       </Modal>
     </SafeAreaView>
@@ -347,13 +364,13 @@ const styles = StyleSheet.create({
     color: '#8ED1FC',
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    marginBottom: 14,
+    marginBottom: 16,
   },
   yearTitle: {
     color: '#ffffff',
     fontFamily: 'Poppins-SemiBold',
     fontSize: 20,
-    marginBottom: 12,
+    marginBottom: 2,
   },
   yearBundleCard: {
     backgroundColor: '#1E1E2D',
@@ -401,34 +418,25 @@ const styles = StyleSheet.create({
     fontSize: 28,
   },
   fullscreenOverlay: {
-    backgroundColor: 'rgba(0, 0, 0, 0.92)',
+    backgroundColor: '#000000',
     flex: 1,
   },
-  fullscreenCounter: {
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
-    borderRadius: 999,
-    left: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    position: 'absolute',
-    top: 58,
-    zIndex: 10,
+  viewerTopBar: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: 8,
+    paddingHorizontal: 18,
+  },
+  viewerBottomBar: {
+    minHeight: 24,
+    paddingHorizontal: 24,
+    paddingTop: 12,
   },
   fullscreenCounterText: {
-    color: '#ffffff',
+    color: '#CDCDE0',
     fontFamily: 'Poppins-SemiBold',
     fontSize: 14,
-  },
-  fullscreenCaption: {
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
-    borderRadius: 14,
-    bottom: 48,
-    left: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    position: 'absolute',
-    right: 24,
-    zIndex: 10,
   },
   fullscreenCaptionText: {
     color: '#ffffff',
@@ -438,17 +446,13 @@ const styles = StyleSheet.create({
   },
   fullscreenClose: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    borderColor: 'rgba(255,255,255,0.4)',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderColor: 'rgba(255,255,255,0.3)',
     borderRadius: 999,
     borderWidth: 1,
     height: 44,
     justifyContent: 'center',
-    position: 'absolute',
-    right: 18,
-    top: 52,
     width: 44,
-    zIndex: 10,
   },
   fullscreenCloseText: {
     color: '#ffffff',
