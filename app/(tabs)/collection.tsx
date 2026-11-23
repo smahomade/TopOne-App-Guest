@@ -1,15 +1,47 @@
-import { ActivityIndicator, Dimensions, Image, Modal, Platform, Pressable, RefreshControl, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import React, { useMemo, useState } from 'react';
+import { ActivityIndicator, FlatList, Image, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from 'expo-router';
 
 import { useRealtimeQuery } from '@/hooks/useRealtimeQuery';
-import { fetchGalleryImages, GALLERY_CONTENT_TABLES } from '@/lib/adminContent';
+import { fetchGalleryImages, GALLERY_CONTENT_TABLES, type GalleryImage } from '@/lib/adminContent';
 import { images } from '../../constants';
+import SalonLogo from '../../components/SalonLogo';
+
+// The image's own text from the staff app, or the year and subtitle as before.
+function getImageCaption(image: GalleryImage) {
+  return image.caption?.trim() || [image.year, image.subtitle].filter(Boolean).join(' · ');
+}
 
 const Collection = () => {
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const [selectedBundle, setSelectedBundle] = useState<string | null>(null);
-  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+  // Which image the full-screen viewer opened on, and which one is showing now.
+  const [viewerStartIndex, setViewerStartIndex] = useState<number | null>(null);
+  const [viewerIndex, setViewerIndex] = useState(0);
+
+  // Leaving the tab closes the open bundle, so coming back shows every bundle.
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setSelectedBundle(null);
+        setViewerStartIndex(null);
+      };
+    }, [])
+  );
+
+  const openViewer = (index: number) => {
+    setViewerIndex(index);
+    setViewerStartIndex(index);
+  };
+
+  const closeViewer = () => setViewerStartIndex(null);
+
+  const handleViewerScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    setViewerIndex(Math.round(event.nativeEvent.contentOffset.x / windowWidth));
+  };
   const {
     data: galleryResult,
     loading,
@@ -78,6 +110,10 @@ const Collection = () => {
     () => activeBundleImages.find((image) => Boolean(image.subtitle))?.subtitle ?? null,
     [activeBundleImages]
   );
+  // Switched on per bundle in the staff app ("Add subtext for each image").
+  const activeBundleShowsCaptions = activeBundleImages.some((image) => image.showCaptions);
+  const viewerImage = activeBundleImages[viewerIndex] ?? null;
+  const viewerCaption = activeBundleShowsCaptions && viewerImage ? getImageCaption(viewerImage) : '';
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-primary" style={{ backgroundColor: '#161622' }}>
@@ -101,8 +137,7 @@ const Collection = () => {
               <Text className="mt-1 font-psemibold text-2xl text-white">Collection</Text>
             </View>
           )}
-          <Image
-            source={images.logoTopOneWhite}
+          <SalonLogo
             style={{ width: 120, height: 52 }}
             resizeMode="contain"
           />
@@ -135,18 +170,20 @@ const Collection = () => {
                 <Text style={styles.yearSubtitle}>{activeBundleImages.length} images in this bundle</Text>
 
                 <View style={styles.collage}>
-                  {activeBundleImages.map((item) => (
-                    <Pressable key={item.id} style={styles.card} onPress={() => setFullscreenImage(item.imageUrl)}>
-                      <Image
-                        source={{ uri: item.imageUrl }}
-                        style={styles.image}
-                        resizeMode="cover"
-                      />
-                      <Text style={styles.caption}>
-                        {[item.year || 'Unknown', item.subtitle].filter(Boolean).join(' · ')}
-                      </Text>
-                    </Pressable>
-                  ))}
+                  {activeBundleImages.map((item, index) => {
+                    const caption = activeBundleShowsCaptions ? getImageCaption(item) : '';
+
+                    return (
+                      <Pressable key={item.id} style={styles.card} onPress={() => openViewer(index)}>
+                        <Image
+                          source={{ uri: item.imageUrl }}
+                          style={styles.image}
+                          resizeMode="cover"
+                        />
+                        {caption ? <Text style={styles.caption}>{caption}</Text> : null}
+                      </Pressable>
+                    );
+                  })}
                 </View>
               </View>
             ) : (
@@ -197,23 +234,53 @@ const Collection = () => {
         </View>
       </ScrollView>
 
+      {/* Opens on the tapped image; swipe left or right for the rest of the bundle. */}
       <Modal
-        visible={fullscreenImage !== null}
+        visible={viewerStartIndex !== null && activeBundleImages.length > 0}
         transparent
         animationType="fade"
-        onRequestClose={() => setFullscreenImage(null)}
+        onRequestClose={closeViewer}
         statusBarTranslucent
       >
         <View style={styles.fullscreenOverlay}>
-          <TouchableOpacity style={styles.fullscreenClose} onPress={() => setFullscreenImage(null)}>
+          {viewerStartIndex !== null ? (
+            <FlatList
+              data={activeBundleImages}
+              keyExtractor={(item) => item.id}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              initialScrollIndex={Math.min(viewerStartIndex, activeBundleImages.length - 1)}
+              getItemLayout={(_, index) => ({ length: windowWidth, offset: windowWidth * index, index })}
+              onMomentumScrollEnd={handleViewerScrollEnd}
+              renderItem={({ item }) => (
+                <View style={{ width: windowWidth, height: windowHeight, alignItems: 'center', justifyContent: 'center' }}>
+                  <Image
+                    source={{ uri: item.imageUrl }}
+                    style={{ width: windowWidth, height: windowHeight }}
+                    resizeMode="contain"
+                  />
+                </View>
+              )}
+            />
+          ) : null}
+
+          {activeBundleImages.length > 1 ? (
+            <View style={styles.fullscreenCounter} pointerEvents="none">
+              <Text style={styles.fullscreenCounterText}>
+                {Math.min(viewerIndex + 1, activeBundleImages.length)} / {activeBundleImages.length}
+              </Text>
+            </View>
+          ) : null}
+
+          <TouchableOpacity style={styles.fullscreenClose} onPress={closeViewer}>
             <Text style={styles.fullscreenCloseText}>✕</Text>
           </TouchableOpacity>
-          {fullscreenImage ? (
-            <Image
-              source={{ uri: fullscreenImage }}
-              style={styles.fullscreenImage}
-              resizeMode="contain"
-            />
+
+          {viewerCaption ? (
+            <View style={styles.fullscreenCaption} pointerEvents="none">
+              <Text style={styles.fullscreenCaptionText}>{viewerCaption}</Text>
+            </View>
           ) : null}
         </View>
       </Modal>
@@ -334,14 +401,40 @@ const styles = StyleSheet.create({
     fontSize: 28,
   },
   fullscreenOverlay: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.82)',
+    backgroundColor: 'rgba(0, 0, 0, 0.92)',
     flex: 1,
-    justifyContent: 'center',
   },
-  fullscreenImage: {
-    height: Dimensions.get('window').height,
-    width: Dimensions.get('window').width,
+  fullscreenCounter: {
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    borderRadius: 999,
+    left: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    position: 'absolute',
+    top: 58,
+    zIndex: 10,
+  },
+  fullscreenCounterText: {
+    color: '#ffffff',
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 14,
+  },
+  fullscreenCaption: {
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    borderRadius: 14,
+    bottom: 48,
+    left: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    position: 'absolute',
+    right: 24,
+    zIndex: 10,
+  },
+  fullscreenCaptionText: {
+    color: '#ffffff',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    textAlign: 'center',
   },
   fullscreenClose: {
     alignItems: 'center',

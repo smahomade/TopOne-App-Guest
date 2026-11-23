@@ -7,6 +7,7 @@ import CustomButton from '../../components/CustomButton';
 import TextLink from '../../components/TextLink';
 import { images } from '../../constants';
 import { supabase } from '../../lib/supabase';
+import SalonLogo from '../../components/SalonLogo';
 
 const PASSWORD_RESET_REDIRECT_URL = 'topone://reset-password';
 
@@ -59,10 +60,9 @@ const ForgotPassword = () => {
       >
         <View className="px-5 pb-4 pt-4">
           <View className="items-center">
-            <Image
-              source={images.logoTopOneWhite}
+            <SalonLogo
               resizeMode="contain"
-              className="w-[150px] h-[85px]"
+              style={{ width: 150, height: 85 }}
             />
           </View>
 

@@ -12,6 +12,7 @@ import PasswordStrengthMeter from '../../components/PasswordStrengthMeter';
 import PhoneField, { isFullPhoneNumber } from '../../components/PhoneField';
 import InfoModal from '../../components/InfoModal';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
+import SalonLogo from '../../components/SalonLogo';
 
 const rules = [
   (v: string) => v.length >= 8,
@@ -131,8 +132,7 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
       >
         <View className="px-5 pb-4 pt-4">
           <View className="items-center">
-            <Image
-              source={images.logoTopOneWhite}
+            <SalonLogo
               resizeMode="contain"
               style={{ width: 150, height: logoHeight }}
             />
@@ -188,7 +188,7 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
   onChangePhone={(full) => setForm({ ...form, phone: full })}
   OtherStyles="mt-5"
   hasError={showRequiredErrors && requiredFieldErrors.phone}
-/>
+            />
 {showRequiredErrors && requiredFieldErrors.phone && (
   <Text className="mt-2 font-pregular text-sm text-[#FF8A8A]">
     Enter your full phone number.

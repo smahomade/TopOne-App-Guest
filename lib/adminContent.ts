@@ -16,8 +16,12 @@ export type HomeBanner = {
 };
 
 export type GalleryImage = {
+  // The image's own line of text, written in the staff app.
+  caption: string | null;
   id: string;
   imageUrl: string;
+  // Set per bundle in the staff app: whether a line of text goes under each image.
+  showCaptions: boolean;
   subtitle: string | null;
   title: string | null;
   year: string;
@@ -345,10 +349,13 @@ export async function fetchGalleryImages(): Promise<LiveContentResult<GalleryIma
     }
 
     return {
+      caption: getString(row, ['caption']),
       id: getIdentifier(row),
       imageUrl,
+      showCaptions: getBoolean(row, ['show_captions', 'showCaptions'], false),
       subtitle: getString(row, ['subtitle', 'sub_title', 'subTitle', 'description']),
-      title: getString(row, ['title', 'name', 'caption']),
+      // Not 'caption': that's each image's own text now, not the bundle name.
+      title: getString(row, ['title', 'name']),
       year: getYear(row),
     };
   });
@@ -486,7 +493,11 @@ export async function fetchServices(locationId?: string | null): Promise<LiveCon
       categories[mainCategory] = [];
     }
 
-    const existingGroup = categories[mainCategory].find((group) => group.service === serviceName);
+    // The same name can sit in two sections (Ladies and Girls both have
+    // "Wash, cut & finish"), so a service is its section plus its name.
+    const existingGroup = categories[mainCategory].find(
+      (group) => group.service === serviceName && group.serviceCategory === serviceCategory
+    );
 
     if (existingGroup) {
       if (existingGroup.duration === null && duration !== null) {

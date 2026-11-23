@@ -11,6 +11,7 @@ import PasswordStrengthMeter from '../../components/PasswordStrengthMeter';
 import { images } from '../../constants';
 import { supabase } from '../../lib/supabase';
 import { extractTokens } from '../../lib/authLinks';
+import SalonLogo from '../../components/SalonLogo';
 
 const rules = [
   (v: string) => v.length >= 8,
@@ -126,10 +127,9 @@ const ResetPassword = () => {
       >
         <View className="px-5 pb-4 pt-4">
           <View className="items-center">
-            <Image
-              source={images.logoTopOneWhite}
+            <SalonLogo
               resizeMode="contain"
-              className="w-[150px] h-[85px]"
+              style={{ width: 150, height: 85 }}
             />
           </View>
 

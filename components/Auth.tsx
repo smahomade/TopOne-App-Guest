@@ -11,6 +11,7 @@ import PasswordStrengthMeter from './PasswordStrengthMeter'
 import InfoModal from './InfoModal'
 import GoogleSignInButton from './GoogleSignInButton'
 import TextLink from './TextLink'
+import SalonLogo from './SalonLogo';
 
 AppState.addEventListener('change', (state) => {
   if (state === 'active') {
@@ -160,8 +161,7 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
                 Current access: <Text style={styles.accessValue}>Guest Access</Text>
               </Text>
             </View>
-            <Image
-              source={images.logoTopOneWhite}
+            <SalonLogo
               style={{ width: 140, height: 56 }}
               resizeMode="contain"
             />

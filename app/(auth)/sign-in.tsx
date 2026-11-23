@@ -11,6 +11,7 @@ import TextLink from '../../components/TextLink'
 import { router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { hasPendingBooking } from '../../lib/pendingBooking'
+import SalonLogo from '../../components/SalonLogo';
 
 
 const SignIn = () => {
@@ -82,10 +83,9 @@ const SignIn = () => {
         contentContainerStyle={{ flexGrow: 1 }}
       >
         <View className="flex-1 justify-center items-center px-4">
-          <Image 
-            source={images.logoTopOneWhite}
+          <SalonLogo 
             resizeMode='contain' 
-            className="w-[150px] h-[85px]"
+            style={{ width: 150, height: 85 }}
           />
         </View>
 

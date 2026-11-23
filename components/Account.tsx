@@ -12,6 +12,7 @@ import PhoneField, { isFullPhoneNumber } from '../components/PhoneField';
 import InfoModal from '../components/InfoModal';
 import ConfirmModal from '../components/ConfirmModal';
 import { images } from '../constants';
+import SalonLogo from './SalonLogo';
 
 // Replaces the @rneui/themed Button, which doesn't support the safe-area version Expo SDK 58 needs.
 // Keeps the same layout and the same grey look while disabled.
@@ -53,7 +54,7 @@ export default function Account({ session }: { session: Session }) {
   const [showPhoneError, setShowPhoneError] = useState(false);
   const [showUpdatedModal, setShowUpdatedModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [deleteStep, setDeleteStep] = useState<'none' | 'details' | 'final'>('none');
+  const [deleteStep, setDeleteStep] = useState<'none' | 'details'>('none');
   const emailAddress = session.user.email ?? '';
 
   useEffect(() => {
@@ -169,8 +170,7 @@ export default function Account({ session }: { session: Session }) {
           Update your account details below.
         </Text>
       </View>
-      <Image
-        source={images.logoTopOneWhite}
+      <SalonLogo
         style={{ width: 140, height: 56 }}
         resizeMode="contain"
       />
@@ -263,6 +263,7 @@ export default function Account({ session }: { session: Session }) {
     </ScrollView>
     </AvoidKeyboard>
 
+    {/* Typing the word stands in for a second "Are you sure?" pop-up. */}
     <ConfirmModal
       visible={deleteStep === 'details'}
       title="Delete your account?"
@@ -272,18 +273,9 @@ export default function Account({ session }: { session: Session }) {
         'Your enquiry and message history',
         'Access to this account on every device',
       ]}
-      confirmText="Delete"
+      confirmWord="Delete"
+      confirmText="Delete my account"
       cancelText="Keep my account"
-      onConfirm={() => setDeleteStep('final')}
-      onCancel={() => setDeleteStep('none')}
-    />
-
-    <ConfirmModal
-      visible={deleteStep === 'final'}
-      title="Are you sure?"
-      message="Your account will be deleted straight away and cannot be recovered."
-      confirmText="Yes, delete my account"
-      cancelText="Cancel"
       isLoading={deleting}
       onConfirm={() => void deleteAccount()}
       onCancel={() => setDeleteStep('none')}

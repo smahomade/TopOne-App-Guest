@@ -8,6 +8,7 @@ import { useRealtimeQuery } from '@/hooks/useRealtimeQuery';
 import { fetchLocations, LOCATION_CONTENT_TABLES } from '@/lib/adminContent';
 import { icons, images } from '../../constants';
 import { supabase } from '../../lib/supabase';
+import SalonLogo from '../../components/SalonLogo';
 
 type Banner = {
   created_at?: string | null;
@@ -436,8 +437,7 @@ const Home = () => {
                 <Text className="font-pregular text-sm text-gray-100">{userName ? 'Welcome back,' : 'Welcome to'}</Text>
                 <Text className="font-psemibold text-2xl text-white">{userName ?? 'TopOne'}</Text>
               </View>
-              <Image
-                source={images.logoTopOneWhite}
+              <SalonLogo
                 style={{ width: 160, height: 64 }}
                 resizeMode="contain"
               />
