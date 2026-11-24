@@ -5,9 +5,11 @@ name: iPhone simulator check
 # on every iPhone screen size, each on its own Mac. Screenshots are saved as one
 # "iphone-<model>" artifact per model.
 #
-# It runs on every pull request and on every push to main, unless the change
-# only touches files the app doesn't use (notes, store pages, database scripts,
-# server functions). Start it by hand from the Actions tab (Run workflow), or:
+# It runs on every pull request, unless the change only touches files the app
+# doesn't use (notes, store pages, database scripts, server functions). It
+# doesn't run again when a pull request is merged into main, because the pull
+# request's run already checked that code. Start it by hand from the Actions
+# tab (Run workflow), or:
 #   gh workflow run ios-simulator-check.yml --ref <branch>
 #
 # It needs two repository secrets, the same values as in .env:
@@ -23,18 +25,9 @@ on:
       - 'store/**'
       - 'scripts/**'
       - 'supabase/**'
-  # Runs on main also save the build where every pull request can reuse it
-  push:
-    branches: [main]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'store/**'
-      - 'scripts/**'
-      - 'supabase/**'
 
 # A new push to a pull request cancels its older run, whose result no longer
-# matters. On main, a new run waits for the one before it instead.
+# matters. Runs started by hand on the same branch wait for each other instead.
 concurrency:
   group: ios-simulator-check-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
