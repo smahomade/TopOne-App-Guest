@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Alert, Image, ScrollView, Text, View } from 'react-native';
+import { Alert, Image, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AvoidKeyboard from '../../components/AvoidKeyboard';
+import FormScrollView from '../../components/FormScrollView';
 import FormField from '../../components/FormField';
 import CustomButton from '../../components/CustomButton';
 import TextLink from '../../components/TextLink';
@@ -48,14 +48,10 @@ const ForgotPassword = () => {
 
   return (
     <SafeAreaView className="bg-cream h-full">
-      <AvoidKeyboard>
-      <ScrollView
+      <FormScrollView
         bounces={false}
         alwaysBounceVertical={false}
         overScrollMode="never"
-        // Without this, a tap while the keyboard is open only closes the
-        // keyboard, so buttons and links seem to need two taps
-        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ flexGrow: 1 }}
       >
         <View className="px-5 pb-4 pt-4">
@@ -112,8 +108,7 @@ const ForgotPassword = () => {
             If there's an account for this email, we'll send it a link to reset your password. If it doesn't arrive within a few minutes, check your spam folder.
           </Text>
         </View>
-      </ScrollView>
-      </AvoidKeyboard>
+      </FormScrollView>
     </SafeAreaView>
   );
 };

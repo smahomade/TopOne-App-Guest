@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { StyleSheet, View, Alert, ScrollView, Text, Image, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Alert, Text, Image, TouchableOpacity } from 'react-native';
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AvoidKeyboard from './AvoidKeyboard';
+import FormScrollView from './FormScrollView';
 
 import FormField from '../components/FormField';
 import PhoneField, { isFullPhoneNumber } from '../components/PhoneField';
@@ -155,8 +155,7 @@ export default function Account({ session }: { session: Session }) {
 
   return (
   <SafeAreaView edges={['top']} className="flex-1 bg-cream" style={{ backgroundColor: '#F4F1EC' }}>
-    <AvoidKeyboard>
-    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+    <FormScrollView contentContainerStyle={{ flexGrow: 1 }}>
     <View style={styles.container}>
     <View style={styles.headerRow}>
       <View className="flex-1 pr-4">
@@ -260,8 +259,7 @@ export default function Account({ session }: { session: Session }) {
         </Text>
       </View>
     </View>
-    </ScrollView>
-    </AvoidKeyboard>
+    </FormScrollView>
 
     {/* Typing the word stands in for a second "Are you sure?" pop-up. */}
     <ConfirmModal

@@ -1,7 +1,7 @@
-import { BackHandler, Image, ScrollView, Text, View } from 'react-native'
+import { BackHandler, Image, Text, View } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import AvoidKeyboard from '../../components/AvoidKeyboard'
+import FormScrollView from '../../components/FormScrollView'
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import type { User } from '@supabase/supabase-js'
 import { images } from '../../constants'
@@ -127,12 +127,10 @@ const AddPhone = () => {
 
   return (
     <SafeAreaView className="bg-cream h-full">
-      <AvoidKeyboard>
-      <ScrollView
+      <FormScrollView
         bounces={false}
         alwaysBounceVertical={false}
         overScrollMode="never"
-        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ flexGrow: 1 }}
       >
         {/* One group, a third of the way down: the spare height is split 1:2
@@ -213,8 +211,7 @@ const AddPhone = () => {
           </View>
         </View>
         <View style={{ flexGrow: 2 }} />
-      </ScrollView>
-      </AvoidKeyboard>
+      </FormScrollView>
 
       <InfoModal
         visible={saveError !== null}

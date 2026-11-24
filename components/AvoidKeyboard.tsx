@@ -1,11 +1,13 @@
 import React from 'react'
 import { KeyboardAvoidingView, Platform } from 'react-native'
 
-// Goes around a form screen's ScrollView so the keyboard never covers the
-// field being typed in. The app draws edge to edge, so Android no longer moves
-// the screen up for the keyboard by itself. This shrinks the screen to the
-// space above the keyboard instead, and the ScrollView can then be scrolled to
-// the fields and buttons further down.
+// Shrinks what it wraps to the space above the keyboard, so the keyboard never
+// covers the field being typed in. The app draws edge to edge, so Android no
+// longer moves the screen up for the keyboard by itself.
+//
+// Form pages use FormScrollView, which wraps itself in this on Android only
+// (on iPhone its ScrollView handles the keyboard). Pop-ups with a centred card,
+// like ConfirmModal, use this directly on both.
 const AvoidKeyboard = ({ children }: { children: React.ReactNode }) => (
   <KeyboardAvoidingView
     style={{ flex: 1 }}
