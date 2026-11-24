@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { Modal, ScrollView, View, Text, TextInput, TouchableOpacity } from 'react-native';
 import CustomButton from './CustomButton';
 import AvoidKeyboard from './AvoidKeyboard';
 
@@ -45,9 +45,11 @@ const ConfirmModal = ({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <AvoidKeyboard>
-      <View
-        style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
-        className="flex-1 items-center justify-center px-6"
+      <View style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', flex: 1 }}>
+      {/* Scrolls when the keyboard leaves too little room on a small phone. */}
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 24 }}
+        keyboardShouldPersistTaps="handled"
       >
         <View className="w-full rounded-2xl bg-black-100 p-6">
           <Text className="text-center text-xl text-white font-psemibold">
@@ -115,6 +117,7 @@ const ConfirmModal = ({
             </Text>
           </TouchableOpacity>
         </View>
+      </ScrollView>
       </View>
       </AvoidKeyboard>
     </Modal>

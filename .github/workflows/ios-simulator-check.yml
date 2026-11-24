@@ -130,14 +130,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # One of each iPhone screen size, smallest to largest (width x height in points)
+        # One of each iPhone screen size that runs the current iOS (iPhone 11
+        # and newer, SE 2nd generation and newer), smallest to largest, in
+        # width x height points. Models of the same size lay the app out the same.
         iphone:
-          - iPhone SE (3rd generation)   # 375 x 667, home button
-          - iPhone 13 mini               # 375 x 812
-          - iPhone 12 Pro                # 390 x 844, also 12, 13, 14, 16e
+          - iPhone SE (3rd generation)   # 375 x 667, home button, also SE 2nd gen
+          - iPhone 13 mini               # 375 x 812, also 11 Pro, 12 mini
+          - iPhone 12 Pro                # 390 x 844, also 12, 13, 13 Pro, 14, 16e, 17e
           - iPhone 15                    # 393 x 852, also 14 Pro, 15 Pro, 16
           - iPhone 17 Pro                # 402 x 874, also 16 Pro, 17
+          - iPhone 11                    # 414 x 896, also 11 Pro Max
           - iPhone Air                   # 420 x 912
+          - iPhone 14 Plus               # 428 x 926, also 12 Pro Max, 13 Pro Max
           - iPhone 16 Plus               # 430 x 932, also 14 Pro Max, 15 Plus, 15 Pro Max
           - iPhone 17 Pro Max            # 440 x 956, also 16 Pro Max
     steps:

@@ -106,9 +106,14 @@ function formatServiceDuration(duration: number | null) {
   return `${minutes} min`;
 }
 
+// £1,400 rather than £1400.
+function formatMoney(amount: number) {
+  return `£${String(amount).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+}
+
 // A price of 0 means the salon didn't enter one: the website's "Price on consultation".
 function formatPrice(price: number) {
-  return price > 0 ? `£${price}` : 'Price on consultation';
+  return price > 0 ? formatMoney(price) : 'Price on consultation';
 }
 
 function formatPriceRange(roles: ServiceRole[]) {
@@ -120,7 +125,22 @@ function formatPriceRange(roles: ServiceRole[]) {
 
   const lowestPrice = Math.min(...prices);
 
-  return lowestPrice === Math.max(...prices) ? `£${lowestPrice}` : `From £${lowestPrice}`;
+  return lowestPrice === Math.max(...prices) ? formatMoney(lowestPrice) : `From ${formatMoney(lowestPrice)}`;
+}
+
+// Package names like "Full body 1: full legs & full arms, bikini…" show as a
+// short bold name with what's included on a lighter line underneath, so they
+// don't become four lines of bold on a small phone.
+function splitServiceName(name: string) {
+  const colonIndex = name.indexOf(': ');
+
+  if (colonIndex <= 0) {
+    return { title: name, detail: null };
+  }
+
+  const detail = name.slice(colonIndex + 2);
+
+  return { title: name.slice(0, colonIndex), detail: detail.charAt(0).toUpperCase() + detail.slice(1) };
 }
 
 // One line per service, whichever stylist was picked. Booking it for more
@@ -481,7 +501,15 @@ const Services = () => {
             </Text>
           ) : null}
 
-          <View className="mb-6 flex-row flex-wrap gap-3">
+          {/* One row that scrolls sideways: wrapped onto four rows, the nine
+              types filled half of a small phone's screen. It runs to the
+              screen edges so the cut-off button shows there's more. */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginHorizontal: -16, marginBottom: 20 }}
+            contentContainerStyle={{ columnGap: 8, paddingHorizontal: 16 }}
+          >
             {categoryNames.map((category) => {
               const isSelected = selectedCategory === category;
 
@@ -489,7 +517,7 @@ const Services = () => {
                 <TouchableOpacity
                   key={category}
                   activeOpacity={0.82}
-                  className={`rounded-full border px-4 py-3 ${isSelected ? 'border-secondary bg-secondary' : 'border-black-200 bg-black-100'}`}
+                  className={`rounded-full border px-4 py-2.5 ${isSelected ? 'border-secondary bg-secondary' : 'border-black-200 bg-black-100'}`}
                   onPress={() => setSelectedCategory(category)}
                 >
                   <Text className={`font-psemibold text-sm ${isSelected ? 'text-primary' : 'text-white'}`}>
@@ -498,7 +526,7 @@ const Services = () => {
                 </TouchableOpacity>
               );
             })}
-          </View>
+          </ScrollView>
 
           <Text className="mb-4 font-psemibold text-xl text-white">Available Services</Text>
         </View>
@@ -514,6 +542,7 @@ const Services = () => {
             // the tables on the salon's price list.
             const sectionLabel = getCategoryLabel(group.serviceCategory);
             const startsSection = Boolean(sectionLabel) && selectedServices[index - 1]?.serviceCategory !== group.serviceCategory;
+            const name = splitServiceName(group.service);
 
             return (
               <React.Fragment key={`${group.serviceCategory}-${group.service}-${index}`}>
@@ -522,10 +551,13 @@ const Services = () => {
                   {sectionLabel}
                 </Text>
               ) : null}
-              <View className="mb-4 rounded-2xl border border-black-200 bg-black-100 px-5 py-5">
-                <View className="flex-row items-center justify-between gap-4">
+              <View className="mb-3 rounded-2xl border border-black-200 bg-black-100 px-4 py-4">
+                <View className="flex-row items-center justify-between" style={{ columnGap: 12 }}>
                   <View className="flex-1">
-                    <Text className="font-pbold text-base text-white">{group.service}</Text>
+                    <Text className="font-pbold text-base text-white">{name.title}</Text>
+                    {name.detail ? (
+                      <Text className="mt-0.5 font-pregular text-xs leading-5 text-gray-100">{name.detail}</Text>
+                    ) : null}
                     {details ? (
                       <Text className="mt-1 font-pregular text-sm text-gray-100">{details}</Text>
                     ) : null}
@@ -568,29 +600,41 @@ const Services = () => {
           onRequestClose={() => setShowRolesModal(false)}
         >
           <View className="flex-1 items-center justify-center bg-black/70 px-5">
-            <View className="w-full rounded-2xl border border-black-200 bg-black-100 p-6">
-              <Text className="mb-1 font-psemibold text-xl text-white">
+            {/* Capped and scrollable, so four or more options (laser) and
+                larger text sizes still fit on a small phone. */}
+            <View className="w-full rounded-2xl border border-black-200 bg-black-100" style={{ maxHeight: '85%' }}>
+            <ScrollView contentContainerStyle={{ padding: 20 }}>
+              <Text className="font-psemibold text-xl text-white">
                 {getChoiceTitle(selectedService?.roles ?? [])}
               </Text>
-              <Text className="font-pregular text-sm text-gray-100">{selectedService?.service}</Text>
-              {selectedService && getCategoryLabel(selectedService.serviceCategory) ? (
-                <Text className="mt-1 font-pregular text-sm text-secondary">{getCategoryLabel(selectedService.serviceCategory)}</Text>
+              {selectedService ? (
+                <>
+                  <Text className="mt-1 font-psemibold text-base text-white">
+                    {splitServiceName(selectedService.service).title}
+                  </Text>
+                  {splitServiceName(selectedService.service).detail ? (
+                    <Text className="mt-0.5 font-pregular text-xs leading-5 text-gray-100">
+                      {splitServiceName(selectedService.service).detail}
+                    </Text>
+                  ) : null}
+                  {getCategoryLabel(selectedService.serviceCategory) || formatServiceDuration(selectedService.duration) ? (
+                    <Text className="mt-1 font-pregular text-sm text-secondary">
+                      {[getCategoryLabel(selectedService.serviceCategory), formatServiceDuration(selectedService.duration)]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </Text>
+                  ) : null}
+                </>
               ) : null}
-              {selectedService && formatServiceDuration(selectedService.duration) ? (
-                <Text className="mb-5 mt-1 font-pregular text-sm text-gray-100">
-                  Duration: {formatServiceDuration(selectedService.duration)}
-                </Text>
-              ) : (
-                <View className="mb-5" />
-              )}
-              
+              <View className="mb-4" />
+
               {selectedService?.roles.map((roleItem, index) => {
                 const isChosen =
                   selectionByService.get(getServiceKey(selectedService.serviceCategory, selectedService.service))?.role === roleItem.role;
 
                 return (
-                  <View key={index} className="mb-3 rounded-xl border border-white/10 bg-primary px-4 py-4">
-                    <View className="flex-row items-center justify-between gap-3">
+                  <View key={index} className="mb-2.5 rounded-xl border border-white/10 bg-primary px-4 py-3">
+                    <View className="flex-row items-center justify-between" style={{ columnGap: 12 }}>
                       <View className="flex-1">
                         <Text className="font-psemibold text-base text-white">{roleItem.role}</Text>
                         <Text className="mt-1 font-pregular text-sm text-gray-100">{formatPrice(roleItem.price)}</Text>
@@ -627,6 +671,7 @@ const Services = () => {
               >
                 <Text className="font-psemibold text-sm text-gray-100">Close</Text>
               </TouchableOpacity>
+            </ScrollView>
             </View>
           </View>
         </Modal>
@@ -770,29 +815,33 @@ const Services = () => {
 
       {/* Always on screen once something is added, so nobody has to scroll to find the next step */}
       {bookingSelections.length > 0 ? (
-        <View className="flex-row items-center border-t border-black-200 bg-black-100 px-4 py-3" style={{ columnGap: 10 }}>
-          <View style={{ flex: 1 }}>
-            <Text className="font-psemibold text-sm text-white">
+        <View className="flex-row items-center border-t border-black-200 bg-black-100 px-4 py-3" style={{ columnGap: 8 }}>
+          {/* Shrinks rather than wraps, so "10 services" and "£12,000" stay
+              on one line beside the two buttons on a small phone. */}
+          <View style={{ flex: 1, minWidth: 56 }}>
+            <Text className="font-psemibold text-sm text-white" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
               {bookingCount} {bookingCount === 1 ? 'service' : 'services'}
             </Text>
             {bookingTotal > 0 ? (
-              <Text className="font-pregular text-xs text-gray-100">£{bookingTotal}</Text>
+              <Text className="font-pregular text-xs text-gray-100" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+                {formatMoney(bookingTotal)}
+              </Text>
             ) : null}
           </View>
           <TouchableOpacity
             activeOpacity={0.82}
-            className="rounded-xl px-3.5 py-3"
+            className="rounded-xl px-3 py-3"
             style={{ backgroundColor: '#F87171' }}
             onPress={() => setShowEditModal(true)}
           >
-            <Text className="font-psemibold text-sm text-primary">Edit services</Text>
+            <Text className="font-psemibold text-sm text-primary" numberOfLines={1}>Edit services</Text>
           </TouchableOpacity>
           <TouchableOpacity
             activeOpacity={0.82}
-            className="rounded-xl bg-secondary px-3.5 py-3"
+            className="rounded-xl bg-secondary px-3 py-3"
             onPress={handleBookSelections}
           >
-            <Text className="font-psemibold text-sm text-primary">Choose dates</Text>
+            <Text className="font-psemibold text-sm text-primary" numberOfLines={1}>Choose dates</Text>
           </TouchableOpacity>
         </View>
       ) : null}
@@ -813,18 +862,18 @@ const Services = () => {
 
               <View className="mt-5" style={{ rowGap: 12 }}>
                 {bookingSelections.map((selection) => (
-                  <View key={selection.id} className="rounded-xl border border-white/10 bg-primary px-4 py-4">
-                    <View className="flex-row items-center justify-between" style={{ columnGap: 12 }}>
-                      <View className="flex-1">
-                        <Text className="font-psemibold text-sm text-white">{selection.service}</Text>
-                        <Text className="mt-1 font-pregular text-xs text-gray-100">
-                          {[
-                            getCategoryLabel(selection.serviceCategory),
-                            selection.role,
-                            selection.quantity > 1 && selection.price > 0 ? `${formatPrice(selection.price)} each` : formatPrice(selection.price),
-                          ].filter(Boolean).join(' · ')}
-                        </Text>
-                      </View>
+                  <View key={selection.id} className="rounded-xl border border-white/10 bg-primary px-4 py-3">
+                    {/* The name gets the full width; the details and − / +
+                        share the line under it, so nothing wraps into a
+                        narrow column beside the buttons. */}
+                    <Text className="font-psemibold text-sm text-white">{splitServiceName(selection.service).title}</Text>
+                    <Text className="mt-0.5 font-pregular text-xs text-gray-100">
+                      {[getCategoryLabel(selection.serviceCategory), selection.role].filter(Boolean).join(' · ')}
+                    </Text>
+                    <View className="mt-2 flex-row items-center justify-between" style={{ columnGap: 12 }}>
+                      <Text className="flex-1 font-psemibold text-sm text-secondary">
+                        {selection.quantity > 1 && selection.price > 0 ? `${formatPrice(selection.price)} each` : formatPrice(selection.price)}
+                      </Text>
 
                       <View className="flex-row items-center" style={{ columnGap: 10 }}>
                         <TouchableOpacity
@@ -858,7 +907,7 @@ const Services = () => {
               {bookingTotal > 0 ? (
                 <View className="mt-4 flex-row items-center justify-between border-t border-white/10 pt-4">
                   <Text className="font-psemibold text-sm text-white">Total</Text>
-                  <Text className="font-psemibold text-sm text-white">£{bookingTotal}</Text>
+                  <Text className="font-psemibold text-sm text-white">{formatMoney(bookingTotal)}</Text>
                 </View>
               ) : null}
 

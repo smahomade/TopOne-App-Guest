@@ -26,8 +26,14 @@ const TabIcon = ({ icon, color, name, focused }: TabIconProps) => {
                 className="w-6 h-6"
              />
 
+             {/* One line, and only a little bigger with large phone text sizes:
+                 five tabs share a small phone's width, so "Collection" broke
+                 into "Collecti / on". */}
              <Text className={`${focused ? 'font-psemibold': 'font-pregular'} text-xs`}
                     style={{color:color}}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    maxFontSizeMultiplier={1.15}
                     >
                 {name}
              </Text>

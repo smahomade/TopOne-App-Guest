@@ -43,6 +43,18 @@ name: iPhone signed-out check
 - waitForAnimationToEnd
 - takeScreenshot: 04-booking-bar
 
+# The "Your services" pop-up, then the same service for a second person
+- tapOn: "Edit services"
+- waitForAnimationToEnd
+- takeScreenshot: 04b-edit-services
+- tapOn:
+    # The + button's VoiceOver label
+    text: "Add .* for one more person"
+    optional: true
+- takeScreenshot: 04c-edit-services-two-people
+- tapOn: "Done"
+- waitForAnimationToEnd
+
 # Dates and time of day. The 15th of next month is always in the future;
 # if the salon is closed that weekday, the next days are tried.
 - tapOn: "Choose dates"
@@ -193,3 +205,31 @@ name: iPhone signed-out check
 - tapOn: "Messages(, tab.*)?"
 - waitForAnimationToEnd
 - takeScreenshot: 15-messages
+
+# A collection bundle and the full-screen viewer. Bundles come from the
+# database, so these only save screenshots and never stop the run.
+- tapOn: "Collection(, tab.*)?"
+- waitForAnimationToEnd
+- tapOn:
+    # A bundle card reads like "2021, 27 images · Tap to open" to VoiceOver.
+    # Matching on "Tap to open" skips the line above the bundles, which
+    # also has "images" in it.
+    text: ".*Tap to open.*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: 16-collection-bundle
+- runFlow:
+    when:
+      # The open bundle's line under its name ends with the image count
+      visible: "(.* · )?\\d+ images?"
+    commands:
+      # The first photo in the grid
+      - tapOn:
+          point: "25%,50%"
+      - waitForAnimationToEnd
+      - takeScreenshot: 17-collection-viewer
+      - swipe:
+          direction: LEFT
+      - waitForAnimationToEnd
+      - takeScreenshot: 18-collection-viewer-swiped
