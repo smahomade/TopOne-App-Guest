@@ -1,7 +1,7 @@
-import { Alert, View, Text, ScrollView, Image, useWindowDimensions } from 'react-native';
+import { Alert, View, Text, Image, useWindowDimensions } from 'react-native';
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AvoidKeyboard from '../../components/AvoidKeyboard';
+import FormScrollView from '../../components/FormScrollView';
 import { images } from '../../constants';
 import FormField from '../../components/FormField';
 import CustomButton from '../../components/CustomButton';
@@ -120,14 +120,10 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
 
   return (
     <SafeAreaView className="bg-cream h-full">
-      <AvoidKeyboard>
-      <ScrollView
+      <FormScrollView
         bounces={false}
         alwaysBounceVertical={false}
         overScrollMode="never"
-        // Without this, a tap while the keyboard is open only closes the
-        // keyboard, so buttons and links seem to need two taps
-        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ flexGrow: 1 }}
       >
         <View className="px-5 pb-4 pt-4">
@@ -233,8 +229,7 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
             <TextLink label="Sign in" href="/sign-in" sizeClassName="text-base" />
           </View>
         </View>
-      </ScrollView>
-      </AvoidKeyboard>
+      </FormScrollView>
 
       <InfoModal
         visible={showConfirmEmailModal}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Image, ScrollView, Text, View } from 'react-native';
+import { Alert, Image, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AvoidKeyboard from '../../components/AvoidKeyboard';
+import FormScrollView from '../../components/FormScrollView';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 
@@ -115,14 +115,10 @@ const ResetPassword = () => {
 
   return (
     <SafeAreaView className="bg-cream h-full">
-      <AvoidKeyboard>
-      <ScrollView
+      <FormScrollView
         bounces={false}
         alwaysBounceVertical={false}
         overScrollMode="never"
-        // Without this, a tap while the keyboard is open only closes the
-        // keyboard, so buttons seem to need two taps
-        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ flexGrow: 1 }}
       >
         <View className="px-5 pb-4 pt-4">
@@ -184,8 +180,7 @@ const ResetPassword = () => {
             If this screen says the recovery link is required, open it directly from the password reset email again.
           </Text>
         </View>
-      </ScrollView>
-      </AvoidKeyboard>
+      </FormScrollView>
     </SafeAreaView>
   );
 };

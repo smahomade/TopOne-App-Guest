@@ -1,7 +1,7 @@
-import { View, Text, ScrollView, Image, AppState } from 'react-native'
+import { View, Text, Image, AppState } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import AvoidKeyboard from '../../components/AvoidKeyboard'
+import FormScrollView from '../../components/FormScrollView'
 import { images } from '../../constants'
 import FormField from '../../components/FormField'
 import CustomButton from '../../components/CustomButton'
@@ -72,14 +72,10 @@ const SignIn = () => {
 
   return (
     <SafeAreaView className="bg-cream h-full">
-      <AvoidKeyboard>
-      <ScrollView
+      <FormScrollView
         bounces={false}
         alwaysBounceVertical={false}
         overScrollMode="never"
-        // Without this, a tap while the keyboard is open only closes the
-        // keyboard, so buttons and links seem to need two taps
-        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ flexGrow: 1 }}
       >
         <View className="flex-1 justify-center items-center px-4">
@@ -140,8 +136,7 @@ const SignIn = () => {
             <TextLink label="Click Here" href="/forgot-password" />
           </View>
         </View>
-      </ScrollView>
-      </AvoidKeyboard>
+      </FormScrollView>
 
       <InfoModal
         visible={loginError !== null}
