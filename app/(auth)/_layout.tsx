@@ -45,8 +45,8 @@ const AuthLayout = () => {
         }}
       />
     </Stack>
-    
-
+    {/* Dark icons on the cream pages (the start screen's photo uses light ones) */}
+    <StatusBar style='dark' />
     </>
     
   )

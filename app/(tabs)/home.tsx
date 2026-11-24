@@ -126,20 +126,20 @@ const BannerCard = ({ banner, imageSource, index, isNewPromotion, onPress }: Ban
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.45)',
+            backgroundColor: 'rgba(26, 24, 23, 0.45)',
             borderRadius: 16,
           }}
         />
 
         {isNewPromotion ? (
           <Animated.View
-            className="absolute left-4 top-4 rounded-full border border-secondary bg-primary/90 px-3 py-1.5"
+            className="absolute left-4 top-4 rounded-full border border-ink bg-cream/90 px-3 py-1.5"
             style={{
               opacity: badgeOpacity,
               transform: [{ scale: badgeScale }],
             }}
           >
-            <Text className="font-psemibold text-[11px] uppercase tracking-widest text-secondary">New promotion</Text>
+            <Text className="font-psemibold text-[11px] uppercase tracking-widest text-ink">New promotion</Text>
           </Animated.View>
         ) : null}
 
@@ -148,18 +148,18 @@ const BannerCard = ({ banner, imageSource, index, isNewPromotion, onPress }: Ban
           style={{ alignItems: banner.text_align === 'right' ? 'flex-end' : 'flex-start' }}
         >
           <Text
-            className="font-psemibold text-xl text-white"
+            className="font-display text-[22px] text-white"
             style={{ textAlign: banner.text_align }}
           >
             {banner.title}
           </Text>
           <Text
-            className="mt-0.5 font-pregular text-sm text-gray-100"
+            className="mt-0.5 font-pregular text-sm text-[#E8E2DA]"
             style={{ textAlign: banner.text_align }}
           >
             {banner.description}
           </Text>
-          <Text className="mt-2 font-psemibold text-xs text-secondary">Tap for more details</Text>
+          <Text className="mt-2 font-psemibold text-xs uppercase tracking-widest text-white underline">Tap for more details</Text>
         </View>
       </TouchableOpacity>
     </Animated.View>
@@ -413,14 +413,14 @@ const Home = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-primary" style={{ backgroundColor: '#161622' }}>
+    <SafeAreaView className="flex-1 bg-cream" style={{ backgroundColor: '#F4F1EC' }}>
       <FlatList
         data={visibleBanners}
         keyExtractor={(item) => item.id}
-        className="bg-primary"
-        style={{ backgroundColor: '#161622' }}
+        className="bg-cream"
+        style={{ backgroundColor: '#F4F1EC' }}
         contentContainerStyle={{ paddingBottom: 32 }}
-        refreshControl={<RefreshControl refreshing={bannersRefreshing} onRefresh={refetchBanners} tintColor="#8ED1FC" />}
+        refreshControl={<RefreshControl refreshing={bannersRefreshing} onRefresh={refetchBanners} tintColor="#1A1817" />}
         renderItem={({ item, index }) => (
           <BannerCard
             banner={item}
@@ -434,8 +434,8 @@ const Home = () => {
           <View className="px-4 pb-4 pt-6">
             <View className="mb-5 flex-row items-center justify-between">
               <View>
-                <Text className="font-pregular text-sm text-gray-100">{userName ? 'Welcome back,' : 'Welcome to'}</Text>
-                <Text className="font-psemibold text-2xl text-white">{userName ?? 'TopOne'}</Text>
+                <Text className="font-pregular text-sm text-muted">{userName ? 'Welcome back,' : 'Welcome to'}</Text>
+                <Text className="font-display text-[28px] text-ink">{userName ?? 'TopOne'}</Text>
               </View>
               <SalonLogo
                 style={{ width: 160, height: 64 }}
@@ -445,20 +445,20 @@ const Home = () => {
 
             <TouchableOpacity
               onPress={() => router.push('/(extras)/location')}
-              className="mb-5 flex-row items-center self-start rounded-full bg-black-100 px-4 py-2"
+              className="mb-5 flex-row items-center self-start rounded-full bg-card px-4 py-2"
             >
               <Image
                 source={icons.rightArrow}
                 style={{ width: 12, height: 12, marginRight: 8 }}
-                tintColor="#8ED1FC"
+                tintColor="#1A1817"
                 resizeMode="contain"
               />
-              <Text className="font-pregular text-sm text-secondary">{currentLocation?.name ?? 'Choose a salon'}</Text>
+              <Text className="font-pregular text-sm text-ink">{currentLocation?.name ?? 'Choose a salon'}</Text>
             </TouchableOpacity>
 
-            <Text className="mb-3 font-psemibold text-xl text-white">What's on</Text>
+            <Text className="mb-3 font-display text-[22px] text-ink">What's on</Text>
 
-            <Text className="mb-2 font-pregular text-sm text-gray-100">
+            <Text className="mb-2 font-pregular text-sm text-muted">
               Browse the latest updates from the salon.
             </Text>
 
@@ -468,11 +468,11 @@ const Home = () => {
           <View className="px-4 py-6">
             {isBannerLoading ? (
               <>
-                <View className="mb-4 h-[180px] rounded-2xl border border-black-200 bg-black-100" />
-                <View className="h-[180px] rounded-2xl border border-black-200 bg-black-100" />
+                <View className="mb-4 h-[180px] rounded-2xl border border-line bg-card" />
+                <View className="h-[180px] rounded-2xl border border-line bg-card" />
               </>
             ) : (
-              <Text className="text-center font-pregular text-sm text-gray-100">
+              <Text className="text-center font-pregular text-sm text-muted">
                 {currentLocation ? `No home updates published for ${currentLocation.name} yet.` : 'No home updates published yet.'}
               </Text>
             )}
@@ -486,8 +486,8 @@ const Home = () => {
         visible={selectedBanner !== null}
         onRequestClose={() => setSelectedBanner(null)}
       >
-        <View style={{ flex: 1, backgroundColor: 'rgba(7, 11, 19, 0.82)', justifyContent: 'center', padding: 20 }}>
-          <View className="overflow-hidden rounded-3xl border border-black-200 bg-black-100">
+        <View style={{ flex: 1, backgroundColor: 'rgba(26, 24, 23, 0.82)', justifyContent: 'center', padding: 20 }}>
+          <View className="overflow-hidden rounded-3xl border border-line bg-card">
             {selectedBanner ? (
               <>
                 <Image
@@ -496,16 +496,16 @@ const Home = () => {
                   resizeMode="cover"
                 />
                 <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 24 }}>
-                  <Text className="font-pregular text-sm text-secondary">Banner Details</Text>
-                  <Text className="mt-2 font-pbold text-2xl text-white">{selectedBanner.title}</Text>
-                  <Text className="mt-3 font-psemibold text-sm text-gray-100">{selectedBanner.description}</Text>
-                  <Text className="mt-4 font-pregular text-sm leading-6 text-gray-100">{selectedBanner.long_description}</Text>
+                  <Text className="font-pregular text-sm text-ink">Banner Details</Text>
+                  <Text className="mt-2 font-display text-[26px] text-ink">{selectedBanner.title}</Text>
+                  <Text className="mt-3 font-psemibold text-sm text-muted">{selectedBanner.description}</Text>
+                  <Text className="mt-4 font-pregular text-sm leading-6 text-muted">{selectedBanner.long_description}</Text>
 
                   <Pressable
                     onPress={() => setSelectedBanner(null)}
-                    className="mt-6 items-center rounded-2xl bg-secondary px-4 py-4"
+                    className="mt-6 items-center rounded-2xl bg-ink px-4 py-4"
                   >
-                    <Text className="font-psemibold text-sm text-primary">Close</Text>
+                    <Text className="font-psemibold text-sm text-cream">Close</Text>
                   </Pressable>
                 </ScrollView>
               </>

@@ -80,11 +80,11 @@ export default function Confirm() {
 
   if (failureMessage) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#161622', justifyContent: 'center', paddingHorizontal: 24 }}>
-        <Text className="text-center text-2xl text-white font-psemibold">
+      <View style={{ flex: 1, backgroundColor: '#F4F1EC', justifyContent: 'center', paddingHorizontal: 24 }}>
+        <Text className="text-center text-[28px] text-ink font-display">
           Link no longer valid
         </Text>
-        <Text className="mt-4 text-center font-pregular text-base leading-6 text-gray-100">
+        <Text className="mt-4 text-center font-pregular text-base leading-6 text-muted">
           {failureMessage}
         </Text>
         <CustomButton
@@ -95,18 +95,18 @@ export default function Confirm() {
         <CustomButton
           title="Back to Sign In"
           handlePress={() => router.replace('/sign-in')}
-          containerStyles="mt-3 w-full"
-          backgroundColor="#1E1E2D"
-          textColor="#ffffff"
+          containerStyles="mt-3 w-full border border-ink"
+          backgroundColor="#FFFFFF"
+          textColor="#1A1817"
         />
       </View>
     )
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#161622', alignItems: 'center', justifyContent: 'center' }}>
-      <ActivityIndicator size="large" color="#8ED1FC" />
-      <Text style={{ color: '#CBD5E1', marginTop: 16, fontFamily: 'Poppins-Regular' }}>
+    <View style={{ flex: 1, backgroundColor: '#F4F1EC', alignItems: 'center', justifyContent: 'center' }}>
+      <ActivityIndicator size="large" color="#1A1817" />
+      <Text style={{ color: '#3F3A35', marginTop: 16, fontFamily: 'DMSans-Regular' }}>
         Confirming your email...
       </Text>
     </View>

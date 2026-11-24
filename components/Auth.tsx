@@ -206,7 +206,7 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
                 hasError={showRequiredErrors && signUpFieldErrors.phoneNumber}
               />
               {showRequiredErrors && signUpFieldErrors.phoneNumber && (
-                <Text className="mt-2 font-pregular text-sm text-[#FF8A8A]">
+                <Text className="mt-2 font-pregular text-sm text-[#B3261E]">
                   Enter your full phone number.
                 </Text>
               )}
@@ -324,14 +324,14 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: '#161622',
+    backgroundColor: '#F4F1EC',
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
   },
   container: {
-    backgroundColor: '#161622',
+    backgroundColor: '#F4F1EC',
     flex: 1,
     padding: 16,
   },
@@ -346,23 +346,23 @@ const styles = StyleSheet.create({
     paddingRight: 16,
   },
   headerEyebrow: {
-    color: '#CDCDE0',
+    color: '#6B635A',
     fontSize: 13,
   },
   headerTitle: {
-    color: '#ffffff',
-    fontSize: 24,
-    fontWeight: '600',
+    color: '#1A1817',
+    fontFamily: 'PlayfairDisplay-SemiBold',
+    fontSize: 27,
     marginTop: 4,
   },
   accessText: {
-    color: '#ffffff',
+    color: '#1A1817',
     fontSize: 13,
     fontWeight: '500',
     marginTop: 6,
   },
   accessValue: {
-    color: '#8ED1FC',
+    color: '#1A1817',
   },
   switchRow: {
     alignItems: 'center',
@@ -373,8 +373,8 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   switchLabel: {
-    color: '#CDCDE0',
-    fontFamily: 'Poppins-Regular',
+    color: '#6B635A',
+    fontFamily: 'DMSans-Regular',
     fontSize: 14,
   },
 })

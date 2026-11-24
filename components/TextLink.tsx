@@ -9,6 +9,8 @@ type TextLinkProps = {
   onPress?: () => void;
   /** Text size, to match the words next to it. */
   sizeClassName?: string;
+  /** Text colour; white over a photo. */
+  colorClassName?: string;
 };
 
 // A link made of a word or two, like "Sign up". Text on its own is only as tall
@@ -19,7 +21,7 @@ type TextLinkProps = {
 // To space it from the words before it, give the row style={{ columnGap: 8 }}.
 // NativeWind's gap-2 class only spaces children that have a className, so it
 // leaves no space before this one.
-const TextLink = ({ label, href, onPress, sizeClassName = 'text-lg' }: TextLinkProps) => (
+const TextLink = ({ label, href, onPress, sizeClassName = 'text-lg', colorClassName = 'text-ink' }: TextLinkProps) => (
   <Pressable
     accessibilityRole="link"
     hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
@@ -32,7 +34,7 @@ const TextLink = ({ label, href, onPress, sizeClassName = 'text-lg' }: TextLinkP
     }}
     style={({ pressed }) => ({ minHeight: 44, justifyContent: 'center', opacity: pressed ? 0.6 : 1 })}
   >
-    <Text className={`${sizeClassName} font-psemibold text-secondary underline`}>{label}</Text>
+    <Text className={`${sizeClassName} ${colorClassName} font-psemibold underline`}>{label}</Text>
   </Pressable>
 );
 

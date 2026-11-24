@@ -29,7 +29,7 @@ export default function PasswordStrengthMeter({ value }: Props) {
         {[0, 1, 2, 3].map(i => (
           <View
             key={i}
-            style={[styles.bar, { backgroundColor: i < score ? color : '#3a3a3a' }]}
+            style={[styles.bar, { backgroundColor: i < score ? color : '#E4DDD3' }]}
           />
         ))}
       </View>

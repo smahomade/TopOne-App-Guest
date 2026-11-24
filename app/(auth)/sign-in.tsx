@@ -71,7 +71,7 @@ const SignIn = () => {
   };
 
   return (
-    <SafeAreaView className="bg-primary h-full">
+    <SafeAreaView className="bg-cream h-full">
       <AvoidKeyboard>
       <ScrollView
         bounces={false}
@@ -90,7 +90,7 @@ const SignIn = () => {
         </View>
 
         <View className="flex-1 justify-center items-center px-4 pb-14">
-          <Text className="text-2xl text-white font-psemibold mt-4">
+          <Text className="text-[28px] text-ink font-display mt-4">
             Log in to Top One
           </Text>
 
@@ -127,14 +127,14 @@ const SignIn = () => {
           <GoogleSignInButton returnTo="home" dividerPosition="above" containerStyles="mt-5" />
 
           <View className="pt-3 flex-row flex-wrap items-center justify-center" style={{ columnGap: 8 }}>
-            <Text className="text-lg text-gray-100 font-pregular">
+            <Text className="text-lg text-muted font-pregular">
               Don't have an account?
             </Text>
             <TextLink label="Sign up" href="/sign-up" />
           </View>
 
           <View className="pt-16 flex-row flex-wrap items-center justify-center" style={{ columnGap: 8 }}>
-            <Text className="text-lg text-gray-100 font-pregular">
+            <Text className="text-lg text-muted font-pregular">
               Forgot Password?
             </Text>
             <TextLink label="Click Here" href="/forgot-password" />

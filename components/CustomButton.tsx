@@ -11,7 +11,7 @@ type CustomButtonProps = {
   textColor?: string
 }
 
-const CustomButton = ({title, handlePress, containerStyles, textStyles = '', isLoading = false, backgroundColor = '#8ed1fc', textColor = '#161622' }: CustomButtonProps) => {
+const CustomButton = ({title, handlePress, containerStyles, textStyles = '', isLoading = false, backgroundColor = '#1A1817', textColor = '#F4F1EC' }: CustomButtonProps) => {
   return (
 
     <TouchableOpacity 

@@ -119,7 +119,7 @@ const Collection = () => {
   const viewerCaption = activeBundleShowsCaptions && viewerImage ? getImageCaption(viewerImage) : '';
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-primary" style={{ backgroundColor: '#161622' }}>
+    <SafeAreaView edges={['top']} className="flex-1 bg-cream" style={{ backgroundColor: '#F4F1EC' }}>
       {/* Top header — always visible, not scrollable */}
       <View className="pt-2">
         <View className="flex-row items-center justify-between px-4 pb-3">
@@ -131,13 +131,13 @@ const Collection = () => {
               <Ionicons
                 name={Platform.OS === 'ios' ? 'chevron-back' : 'arrow-back'}
                 size={Platform.OS === 'ios' ? 30 : 26}
-                color="#FFFFFF"
+                color="#1A1817"
               />
             </TouchableOpacity>
           ) : (
             <View>
-              <Text className="font-pregular text-sm text-gray-100">Collection</Text>
-              <Text className="mt-1 font-psemibold text-2xl text-white">Collection</Text>
+              <Text className="font-pregular text-sm text-muted">Collection</Text>
+              <Text className="mt-1 font-display text-[28px] text-ink">Collection</Text>
             </View>
           )}
           <SalonLogo
@@ -145,23 +145,23 @@ const Collection = () => {
             resizeMode="contain"
           />
         </View>
-        <View style={{ height: 1, backgroundColor: '#232533' }} />
+        <View style={{ height: 1, backgroundColor: '#E4DDD3' }} />
         {!activeBundle ? (
-          <Text className="px-4 pb-2 pt-3 font-pregular text-sm text-gray-100">
+          <Text className="px-4 pb-2 pt-3 font-pregular text-sm text-muted">
             Choose a collection bundle to view all images in that set.
           </Text>
         ) : null}
       </View>
 
       <ScrollView
-        className="bg-primary"
-        style={{ backgroundColor: '#161622' }}
+        className="bg-cream"
+        style={{ backgroundColor: '#F4F1EC' }}
         contentContainerStyle={{ paddingBottom: 32, paddingTop: 16 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refetch} tintColor="#8ED1FC" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refetch} tintColor="#1A1817" />}
       >
 
         <View style={styles.container}>
-          {loading ? <ActivityIndicator size="small" color="#8ED1FC" /> : null}
+          {loading ? <ActivityIndicator size="small" color="#1A1817" /> : null}
 
           {orderedBundles.length > 0 ? (
             activeBundle ? (
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   emptyState: {
-    color: '#6b7280',
+    color: '#6B635A',
     fontSize: 15,
     lineHeight: 22,
     paddingHorizontal: 16,
@@ -324,8 +324,8 @@ const styles = StyleSheet.create({
   },
   backButton: {
     alignSelf: 'flex-start',
-    backgroundColor: '#1E1E2D',
-    borderColor: '#232533',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E4DDD3',
     borderRadius: 999,
     borderWidth: 1,
     marginBottom: 14,
@@ -333,13 +333,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   backButtonText: {
-    color: '#CDCDE0',
-    fontFamily: 'Poppins-SemiBold',
+    color: '#6B635A',
+    fontFamily: 'DMSans-SemiBold',
     fontSize: 12,
   },
   card: {
-    backgroundColor: '#1E1E2D',
-    borderColor: '#232533',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E4DDD3',
     borderRadius: 16,
     borderWidth: 1,
     marginBottom: 14,
@@ -351,8 +351,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   caption: {
-    color: '#ffffff',
-    fontFamily: 'Poppins-Medium',
+    color: '#1A1817',
+    fontFamily: 'DMSans-Medium',
     fontSize: 13,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -361,20 +361,20 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   yearSubtitle: {
-    color: '#8ED1FC',
-    fontFamily: 'Poppins-Regular',
+    color: '#1A1817',
+    fontFamily: 'DMSans-Regular',
     fontSize: 13,
     marginBottom: 16,
   },
   yearTitle: {
-    color: '#ffffff',
-    fontFamily: 'Poppins-SemiBold',
-    fontSize: 20,
+    color: '#1A1817',
+    fontFamily: 'PlayfairDisplay-SemiBold',
+    fontSize: 24,
     marginBottom: 2,
   },
   yearBundleCard: {
-    backgroundColor: '#1E1E2D',
-    borderColor: '#232533',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E4DDD3',
     borderRadius: 20,
     borderWidth: 1,
     height: 180,
@@ -389,8 +389,8 @@ const styles = StyleSheet.create({
     right: 18,
   },
   yearBundleHint: {
-    color: '#CDCDE0',
-    fontFamily: 'Poppins-Regular',
+    color: '#E8E2DA',
+    fontFamily: 'DMSans-Regular',
     fontSize: 12,
     marginTop: 8,
   },
@@ -399,13 +399,13 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   yearBundleMeta: {
-    color: '#8ED1FC',
-    fontFamily: 'Poppins-SemiBold',
+    color: '#FFFFFF',
+    fontFamily: 'DMSans-SemiBold',
     fontSize: 13,
     marginTop: 4,
   },
   yearBundleOverlay: {
-    backgroundColor: 'rgba(7, 11, 19, 0.55)',
+    backgroundColor: 'rgba(26, 24, 23, 0.55)',
     bottom: 0,
     left: 0,
     position: 'absolute',
@@ -414,8 +414,8 @@ const styles = StyleSheet.create({
   },
   yearBundleTitle: {
     color: '#ffffff',
-    fontFamily: 'Poppins-Bold',
-    fontSize: 28,
+    fontFamily: 'PlayfairDisplay-SemiBold',
+    fontSize: 30,
   },
   fullscreenOverlay: {
     backgroundColor: '#000000',
@@ -434,13 +434,13 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   fullscreenCounterText: {
-    color: '#CDCDE0',
-    fontFamily: 'Poppins-SemiBold',
+    color: '#D6CEC4',
+    fontFamily: 'DMSans-SemiBold',
     fontSize: 14,
   },
   fullscreenCaptionText: {
     color: '#ffffff',
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'DMSans-Medium',
     fontSize: 14,
     textAlign: 'center',
   },
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
   },
   fullscreenCloseText: {
     color: '#ffffff',
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'DMSans-SemiBold',
     fontSize: 20,
   },
 });

@@ -1153,24 +1153,24 @@ const Book = () => {
 
 	const newestBorderColor = newestHighlight.interpolate({
 		inputRange: [0, 1],
-		outputRange: ['rgba(142, 209, 252, 0.25)', 'rgba(142, 209, 252, 1)'],
+		outputRange: ['rgba(26, 24, 23, 0.25)', 'rgba(26, 24, 23, 1)'],
 	});
 
 	if (sessionLoading) {
 		return (
-			<SafeAreaView edges={['top']} className="flex-1 items-center justify-center bg-primary" style={{ backgroundColor: '#161622' }}>
-				<ActivityIndicator size="large" color="#8ED1FC" />
+			<SafeAreaView edges={['top']} className="flex-1 items-center justify-center bg-cream" style={{ backgroundColor: '#F4F1EC' }}>
+				<ActivityIndicator size="large" color="#1A1817" />
 			</SafeAreaView>
 		);
 	}
 
 	if (!session) {
 		return (
-			<SafeAreaView edges={['top']} className="flex-1 bg-primary" style={{ backgroundColor: '#161622' }}>
+			<SafeAreaView edges={['top']} className="flex-1 bg-cream" style={{ backgroundColor: '#F4F1EC' }}>
 				<View className="flex-1 px-4 pb-8 pt-3">
-					<View className="rounded-3xl border border-black-200 bg-black-100 px-5 py-6">
-						<Text className="font-psemibold text-2xl text-white">Messages</Text>
-						<Text className="mt-3 font-pregular text-sm text-gray-100">
+					<View className="rounded-3xl border border-line bg-card px-5 py-6">
+						<Text className="font-display text-[28px] text-ink">Messages</Text>
+						<Text className="mt-3 font-pregular text-sm text-muted">
 							{hasBookingParams
 								? "Your booking request is saved. Sign in and we'll send it to the salon."
 								: 'Sign in to message the salon, ask for a booking, and receive replies from the salon team.'}
@@ -1189,37 +1189,37 @@ const Book = () => {
 	}
 
 	return (
-		<SafeAreaView edges={['top']} className="flex-1 bg-primary" style={{ backgroundColor: '#161622' }}>
+		<SafeAreaView edges={['top']} className="flex-1 bg-cream" style={{ backgroundColor: '#F4F1EC' }}>
 			<KeyboardAvoidingView
 				style={{ flex: 1 }}
 				behavior={Platform.OS === 'ios' ? 'padding' : undefined}
 				keyboardVerticalOffset={Platform.OS === 'ios' ? 18 : 0}
 			>
-				<View className="border-b border-black-200 px-4 pb-3 pt-2">
+				<View className="border-b border-line px-4 pb-3 pt-2">
 					{selectedConversation ? (
 						<View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
 							<Pressable
 								onPress={() => setSelectedConversationId(null)}
 								hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-								style={{ width: 38, height: 38, borderRadius: 999, backgroundColor: '#1E1E2D', borderWidth: 1, borderColor: '#232533', alignItems: 'center', justifyContent: 'center' }}
+								style={{ width: 38, height: 38, borderRadius: 999, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E4DDD3', alignItems: 'center', justifyContent: 'center' }}
 							>
-								<Text style={{ color: '#8ED1FC', fontSize: 22, lineHeight: 26, marginLeft: -2 }}>‹</Text>
+								<Text style={{ color: '#1A1817', fontSize: 22, lineHeight: 26, marginLeft: -2 }}>‹</Text>
 							</Pressable>
 							<View style={{ flex: 1, alignItems: 'center' }}>
-								<Text className="font-psemibold text-base text-white">{activeLocationName ?? 'Top One'}</Text>
+								<Text className="font-psemibold text-base text-ink">{activeLocationName ?? 'Top One'}</Text>
 								{isSelectedConversationClosed ? (
 									<Text className="font-pregular text-[11px] text-red-200">Conversation closed</Text>
 								) : (
-									<Text className="font-pregular text-[11px] text-gray-100">Salon</Text>
+									<Text className="font-pregular text-[11px] text-muted">Salon</Text>
 								)}
 							</View>
 							<View style={{ width: 38 }} />
 						</View>
 					) : (
 						<View>
-							<Text className="font-pregular text-sm text-gray-100">Booking Support</Text>
-							<Text className="mt-1 font-psemibold text-2xl text-white">Messages</Text>
-							<Text className="mt-2 font-pregular text-sm text-gray-100">{helperText}</Text>
+							<Text className="font-pregular text-sm text-muted">Booking Support</Text>
+							<Text className="mt-1 font-display text-[28px] text-ink">Messages</Text>
+							<Text className="mt-2 font-pregular text-sm text-muted">{helperText}</Text>
 						</View>
 					)}
 					{error ? <Text className="mt-2 font-pregular text-sm text-red-300">{error}</Text> : null}
@@ -1245,32 +1245,32 @@ const Book = () => {
 							return (
 								<View className={`mb-3 ${isClientMessage ? 'items-end' : 'items-start'}`}>
 									<View
-										className={`max-w-[92%] rounded-2xl px-4 py-3 ${isClientMessage ? 'bg-secondary' : 'bg-primary'}`}
-										style={{ borderWidth: 1, borderColor: isClientMessage ? '#8ED1FC' : '#232533' }}
+										className={`max-w-[92%] rounded-2xl px-4 py-3 ${isClientMessage ? 'bg-ink' : 'bg-cream'}`}
+										style={{ borderWidth: 1, borderColor: isClientMessage ? '#1A1817' : '#E4DDD3' }}
 									>
-										<Text className={`font-psemibold text-xs ${isClientMessage ? 'text-primary' : 'text-secondary'}`}>
+										<Text className={`font-psemibold text-xs ${isClientMessage ? 'text-cream' : 'text-ink'}`}>
 											{item.senderLabel}
 										</Text>
 										{bookingDetails?.customerName && bookingDetails?.servicesSummary ? (
 											<>
-												<Text className={`mt-2 font-pbold text-base ${isClientMessage ? 'text-primary' : 'text-white'}`}>
+												<Text className={`mt-2 font-pbold text-base ${isClientMessage ? 'text-cream' : 'text-ink'}`}>
 													{bookingDetails.customerName}
 												</Text>
 												<View className="mt-2 gap-1">
 													{serviceLines.map((line, index) => (
-														<Text key={`${item.id}-service-${index}`} className={`font-psemibold text-sm ${isClientMessage ? 'text-primary' : 'text-secondary'}`}>
+														<Text key={`${item.id}-service-${index}`} className={`font-psemibold text-sm ${isClientMessage ? 'text-cream' : 'text-ink'}`}>
 															{line}
 														</Text>
 													))}
 												</View>
 												{bookingDetails.preferredDatesSummary ? (
 													<View className="mt-3">
-														<Text className={`font-psemibold text-sm ${isClientMessage ? 'text-primary' : 'text-white'}`}>
+														<Text className={`font-psemibold text-sm ${isClientMessage ? 'text-cream' : 'text-ink'}`}>
 															Preferred dates:
 														</Text>
 														<View className="mt-1 gap-1">
 															{preferredDateLines.map((line, index) => (
-																<Text key={`${item.id}-date-${index}`} className={`font-psemibold text-sm ${isClientMessage ? 'text-primary' : 'text-secondary'}`}>
+																<Text key={`${item.id}-date-${index}`} className={`font-psemibold text-sm ${isClientMessage ? 'text-cream' : 'text-ink'}`}>
 																	{line}
 																</Text>
 															))}
@@ -1278,18 +1278,18 @@ const Book = () => {
 													</View>
 												) : null}
 												{bookingFollowUpNote ? (
-													<Text className={`mt-3 font-pregular text-sm ${isClientMessage ? 'text-primary' : 'text-gray-100'}`}>
+													<Text className={`mt-3 font-pregular text-sm ${isClientMessage ? 'text-cream' : 'text-muted'}`}>
 														{bookingFollowUpNote}
 													</Text>
 												) : null}
 											</>
 										) : (
-											<Text className={`mt-1 font-pregular text-sm ${isClientMessage ? 'text-primary' : 'text-white'}`}>
+											<Text className={`mt-1 font-pregular text-sm ${isClientMessage ? 'text-cream' : 'text-ink'}`}>
 												{stripBookingPrefix(item.body)}
 											</Text>
 										)}
 										
-										<Text className={`mt-2 font-pregular text-[11px] ${isClientMessage ? 'text-primary' : 'text-gray-100'}`}>
+										<Text className={`mt-2 font-pregular text-[11px] ${isClientMessage ? 'text-cream' : 'text-muted'}`}>
 											{formatTimestamp(item.createdAt)}
 										</Text>
 									</View>
@@ -1305,7 +1305,7 @@ const Book = () => {
 						refreshing={refreshing}
 						onRefresh={refetch}
 						renderItem={({ item: section, index }) => (
-							<Pressable onPress={() => setSelectedConversationId(section.id)} className="mb-4 rounded-3xl border border-black-200 bg-black-100 px-4 py-4">
+							<Pressable onPress={() => setSelectedConversationId(section.id)} className="mb-4 rounded-3xl border border-line bg-card px-4 py-4">
 								{index === 0 && bookingSections.length > 1 ? (
 									<Animated.View
 										pointerEvents="none"
@@ -1314,8 +1314,8 @@ const Book = () => {
 								) : null}
 								<View className="flex-row items-start justify-between gap-4">
 									<View className="flex-1">
-										<Text className="font-pbold text-lg text-white">{section.title}</Text>
-										<Text className="mt-1 font-pregular text-xs text-gray-100">
+										<Text className="font-pbold text-lg text-ink">{section.title}</Text>
+										<Text className="mt-1 font-pregular text-xs text-muted">
 											{section.type === 'booking' ? 'Booking request conversation' : 'General conversation'}
 										</Text>
 										{messageResult.conversationClosedById[section.id] ? (
@@ -1323,36 +1323,36 @@ const Book = () => {
 										) : null}
 										{section.bookingServicesSummary ? (
 											<>
-												<Text className="mt-3 font-psemibold text-sm text-secondary" numberOfLines={2}>
+												<Text className="mt-3 font-psemibold text-sm text-ink" numberOfLines={2}>
 													{section.bookingServicesSummary}
 												</Text>
 												{section.bookingPreferredDatesSummary ? (
-													<View className="mt-3 rounded-2xl border border-secondary/30 bg-secondary/10 px-3 py-3">
-														<Text className="font-psemibold text-[11px] uppercase tracking-wider text-secondary">
+													<View className="mt-3 rounded-2xl border border-ink/30 bg-ink/10 px-3 py-3">
+														<Text className="font-psemibold text-[11px] uppercase tracking-wider text-ink">
 															Preferred dates
 														</Text>
-														<Text className="mt-1 font-psemibold text-sm leading-5 text-white" numberOfLines={3}>
+														<Text className="mt-1 font-psemibold text-sm leading-5 text-ink" numberOfLines={3}>
 															{section.bookingPreferredDatesSummary}
 														</Text>
 													</View>
 												) : null}
 											</>
 										) : (
-											<Text className="mt-3 font-pregular text-sm text-gray-100" numberOfLines={2}>
+											<Text className="mt-3 font-pregular text-sm text-muted" numberOfLines={2}>
 												{section.preview}
 											</Text>
 										)}
 									</View>
 									<View className="items-end">
-										<Text className="font-psemibold text-[11px] text-secondary">{formatTimestamp(section.lastMessageAt)}</Text>
+										<Text className="font-psemibold text-[11px] text-ink">{formatTimestamp(section.lastMessageAt)}</Text>
 										{(() => {
 											const unreadCount = section.messages.filter((m) => m.senderRole === 'admin' && !m.isRead).length;
 											return unreadCount > 0 ? (
-												<View style={{ marginTop: 8, minWidth: 22, height: 22, borderRadius: 999, backgroundColor: '#8ED1FC', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}>
-													<Text style={{ fontFamily: 'Poppins-Bold', fontSize: 11, color: '#161622' }}>{unreadCount}</Text>
+												<View style={{ marginTop: 8, minWidth: 22, height: 22, borderRadius: 999, backgroundColor: '#1A1817', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}>
+													<Text style={{ fontFamily: 'DMSans-Bold', fontSize: 11, color: '#F4F1EC' }}>{unreadCount}</Text>
 												</View>
 											) : (
-												<Text className="mt-3 font-pregular text-[11px] text-gray-100">{section.messages.length} msgs</Text>
+												<Text className="mt-3 font-pregular text-[11px] text-muted">{section.messages.length} msgs</Text>
 											);
 										})()}
 									</View>
@@ -1360,13 +1360,13 @@ const Book = () => {
 							</Pressable>
 						)}
 						ListEmptyComponent={() => (
-							<View className="flex-1 items-center justify-center rounded-3xl border border-black-200 bg-black-100 px-5 py-8">
+							<View className="flex-1 items-center justify-center rounded-3xl border border-line bg-card px-5 py-8">
 								{loading ? (
-									<ActivityIndicator size="small" color="#8ED1FC" />
+									<ActivityIndicator size="small" color="#1A1817" />
 								) : (
 									<>
-										<Text className="font-psemibold text-lg text-white">No conversations yet</Text>
-										<Text className="mt-2 text-center font-pregular text-sm text-gray-100">
+										<Text className="font-psemibold text-lg text-ink">No conversations yet</Text>
+										<Text className="mt-2 text-center font-pregular text-sm text-muted">
 											Select services in the Services tab, then book them to create a new conversation here.
 										</Text>
 									</>
@@ -1376,27 +1376,27 @@ const Book = () => {
 					/>
 				)}
 
-		                <View className="border-t border-black-200 px-4 pb-4 pt-3">
-                                        <View className="flex-row items-center rounded-full border border-black-200 bg-black-100 px-4" style={{ minHeight: 48 }}>
+		                <View className="border-t border-line px-4 pb-4 pt-3">
+                                        <View className="flex-row items-center rounded-full border border-line bg-card px-4" style={{ minHeight: 48 }}>
                                                 {isSelectedConversationClosed ? (
-                                                        <Text className="flex-1 font-pregular text-sm text-gray-100">Conversation closed</Text>
+                                                        <Text className="flex-1 font-pregular text-sm text-muted">Conversation closed</Text>
                                                 ) : (
                                                         <TextInput
                                                                 value={draftMessage}
                                                                 onChangeText={setDraftMessage}
                                                                 placeholder="Type a message..."
-                                                                placeholderTextColor="#7b7b8b"
+                                                                placeholderTextColor="#8A8178"
                                                                 multiline
                                                                 editable={!isSelectedConversationClosed}
-                                                                style={{ flex: 1, color: '#ffffff', fontFamily: 'Poppins-Regular', fontSize: 14, paddingVertical: 12, maxHeight: 100, textAlignVertical: 'center' }}
+                                                                style={{ flex: 1, color: '#1A1817', fontFamily: 'DMSans-Regular', fontSize: 14, paddingVertical: 12, maxHeight: 100, textAlignVertical: 'center' }}
                                                         />
                                                 )}
                                                 <Pressable
                                                         onPress={handleSendMessage}
                                                         disabled={isSelectedConversationClosed || sending || draftMessage.trim().length === 0}
-                                                        style={{ marginLeft: 8, width: 36, height: 36, borderRadius: 999, backgroundColor: isSelectedConversationClosed || sending || draftMessage.trim().length === 0 ? '#232533' : '#8ED1FC', alignItems: 'center', justifyContent: 'center' }}
+                                                        style={{ marginLeft: 8, width: 36, height: 36, borderRadius: 999, backgroundColor: isSelectedConversationClosed || sending || draftMessage.trim().length === 0 ? '#E4DDD3' : '#1A1817', alignItems: 'center', justifyContent: 'center' }}
                                                 >
-                                                        <Text style={{ color: isSelectedConversationClosed || sending || draftMessage.trim().length === 0 ? '#7b7b8b' : '#161622', fontSize: 18, lineHeight: 22, fontWeight: 'bold' }}>{'>'}</Text>
+                                                        <Text style={{ color: isSelectedConversationClosed || sending || draftMessage.trim().length === 0 ? '#8A8178' : '#F4F1EC', fontSize: 18, lineHeight: 22, fontWeight: 'bold' }}>{'>'}</Text>
                                                 </Pressable>
                                         </View>
                                 </View>

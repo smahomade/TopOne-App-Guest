@@ -126,7 +126,7 @@ const AddPhone = () => {
   const withGoogle = signedInAs?.withGoogle ?? true
 
   return (
-    <SafeAreaView className="bg-primary h-full">
+    <SafeAreaView className="bg-cream h-full">
       <AvoidKeyboard>
       <ScrollView
         bounces={false}
@@ -156,18 +156,18 @@ const AddPhone = () => {
           >
             <Text
               accessibilityRole="header"
-              className="text-2xl text-white font-psemibold text-center"
+              className="text-[28px] text-ink font-display text-center"
             >
               {signedInAs?.firstName ? `Welcome, ${signedInAs.firstName}!` : 'Welcome!'}
             </Text>
-            <Text className="mt-2 text-center font-pregular text-sm text-gray-100">
+            <Text className="mt-2 text-center font-pregular text-sm text-muted">
               {`You're signed in${withGoogle ? ' with Google' : ''}${signedInAs && !signedInAs.email ? '.' : ' as'}`}
             </Text>
             {/* On its own line, so a long address isn't split across two. While
                 the session loads, a blank line holds its place so nothing
                 below moves when the address appears. */}
             {!signedInAs || signedInAs.email ? (
-              <Text className="text-center font-psemibold text-sm text-white">
+              <Text className="text-center font-psemibold text-sm text-ink">
                 {signedInAs?.email ?? ' '}
               </Text>
             ) : null}
@@ -183,11 +183,11 @@ const AddPhone = () => {
             />
           </View>
           {showRequiredError && (
-            <Text className="mt-2 font-pregular text-sm text-[#FF8A8A]">
+            <Text className="mt-2 font-pregular text-sm text-[#B3261E]">
               Enter your full phone number.
             </Text>
           )}
-          <Text className="mt-2 font-pregular text-sm text-gray-100">
+          <Text className="mt-2 font-pregular text-sm text-muted">
             {`The salon uses it to confirm your bookings.${withGoogle ? " Google doesn't share it with us." : ''}`}
           </Text>
 
@@ -201,11 +201,11 @@ const AddPhone = () => {
           />
 
           <View className="justify-center pt-5 flex-row gap-2">
-            <Text className="text-base text-gray-100 font-pregular">
+            <Text className="text-base text-muted font-pregular">
               Not you?
             </Text>
             <Text
-              className="text-base font-psemibold text-secondary underline"
+              className="text-base font-psemibold text-ink underline"
               onPress={switchAccount}
             >
               Use a different account

@@ -114,7 +114,7 @@ const ResetPassword = () => {
   };
 
   return (
-    <SafeAreaView className="bg-primary h-full">
+    <SafeAreaView className="bg-cream h-full">
       <AvoidKeyboard>
       <ScrollView
         bounces={false}
@@ -136,14 +136,14 @@ const ResetPassword = () => {
           <View className="mt-2 items-center">
             {/* One line on every iPhone: shrinks a little on narrow ones */}
             <Text
-              className="text-3xl text-white font-psemibold text-center"
+              className="text-3xl text-ink font-display text-center"
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.7}
             >
               Create a new password
             </Text>
-            <Text className="mt-2 text-center font-pregular text-sm text-gray-100">
+            <Text className="mt-2 text-center font-pregular text-sm text-muted">
               Enter your new password below after opening the recovery link from your email.
             </Text>
           </View>
@@ -180,7 +180,7 @@ const ResetPassword = () => {
             isLoading={isSubmitting}
           />
 
-          <Text className="mt-6 text-center font-pregular text-xs leading-5 text-gray-100">
+          <Text className="mt-6 text-center font-pregular text-xs leading-5 text-muted">
             If this screen says the recovery link is required, open it directly from the password reset email again.
           </Text>
         </View>
