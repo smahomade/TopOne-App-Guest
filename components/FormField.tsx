@@ -25,10 +25,10 @@ const FormField = ({
   placeholder,
   handleChangeText,
   OtherStyles = '',
-  titleColor = 'text-gray-100',
+  titleColor = 'text-muted',
   isRequired = false,
   requiredReason,
-  inputClassName = 'border-black-200 bg-black-100',
+  inputClassName = 'border-line bg-card',
   hasError = false,
   secret,
   ...props
@@ -60,7 +60,7 @@ const FormField = ({
         <View className="flex-row items-center">
           <Text className={`text-base font-pmedium ${titleColor}`}>{title}</Text>
           {isRequired && (
-            <Text className="ml-1 text-base font-psemibold text-[#FF8A8A]">*</Text>
+            <Text className="ml-1 text-base font-psemibold text-[#B3261E]">*</Text>
           )}
         </View>
 
@@ -69,19 +69,19 @@ const FormField = ({
             ref={questionRef}
             activeOpacity={0.8}
             onPress={handleQuestionPress}
-            className="h-6 w-6 items-center justify-center rounded-full border border-black-200 bg-black-100"
+            className="h-6 w-6 items-center justify-center rounded-full border border-line bg-card"
           >
-            <Text className="font-psemibold text-xs text-secondary">?</Text>
+            <Text className="font-psemibold text-xs text-ink">?</Text>
           </TouchableOpacity>
         )}
       </View>
 
-      <View className={`border-2 w-full h-14 px-4 rounded-2xl items-center flex-row ${hasError ? 'border-[#C44159] bg-[#2B1217]' : inputClassName}`}>
+      <View className={`border-2 w-full h-14 px-4 rounded-2xl items-center flex-row ${hasError ? 'border-[#B3261E] bg-[#FBEAE8]' : inputClassName}`}>
         <TextInput
-          className="flex-1 text-white font-psemibold text-base"
+          className="flex-1 text-ink font-psemibold text-base"
           value={value}
           placeholder={placeholder}
-          placeholderTextColor="#7b7b8b"
+          placeholderTextColor="#8A8178"
           onChangeText={handleChangeText}
           secureTextEntry={isSecret && !showPassword}
           autoCapitalize="none"
@@ -116,14 +116,14 @@ const FormField = ({
             >
               <View
                 style={{
-                  backgroundColor: '#1E1E2D',
+                  backgroundColor: '#FFFFFF',
                   borderRadius: 12,
                   padding: 12,
                   borderWidth: 0.5,
-                  borderColor: '#3a3a4a',
+                  borderColor: '#D5CDC2',
                 }}
               >
-                <Text style={{ color: '#CBD5E1', fontSize: 12, lineHeight: 20, fontFamily: 'Poppins-Regular' }}>
+                <Text style={{ color: '#3F3A35', fontSize: 12, lineHeight: 20, fontFamily: 'DMSans-Regular' }}>
                   {requiredReason}
                 </Text>
               </View>
@@ -141,7 +141,7 @@ const FormField = ({
                   borderTopWidth: 8,
                   borderLeftColor: 'transparent',
                   borderRightColor: 'transparent',
-                  borderTopColor: '#3a3a4a',
+                  borderTopColor: '#D5CDC2',
                 }}
               />
               <View
@@ -156,7 +156,7 @@ const FormField = ({
                   borderTopWidth: 7,
                   borderLeftColor: 'transparent',
                   borderRightColor: 'transparent',
-                  borderTopColor: '#1E1E2D',
+                  borderTopColor: '#FFFFFF',
                 }}
               />
             </View>

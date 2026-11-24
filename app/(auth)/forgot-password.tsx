@@ -47,7 +47,7 @@ const ForgotPassword = () => {
   };
 
   return (
-    <SafeAreaView className="bg-primary h-full">
+    <SafeAreaView className="bg-cream h-full">
       <AvoidKeyboard>
       <ScrollView
         bounces={false}
@@ -69,14 +69,14 @@ const ForgotPassword = () => {
           <View className="mt-2 items-center">
             {/* One line on every iPhone: shrinks a little on narrow ones */}
             <Text
-              className="text-3xl text-white font-psemibold text-center"
+              className="text-3xl text-ink font-display text-center"
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.7}
             >
               Reset your password
             </Text>
-            <Text className="mt-2 text-center font-pregular text-sm text-gray-100">
+            <Text className="mt-2 text-center font-pregular text-sm text-muted">
               Enter your account email and we will send you a password reset link.
             </Text>
           </View>
@@ -102,13 +102,13 @@ const ForgotPassword = () => {
 
           {/* On narrow phones the link moves to its own line instead of running edge to edge */}
           <View className="pt-3 flex-row flex-wrap items-center justify-center" style={{ columnGap: 8 }}>
-            <Text className="text-base text-gray-100 font-pregular">
+            <Text className="text-base text-muted font-pregular">
               Remembered your password?
             </Text>
             <TextLink label="Back to sign in" href="/sign-in" sizeClassName="text-base" />
           </View>
 
-          <Text className="mt-6 text-center font-pregular text-xs leading-5 text-gray-100">
+          <Text className="mt-6 text-center font-pregular text-xs leading-5 text-muted">
             If there's an account for this email, we'll send it a link to reset your password. If it doesn't arrive within a few minutes, check your spam folder.
           </Text>
         </View>

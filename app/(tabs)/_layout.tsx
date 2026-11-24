@@ -52,23 +52,23 @@ const TabsLayout = () => {
 
   return (
     <>
-    <StatusBar style='light'/>
+    <StatusBar style='dark'/>
   
         <Tabs
             screenOptions={{
                 sceneStyle: {
-                    backgroundColor: '#161622',
+                    backgroundColor: '#F4F1EC',
                 },
                 tabBarShowLabel: false,
                 // The tab bar now boxes icons to 31x28 at the top of each tab, which
                 // wraps our labels ("Hom/e") and pushes icon and label up to the top edge.
                 tabBarIconStyle: { width: '100%', height: '100%' },
-                tabBarActiveTintColor: '#8ED1FC', //This is the 'color' variable
-                tabBarInactiveTintColor: '#CDCDE0', // this is the 'color' variable
+                tabBarActiveTintColor: '#1A1817', //This is the 'color' variable
+                tabBarInactiveTintColor: '#7A7168', // this is the 'color' variable
                 tabBarStyle:{
-                    backgroundColor: '#161622',
+                    backgroundColor: '#FFFFFF',
                     borderTopWidth: 1,
-                    borderTopColor: '#232533',
+                    borderTopColor: '#E4DDD3',
                     height: TAB_BAR_CONTENT_HEIGHT + bottom,
                 }
 

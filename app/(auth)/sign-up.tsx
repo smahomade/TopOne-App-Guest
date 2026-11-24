@@ -119,7 +119,7 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
   };
 
   return (
-    <SafeAreaView className="bg-primary h-full">
+    <SafeAreaView className="bg-cream h-full">
       <AvoidKeyboard>
       <ScrollView
         bounces={false}
@@ -141,14 +141,14 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
           <View className="mt-2 items-center">
             {/* One line on every iPhone: shrinks a little on narrow ones */}
             <Text
-              className="text-3xl text-white font-psemibold text-center"
+              className="text-3xl text-ink font-display text-center"
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.7}
             >
               Create your account
             </Text>
-            <Text className="mt-2 text-center font-pregular text-sm text-gray-100">
+            <Text className="mt-2 text-center font-pregular text-sm text-muted">
               Fill in your details to book appointments.
             </Text>
           </View>
@@ -190,7 +190,7 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
   hasError={showRequiredErrors && requiredFieldErrors.phone}
             />
 {showRequiredErrors && requiredFieldErrors.phone && (
-  <Text className="mt-2 font-pregular text-sm text-[#FF8A8A]">
+  <Text className="mt-2 font-pregular text-sm text-[#B3261E]">
     Enter your full phone number.
   </Text>
 )}
@@ -227,7 +227,7 @@ const { data: { user, session }, error } = await supabase.auth.signUp({
           />
 
           <View className="pt-3 flex-row flex-wrap items-center justify-center" style={{ columnGap: 8 }}>
-            <Text className="text-base text-gray-100 font-pregular">
+            <Text className="text-base text-muted font-pregular">
               Have an account already?
             </Text>
             <TextLink label="Sign in" href="/sign-in" sizeClassName="text-base" />

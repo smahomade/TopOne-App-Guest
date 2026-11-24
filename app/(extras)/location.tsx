@@ -162,14 +162,14 @@ const Location = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-primary" style={{ backgroundColor: '#161622' }}>
+    <SafeAreaView className="flex-1 bg-cream" style={{ backgroundColor: '#F4F1EC' }}>
       <FlatList
         data={locations}
         keyExtractor={(item) => item.id}
-        className="bg-primary"
-        style={{ backgroundColor: '#161622' }}
+        className="bg-cream"
+        style={{ backgroundColor: '#F4F1EC' }}
         contentContainerStyle={{ paddingBottom: 32 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refetch} tintColor="#8ED1FC" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refetch} tintColor="#1A1817" />}
         renderItem={({ item }) => {
           const isActiveLocation = activeLocationId === item.id;
           const pulseScale = pulseAnimation.interpolate({
@@ -185,7 +185,7 @@ const Location = () => {
             <TouchableOpacity
               activeOpacity={0.9}
               onPress={() => handleOpenLocationDetails(item)}
-              className="mx-4 mb-4 overflow-hidden rounded-2xl bg-black-100"
+              className="mx-4 mb-4 overflow-hidden rounded-2xl bg-card"
               style={isActiveLocation ? styles.activeCard : styles.card}
             >
               <Image
@@ -193,7 +193,7 @@ const Location = () => {
                 style={{ width: '100%', height: 180 }}
                 resizeMode="cover"
               />
-              <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(8, 11, 20, 0.52)' }} />
+              <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(26, 24, 23, 0.52)' }} />
 
               {isActiveLocation ? (
                 <View style={styles.activeBadge}>
@@ -214,10 +214,10 @@ const Location = () => {
               ) : null}
 
               <View style={{ position: 'absolute', left: 20, right: 20, bottom: 20 }}>
-                <Text className="font-psemibold text-[24px] text-white">{item.name}</Text>
-                <Text className="mt-2 font-pregular text-sm leading-6 text-gray-100">{item.addressLine1}</Text>
-                <Text className="font-pregular text-sm text-gray-100">{item.postcode ?? ''}</Text>
-                <Text className="mt-2 font-psemibold text-xs text-secondary">Tap for more details</Text>
+                <Text className="font-display text-[26px] text-white">{item.name}</Text>
+                <Text className="mt-2 font-pregular text-sm leading-6 text-[#E8E2DA]">{item.addressLine1}</Text>
+                <Text className="font-pregular text-sm text-[#E8E2DA]">{item.postcode ?? ''}</Text>
+                <Text className="mt-2 font-psemibold text-xs uppercase tracking-widest text-white underline">Tap for more details</Text>
               </View>
             </TouchableOpacity>
           );
@@ -232,7 +232,7 @@ const Location = () => {
                 <Ionicons
                   name={Platform.OS === 'ios' ? 'chevron-back' : 'arrow-back'}
                   size={Platform.OS === 'ios' ? 30 : 26}
-                  color="#FFFFFF"
+                  color="#1A1817"
                 />
               </TouchableOpacity>
               <SalonLogo
@@ -240,23 +240,23 @@ const Location = () => {
                 resizeMode="contain"
               />
             </View>
-            <View style={{ height: 1, backgroundColor: '#232533' }} />
+            <View style={{ height: 1, backgroundColor: '#E4DDD3' }} />
             <View className="px-4 pb-4 pt-5">
               <View className="mb-6">
-                <Text className="font-pregular text-sm text-gray-100">Locations</Text>
-                <Text className="mt-1 font-psemibold text-3xl text-white">Choose a salon</Text>
+                <Text className="font-pregular text-sm text-muted">Locations</Text>
+                <Text className="mt-1 font-display text-3xl text-ink">Choose a salon</Text>
               </View>
-              <Text className="mb-2 font-pregular text-sm text-gray-100">Pick the branch you want to visit.</Text>
-              <Text className="font-pregular text-sm text-gray-100">
+              <Text className="mb-2 font-pregular text-sm text-muted">Pick the branch you want to visit.</Text>
+              <Text className="font-pregular text-sm text-muted">
                 Current location:{' '}
-                <Text className="font-psemibold text-secondary">{currentLocation?.name ?? 'Not selected'}</Text>
+                <Text className="font-psemibold text-ink">{currentLocation?.name ?? 'Not selected'}</Text>
               </Text>
             </View>
           </View>
         )}
         ListEmptyComponent={() => (
           <View className="items-center px-4 py-10">
-            {loading ? <ActivityIndicator size="small" color="#8ED1FC" /> : <Text className="font-pregular text-sm text-gray-100">No locations have been published yet.</Text>}
+            {loading ? <ActivityIndicator size="small" color="#1A1817" /> : <Text className="font-pregular text-sm text-muted">No locations have been published yet.</Text>}
           </View>
         )}
       />
@@ -270,14 +270,14 @@ const Location = () => {
         <View
           style={{
             flex: 1,
-            backgroundColor: 'rgba(7, 11, 19, 0.82)',
+            backgroundColor: 'rgba(26, 24, 23, 0.82)',
             justifyContent: 'center',
             paddingTop: insets.top + 20,
             paddingBottom: insets.bottom + 20,
             paddingHorizontal: 20,
           }}
         >
-          <View className="overflow-hidden rounded-3xl border border-black-200 bg-black-100" style={{ maxHeight: '100%' }}>
+          <View className="overflow-hidden rounded-3xl border border-line bg-card" style={{ maxHeight: '100%' }}>
             {selectedLocation ? (
               <>
                 <Image
@@ -304,36 +304,36 @@ const Location = () => {
                     setIsAtDetailsBottom(atBottom);
                   }}
                 >
-                  <Text className="font-pregular text-sm text-secondary">Location Details</Text>
-                  <Text className="mt-2 font-pbold text-2xl text-white">{selectedLocation.name}</Text>
+                  <Text className="font-pregular text-sm text-ink">Location Details</Text>
+                  <Text className="mt-2 font-display text-[28px] text-ink">{selectedLocation.name}</Text>
 
                   <View className="mt-5 gap-3 pb-2">
                     <View>
-                      <Text className="font-psemibold text-xs text-secondary">Address</Text>
-                      <Text className="mt-1 font-pregular text-sm text-gray-100">{selectedLocation.addressLine1}</Text>
-                      {selectedLocation.addressLine2 ? <Text className="mt-1 font-pregular text-sm text-gray-100">{selectedLocation.addressLine2}</Text> : null}
-                      {selectedLocation.postcode ? <Text className="mt-1 font-pregular text-sm text-gray-100">{selectedLocation.postcode}</Text> : null}
-                      {selectedLocation.country ? <Text className="mt-1 font-pregular text-sm text-gray-100">{selectedLocation.country}</Text> : null}
+                      <Text className="font-psemibold text-xs text-ink">Address</Text>
+                      <Text className="mt-1 font-pregular text-sm text-muted">{selectedLocation.addressLine1}</Text>
+                      {selectedLocation.addressLine2 ? <Text className="mt-1 font-pregular text-sm text-muted">{selectedLocation.addressLine2}</Text> : null}
+                      {selectedLocation.postcode ? <Text className="mt-1 font-pregular text-sm text-muted">{selectedLocation.postcode}</Text> : null}
+                      {selectedLocation.country ? <Text className="mt-1 font-pregular text-sm text-muted">{selectedLocation.country}</Text> : null}
                     </View>
 
                     {selectedLocation.phone ? (
                       <View>
-                        <Text className="font-psemibold text-xs text-secondary">Phone</Text>
-                        <Text className="mt-1 font-pregular text-sm text-gray-100">{selectedLocation.phone}</Text>
+                        <Text className="font-psemibold text-xs text-ink">Phone</Text>
+                        <Text className="mt-1 font-pregular text-sm text-muted">{selectedLocation.phone}</Text>
                       </View>
                     ) : null}
 
                     {selectedLocation.email ? (
                       <View>
-                        <Text className="font-psemibold text-xs text-secondary">Email</Text>
-                        <Text className="mt-1 font-pregular text-sm text-gray-100">{selectedLocation.email}</Text>
+                        <Text className="font-psemibold text-xs text-ink">Email</Text>
+                        <Text className="mt-1 font-pregular text-sm text-muted">{selectedLocation.email}</Text>
                       </View>
                     ) : null}
 
                     {selectedLocation.openingHours ? (
                       <View>
-                        <Text className="font-psemibold text-xs text-secondary">Opening Hours</Text>
-                        <Text className="mt-1 font-pregular text-sm leading-6 text-gray-100">{selectedLocation.openingHours}</Text>
+                        <Text className="font-psemibold text-xs text-ink">Opening Hours</Text>
+                        <Text className="mt-1 font-pregular text-sm leading-6 text-muted">{selectedLocation.openingHours}</Text>
                       </View>
                     ) : null}
                   </View>
@@ -353,13 +353,13 @@ const Location = () => {
                   >
                     <View
                       style={{
-                        backgroundColor: 'rgba(12, 18, 28, 0.97)',
+                        backgroundColor: '#1A1817',
                         borderRadius: 999,
                         paddingHorizontal: 12,
                         paddingVertical: 4,
                       }}
                     >
-                      <Text style={{ color: '#8ED1FC', fontSize: 11, fontFamily: 'Poppins-SemiBold' }}>
+                      <Text style={{ color: '#F4F1EC', fontSize: 11, fontFamily: 'DMSans-SemiBold' }}>
                         Scroll for more ⌄
                       </Text>
                     </View>
@@ -367,21 +367,21 @@ const Location = () => {
                 ) : null}
                 </View>
 
-                <View className="border-t border-black-200/60 px-5 py-4">
+                <View className="border-t border-line/60 px-5 py-4">
                   <View className="flex-row gap-3">
                     <Pressable
                       onPress={() => setSelectedLocation(null)}
-                      className={`${selectedLocation.id === activeLocationId ? 'flex-1 bg-secondary' : 'flex-1 border border-black-200 bg-primary'} items-center rounded-2xl px-4 py-4`}
+                      className={`${selectedLocation.id === activeLocationId ? 'flex-1 bg-ink' : 'flex-1 border border-line bg-cream'} items-center rounded-2xl px-4 py-4`}
                     >
-                      <Text className={`font-psemibold text-sm ${selectedLocation.id === activeLocationId ? 'text-primary' : 'text-white'}`}>Close</Text>
+                      <Text className={`font-psemibold text-sm ${selectedLocation.id === activeLocationId ? 'text-cream' : 'text-ink'}`}>Close</Text>
                     </Pressable>
 
                     {selectedLocation.id !== activeLocationId ? (
                       <Pressable
                         onPress={() => void handleSelectLocation(selectedLocation)}
-                        className="flex-1 items-center rounded-2xl bg-secondary px-4 py-4"
+                        className="flex-1 items-center rounded-2xl bg-ink px-4 py-4"
                       >
-                        <Text className="font-psemibold text-sm text-primary">Select Location</Text>
+                        <Text className="font-psemibold text-sm text-cream">Select Location</Text>
                       </Pressable>
                     ) : null}
                   </View>
@@ -398,8 +398,8 @@ const Location = () => {
 const styles = StyleSheet.create({
   activeBadge: {
     alignItems: 'center',
-    backgroundColor: 'rgba(12, 18, 28, 0.86)',
-    borderColor: '#8ED1FC',
+    backgroundColor: 'rgba(244, 241, 236, 0.94)',
+    borderColor: '#1A1817',
     borderRadius: 999,
     borderWidth: 1,
     flexDirection: 'row',
@@ -410,20 +410,20 @@ const styles = StyleSheet.create({
     top: 16,
   },
   activeBadgeText: {
-    color: '#ffffff',
-    fontFamily: 'Poppins-SemiBold',
+    color: '#1A1817',
+    fontFamily: 'DMSans-SemiBold',
     fontSize: 11,
   },
   activeCard: {
-    borderColor: '#8ED1FC',
+    borderColor: '#1A1817',
     borderWidth: 1.5,
-    shadowColor: '#8ED1FC',
+    shadowColor: '#1A1817',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.22,
     shadowRadius: 16,
   },
   activeDot: {
-    backgroundColor: '#8ED1FC',
+    backgroundColor: '#1A1817',
     borderRadius: 999,
     height: 8,
     width: 8,
@@ -436,14 +436,14 @@ const styles = StyleSheet.create({
     width: 12,
   },
   activePulse: {
-    backgroundColor: '#8ED1FC',
+    backgroundColor: '#1A1817',
     borderRadius: 999,
     height: 12,
     position: 'absolute',
     width: 12,
   },
   card: {
-    borderColor: '#232533',
+    borderColor: '#E4DDD3',
     borderWidth: 1,
   },
 });

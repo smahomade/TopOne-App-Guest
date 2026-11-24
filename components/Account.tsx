@@ -154,19 +154,19 @@ export default function Account({ session }: { session: Session }) {
   }
 
   return (
-  <SafeAreaView edges={['top']} className="flex-1 bg-primary" style={{ backgroundColor: '#161622' }}>
+  <SafeAreaView edges={['top']} className="flex-1 bg-cream" style={{ backgroundColor: '#F4F1EC' }}>
     <AvoidKeyboard>
     <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
     <View style={styles.container}>
     <View style={styles.headerRow}>
       <View className="flex-1 pr-4">
-        <Text className="text-sm text-gray-100 font-pregular">
+        <Text className="text-sm text-muted font-pregular">
           Profile
         </Text>
-        <Text className="mt-1 text-2xl text-white font-psemibold">
+        <Text className="mt-1 text-[28px] text-ink font-display">
           Your Account
         </Text>
-        <Text className="mt-2 font-pregular text-sm text-gray-100">
+        <Text className="mt-2 font-pregular text-sm text-muted">
           Update your account details below.
         </Text>
       </View>
@@ -181,7 +181,7 @@ export default function Account({ session }: { session: Session }) {
         handleChangeText={setFirstName}
         placeholder="Enter your first name"
         OtherStyles="mt-5"
-        titleColor="text-gray-100"
+        titleColor="text-muted"
       />
        <FormField
         title="Last Name"
@@ -189,12 +189,12 @@ export default function Account({ session }: { session: Session }) {
         handleChangeText={setLastName}
         placeholder="Enter your last name"
         OtherStyles="mt-5"
-        titleColor="text-gray-100"
+        titleColor="text-muted"
       />
       <View className="mt-5">
-        <Text className="text-base font-pmedium text-gray-100">Email</Text>
-        <View className="mt-2 w-full rounded-2xl border-2 border-black-200 bg-black-100 px-4 py-4">
-          <Text className="font-psemibold text-base text-white">{emailAddress || 'No email available'}</Text>
+        <Text className="text-base font-pmedium text-muted">Email</Text>
+        <View className="mt-2 w-full rounded-2xl border-2 border-line bg-card px-4 py-4">
+          <Text className="font-psemibold text-base text-ink">{emailAddress || 'No email available'}</Text>
         </View>
       </View>
       {/* The same field as sign-up, so the saved number shows with its flag
@@ -206,7 +206,7 @@ export default function Account({ session }: { session: Session }) {
         hasError={showPhoneError}
       />
       {showPhoneError && (
-        <Text className="mt-2 font-pregular text-sm text-[#FF8A8A]">
+        <Text className="mt-2 font-pregular text-sm text-[#B3261E]">
           Enter your full phone number.
         </Text>
       )}
@@ -255,7 +255,7 @@ export default function Account({ session }: { session: Session }) {
           buttonStyle={styles.destructiveButton}
           titleStyle={styles.destructiveButtonText}
         />
-        <Text className="mt-3 text-center font-pregular text-xs leading-5 text-gray-100">
+        <Text className="mt-3 text-center font-pregular text-xs leading-5 text-muted">
           Deleting your account removes your details and enquiry history for good.
         </Text>
       </View>
@@ -324,39 +324,39 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   buttonTitleDisabled: {
-    color: '#86939E',
+    color: '#6B635A',
   },
   primaryButton: {
-    backgroundColor: '#8ED1FC',
+    backgroundColor: '#1A1817',
     borderRadius: 16,
     minHeight: 56,
   },
   primaryButtonText: {
-    color: '#161622',
+    color: '#F4F1EC',
     fontSize: 16,
     fontWeight: '600',
   },
   secondaryButton: {
-    backgroundColor: '#1E1E2D',
-    borderColor: '#232533',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E4DDD3',
     borderRadius: 16,
     borderWidth: 1,
     minHeight: 56,
   },
   secondaryButtonText: {
-    color: '#ffffff',
+    color: '#1A1817',
     fontSize: 16,
     fontWeight: '600',
   },
   destructiveButton: {
     backgroundColor: 'transparent',
-    borderColor: '#7F1D1D',
+    borderColor: '#E8B4AE',
     borderRadius: 16,
     borderWidth: 1,
     minHeight: 56,
   },
   destructiveButtonText: {
-    color: '#F87171',
+    color: '#B3261E',
     fontSize: 16,
     fontWeight: '600',
   },

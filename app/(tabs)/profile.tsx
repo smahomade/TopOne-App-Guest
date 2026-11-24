@@ -24,7 +24,7 @@ export default function App() {
 
   return (
     <>
-    <View className="flex-1 bg-primary" style={{ backgroundColor: '#161622' }}>
+    <View className="flex-1 bg-cream" style={{ backgroundColor: '#F4F1EC' }}>
       {session && session.user ? <Account key={session.user.id} session={session} /> : <Auth />}
     </View>
     </>

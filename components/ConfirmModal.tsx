@@ -51,25 +51,25 @@ const ConfirmModal = ({
         contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 24 }}
         keyboardShouldPersistTaps="handled"
       >
-        <View className="w-full rounded-2xl bg-black-100 p-6">
-          <Text className="text-center text-xl text-white font-psemibold">
+        <View className="w-full rounded-2xl bg-card p-6">
+          <Text className="text-center text-xl text-ink font-psemibold">
             {title}
           </Text>
-          <Text className="mt-3 text-center text-base text-gray-100 font-pregular">
+          <Text className="mt-3 text-center text-base text-muted font-pregular">
             {message}
           </Text>
 
           {bullets.length > 0 && (
             <View
               className="mt-5 rounded-xl px-4 py-3"
-              style={{ backgroundColor: 'rgba(248, 113, 113, 0.08)' }}
+              style={{ backgroundColor: 'rgba(179, 38, 30, 0.06)' }}
             >
               {bullets.map(item => (
                 <View key={item} className="flex-row items-start py-1">
-                  <Text className="mr-2 font-pregular text-sm" style={{ color: '#F87171' }}>
+                  <Text className="mr-2 font-pregular text-sm" style={{ color: '#B3261E' }}>
                     •
                   </Text>
-                  <Text className="flex-1 font-pregular text-sm leading-5 text-gray-100">
+                  <Text className="flex-1 font-pregular text-sm leading-5 text-muted">
                     {item}
                   </Text>
                 </View>
@@ -79,18 +79,18 @@ const ConfirmModal = ({
 
           {confirmWord ? (
             <View className="mt-5">
-              <Text className="font-pregular text-sm text-gray-100">
-                Type <Text className="font-psemibold text-white">{confirmWord}</Text> to confirm
+              <Text className="font-pregular text-sm text-muted">
+                Type <Text className="font-psemibold text-ink">{confirmWord}</Text> to confirm
               </Text>
               <TextInput
                 value={typedWord}
                 onChangeText={setTypedWord}
                 placeholder={confirmWord}
-                placeholderTextColor="#7b7b8b"
+                placeholderTextColor="#8A8178"
                 autoCorrect={false}
                 autoComplete="off"
                 editable={!isLoading}
-                className="mt-2 h-14 rounded-2xl border-2 border-black-200 bg-primary px-4 font-psemibold text-base text-white"
+                className="mt-2 h-14 rounded-2xl border-2 border-line bg-cream px-4 font-psemibold text-base text-ink"
               />
             </View>
           ) : null}
@@ -110,9 +110,9 @@ const ConfirmModal = ({
             className={`mt-3 min-h-[62px] w-full items-center justify-center rounded-xl border ${
               isConfirmDisabled ? 'opacity-50' : ''
             }`}
-            style={{ borderColor: '#7F1D1D' }}
+            style={{ borderColor: '#E8B4AE' }}
           >
-            <Text className="font-psemibold text-lg" style={{ color: '#F87171' }}>
+            <Text className="font-psemibold text-lg" style={{ color: '#B3261E' }}>
               {isLoading ? 'Deleting ...' : confirmText}
             </Text>
           </TouchableOpacity>

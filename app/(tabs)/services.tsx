@@ -467,26 +467,26 @@ const Services = () => {
 
   if (isServicesLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-primary">
-        <ActivityIndicator size="small" color="#8ED1FC" />
-        <Text className="mt-3 font-pregular text-sm text-gray-100">Loading services...</Text>
+      <View className="flex-1 items-center justify-center bg-cream">
+        <ActivityIndicator size="small" color="#1A1817" />
+        <Text className="mt-3 font-pregular text-sm text-muted">Loading services...</Text>
       </View>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-primary" style={{ backgroundColor: '#161622' }} edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-cream" style={{ backgroundColor: '#F4F1EC' }} edges={['top', 'left', 'right']}>
       <ScrollView
-        className="bg-primary"
-        style={{ backgroundColor: '#161622' }}
+        className="bg-cream"
+        style={{ backgroundColor: '#F4F1EC' }}
         contentContainerStyle={{ paddingBottom: 32 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refetch} tintColor="#8ED1FC" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refetch} tintColor="#1A1817" />}
       >
         <View className="px-4 pb-4 pt-4">
           <View className="mb-5 flex-row items-center justify-between">
             <View>
-              <Text className="font-pregular text-sm text-gray-100">Service Menu</Text>
-              <Text className="mt-1 font-psemibold text-2xl text-white">TopOne Salon</Text>
+              <Text className="font-pregular text-sm text-muted">Service Menu</Text>
+              <Text className="mt-1 font-display text-[28px] text-ink">TopOne Salon</Text>
             </View>
             <SalonLogo 
               style={{ width: 120, height: 52 }}
@@ -495,9 +495,9 @@ const Services = () => {
           </View>
 
           {activeLocation ? (
-            <Text className="mb-4 font-pregular text-sm text-gray-100">
+            <Text className="mb-4 font-pregular text-sm text-muted">
               Showing services for{' '}
-              <Text className="font-psemibold text-secondary">{activeLocation.name}</Text>
+              <Text className="font-psemibold text-ink">{activeLocation.name}</Text>
             </Text>
           ) : null}
 
@@ -517,10 +517,10 @@ const Services = () => {
                 <TouchableOpacity
                   key={category}
                   activeOpacity={0.82}
-                  className={`rounded-full border px-4 py-2.5 ${isSelected ? 'border-secondary bg-secondary' : 'border-black-200 bg-black-100'}`}
+                  className={`rounded-full border px-4 py-2.5 ${isSelected ? 'border-ink bg-ink' : 'border-line bg-card'}`}
                   onPress={() => setSelectedCategory(category)}
                 >
-                  <Text className={`font-psemibold text-sm ${isSelected ? 'text-primary' : 'text-white'}`}>
+                  <Text className={`font-psemibold text-sm ${isSelected ? 'text-cream' : 'text-ink'}`}>
                     {category}
                   </Text>
                 </TouchableOpacity>
@@ -528,7 +528,7 @@ const Services = () => {
             })}
           </ScrollView>
 
-          <Text className="mb-4 font-psemibold text-xl text-white">Available Services</Text>
+          <Text className="mb-4 font-display text-[22px] text-ink">Available Services</Text>
         </View>
 
         <View className="px-4">
@@ -547,32 +547,32 @@ const Services = () => {
             return (
               <React.Fragment key={`${group.serviceCategory}-${group.service}-${index}`}>
               {startsSection ? (
-                <Text className={`mb-3 font-psemibold text-xs uppercase tracking-widest text-secondary ${index > 0 ? 'mt-4' : ''}`}>
+                <Text className={`mb-3 font-psemibold text-xs uppercase tracking-widest text-ink ${index > 0 ? 'mt-4' : ''}`}>
                   {sectionLabel}
                 </Text>
               ) : null}
-              <View className="mb-3 rounded-2xl border border-black-200 bg-black-100 px-4 py-4">
+              <View className="mb-3 rounded-2xl border border-line bg-card px-4 py-4">
                 <View className="flex-row items-center justify-between" style={{ columnGap: 12 }}>
                   <View className="flex-1">
-                    <Text className="font-pbold text-base text-white">{name.title}</Text>
+                    <Text className="font-pbold text-base text-ink">{name.title}</Text>
                     {name.detail ? (
-                      <Text className="mt-0.5 font-pregular text-xs leading-5 text-gray-100">{name.detail}</Text>
+                      <Text className="mt-0.5 font-pregular text-xs leading-5 text-muted">{name.detail}</Text>
                     ) : null}
                     {details ? (
-                      <Text className="mt-1 font-pregular text-sm text-gray-100">{details}</Text>
+                      <Text className="mt-1 font-pregular text-sm text-muted">{details}</Text>
                     ) : null}
                     {addedRole && group.roles.length > 1 ? (
-                      <Text className="mt-1 font-pregular text-xs text-secondary">
+                      <Text className="mt-1 font-pregular text-xs text-ink">
                         {isSessionOption(addedRole) ? addedRole : `With ${addedRole}`}
                       </Text>
                     ) : null}
                   </View>
                   <TouchableOpacity
                     activeOpacity={0.82}
-                    className={`rounded-xl px-4 py-3 ${addedRole ? 'border border-secondary' : 'bg-secondary'}`}
+                    className={`rounded-xl px-4 py-3 ${addedRole ? 'border border-ink' : 'bg-ink'}`}
                     onPress={() => handleBook(group)}
                   >
-                    <Text className={`font-psemibold text-sm ${addedRole ? 'text-secondary' : 'text-primary'}`}>
+                    <Text className={`font-psemibold text-sm ${addedRole ? 'text-ink' : 'text-cream'}`}>
                       {!addedSelection ? 'Add' : addedSelection.quantity > 1 ? `Added ×${addedSelection.quantity}` : 'Added ✓'}
                     </Text>
                   </TouchableOpacity>
@@ -585,7 +585,7 @@ const Services = () => {
 
         {categoryNames.length === 0 ? (
           <View className="items-center px-4 py-10">
-            <Text className="font-pregular text-sm text-gray-100">
+            <Text className="font-pregular text-sm text-muted">
               {activeLocation
                 ? `No services are available for ${activeLocation.name} right now.`
                 : 'No services have been published from the admin app yet.'}
@@ -602,23 +602,23 @@ const Services = () => {
           <View className="flex-1 items-center justify-center bg-black/70 px-5">
             {/* Capped and scrollable, so four or more options (laser) and
                 larger text sizes still fit on a small phone. */}
-            <View className="w-full rounded-2xl border border-black-200 bg-black-100" style={{ maxHeight: '85%' }}>
+            <View className="w-full rounded-2xl border border-line bg-card" style={{ maxHeight: '85%' }}>
             <ScrollView contentContainerStyle={{ padding: 20 }}>
-              <Text className="font-psemibold text-xl text-white">
+              <Text className="font-psemibold text-xl text-ink">
                 {getChoiceTitle(selectedService?.roles ?? [])}
               </Text>
               {selectedService ? (
                 <>
-                  <Text className="mt-1 font-psemibold text-base text-white">
+                  <Text className="mt-1 font-psemibold text-base text-ink">
                     {splitServiceName(selectedService.service).title}
                   </Text>
                   {splitServiceName(selectedService.service).detail ? (
-                    <Text className="mt-0.5 font-pregular text-xs leading-5 text-gray-100">
+                    <Text className="mt-0.5 font-pregular text-xs leading-5 text-muted">
                       {splitServiceName(selectedService.service).detail}
                     </Text>
                   ) : null}
                   {getCategoryLabel(selectedService.serviceCategory) || formatServiceDuration(selectedService.duration) ? (
-                    <Text className="mt-1 font-pregular text-sm text-secondary">
+                    <Text className="mt-1 font-pregular text-sm text-ink">
                       {[getCategoryLabel(selectedService.serviceCategory), formatServiceDuration(selectedService.duration)]
                         .filter(Boolean)
                         .join(' · ')}
@@ -633,19 +633,19 @@ const Services = () => {
                   selectionByService.get(getServiceKey(selectedService.serviceCategory, selectedService.service))?.role === roleItem.role;
 
                 return (
-                  <View key={index} className="mb-2.5 rounded-xl border border-white/10 bg-primary px-4 py-3">
+                  <View key={index} className="mb-2.5 rounded-xl border border-line bg-cream px-4 py-3">
                     <View className="flex-row items-center justify-between" style={{ columnGap: 12 }}>
                       <View className="flex-1">
-                        <Text className="font-psemibold text-base text-white">{roleItem.role}</Text>
-                        <Text className="mt-1 font-pregular text-sm text-gray-100">{formatPrice(roleItem.price)}</Text>
+                        <Text className="font-psemibold text-base text-ink">{roleItem.role}</Text>
+                        <Text className="mt-1 font-pregular text-sm text-muted">{formatPrice(roleItem.price)}</Text>
                       </View>
 
                       <TouchableOpacity
                         activeOpacity={0.82}
-                        className={`rounded-xl px-4 py-3 ${isChosen ? 'border border-secondary' : 'bg-secondary'}`}
+                        className={`rounded-xl px-4 py-3 ${isChosen ? 'border border-ink' : 'bg-ink'}`}
                         onPress={() => handleAddSelection(roleItem)}
                       >
-                        <Text className={`font-psemibold text-sm ${isChosen ? 'text-secondary' : 'text-primary'}`}>
+                        <Text className={`font-psemibold text-sm ${isChosen ? 'text-ink' : 'text-cream'}`}>
                           {isChosen ? 'Chosen ✓' : 'Choose'}
                         </Text>
                       </TouchableOpacity>
@@ -657,19 +657,19 @@ const Services = () => {
               {selectedService && selectionByService.has(getServiceKey(selectedService.serviceCategory, selectedService.service)) ? (
                 <TouchableOpacity
                   activeOpacity={0.82}
-                  className="mt-2 items-center rounded-xl border border-white/10 px-4 py-3"
+                  className="mt-2 items-center rounded-xl border border-line px-4 py-3"
                   onPress={handleRemoveFromModal}
                 >
-                  <Text className="font-psemibold text-sm text-gray-100">Remove from booking</Text>
+                  <Text className="font-psemibold text-sm text-muted">Remove from booking</Text>
                 </TouchableOpacity>
               ) : null}
 
               <TouchableOpacity
                 activeOpacity={0.82}
-                className="mt-2 items-center rounded-xl border border-white/10 px-4 py-3"
+                className="mt-2 items-center rounded-xl border border-line px-4 py-3"
                 onPress={() => setShowRolesModal(false)}
               >
-                <Text className="font-psemibold text-sm text-gray-100">Close</Text>
+                <Text className="font-psemibold text-sm text-muted">Close</Text>
               </TouchableOpacity>
             </ScrollView>
             </View>
@@ -683,49 +683,49 @@ const Services = () => {
           onRequestClose={() => setShowDateModal(false)}
         >
           <View className="flex-1 items-center justify-center bg-black/70 px-5">
-            <View className="w-full rounded-2xl border border-black-200 bg-black-100" style={{ maxHeight: '90%' }}>
+            <View className="w-full rounded-2xl border border-line bg-card" style={{ maxHeight: '90%' }}>
               <ScrollView contentContainerStyle={{ padding: 16 }} keyboardShouldPersistTaps="handled">
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                 <View style={{ flex: 1, marginRight: 8 }}>
-                  <Text className="font-psemibold text-base text-white">Choose preferred dates</Text>
-                  <Text className="font-pregular text-xs text-gray-100">
+                  <Text className="font-psemibold text-base text-ink">Choose preferred dates</Text>
+                  <Text className="font-pregular text-xs text-muted">
                     Up to {MAX_BOOKING_DATES} dates{activeLocation ? ` · ${activeLocation.name}` : ''}
                   </Text>
                 </View>
                 <TouchableOpacity
                   onPress={() => setShowDateModal(false)}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  style={{ width: 36, height: 36, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', alignItems: 'center', justifyContent: 'center' }}
+                  style={{ width: 36, height: 36, borderRadius: 999, backgroundColor: '#F4F1EC', borderWidth: 1, borderColor: '#E4DDD3', alignItems: 'center', justifyContent: 'center' }}
                 >
-                  <Text style={{ color: '#ffffff', fontSize: 18, lineHeight: 22, fontWeight: 'bold' }}>×</Text>
+                  <Text style={{ color: '#1A1817', fontSize: 18, lineHeight: 22, fontWeight: 'bold' }}>×</Text>
                 </TouchableOpacity>
               </View>
 
               <View className="mt-3 flex-row items-center justify-between">
                 <TouchableOpacity
                   activeOpacity={0.82}
-                  className="rounded-lg border border-white/10 px-3 py-1.5"
+                  className="rounded-lg border border-line px-3 py-1.5"
                   onPress={() => setVisibleMonth((currentMonth) => addMonths(currentMonth, -1))}
                 >
-                  <Text className="font-psemibold text-xs text-gray-100">‹</Text>
+                  <Text className="font-psemibold text-xs text-muted">‹</Text>
                 </TouchableOpacity>
 
-                <Text className="font-psemibold text-sm text-white">
+                <Text className="font-psemibold text-sm text-ink">
                   {visibleMonth.toLocaleDateString([], { month: 'long', year: 'numeric' })}
                 </Text>
 
                 <TouchableOpacity
                   activeOpacity={0.82}
-                  className="rounded-lg border border-white/10 px-3 py-1.5"
+                  className="rounded-lg border border-line px-3 py-1.5"
                   onPress={() => setVisibleMonth((currentMonth) => addMonths(currentMonth, 1))}
                 >
-                  <Text className="font-psemibold text-xs text-gray-100">›</Text>
+                  <Text className="font-psemibold text-xs text-muted">›</Text>
                 </TouchableOpacity>
               </View>
 
               <View className="mt-2 flex-row justify-between">
                 {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map((day) => (
-                  <Text key={day} className="text-center font-psemibold text-[10px] text-gray-100" style={{ width: '14.28%' }}>
+                  <Text key={day} className="text-center font-psemibold text-[10px] text-muted" style={{ width: '14.28%' }}>
                     {day}
                   </Text>
                 ))}
@@ -748,7 +748,7 @@ const Services = () => {
                       <TouchableOpacity
                         activeOpacity={0.82}
                         disabled={isUnavailable}
-                        style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: 999, backgroundColor: isSelected ? '#8ED1FC' : 'transparent', opacity: isUnavailable ? 0.3 : 1 }}
+                        style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: 999, backgroundColor: isSelected ? '#1A1817' : 'transparent', opacity: isUnavailable ? 0.3 : 1 }}
                         onPress={() => {
                           if (!isUnavailable && !selectedBookingDates.includes(day.dateValue) && selectedBookingDates.length >= MAX_BOOKING_DATES) {
                             return;
@@ -756,7 +756,7 @@ const Services = () => {
                           handleToggleBookingDate(day.dateValue);
                         }}
                       >
-                        <Text style={{ fontFamily: 'Poppins-SemiBold', fontSize: 12, color: isSelected ? '#161622' : '#ffffff' }}>
+                        <Text style={{ fontFamily: 'DMSans-SemiBold', fontSize: 12, color: isSelected ? '#F4F1EC' : '#1A1817' }}>
                           {day.dayNumber}
                         </Text>
                       </TouchableOpacity>
@@ -767,12 +767,12 @@ const Services = () => {
 
               {selectedBookingDates.length > 0 ? (
                 <View className="mt-3">
-                  <Text className="font-psemibold text-xs text-gray-100 mb-1">Selected</Text>
-                  <Text className="font-pregular text-xs text-white">
+                  <Text className="font-psemibold text-xs text-muted mb-1">Selected</Text>
+                  <Text className="font-pregular text-xs text-ink">
                     {selectedBookingDates.map(formatDateLabel).join(' · ')}
                   </Text>
 
-                  <Text className="font-psemibold text-xs text-gray-100 mb-2 mt-3">Time of day</Text>
+                  <Text className="font-psemibold text-xs text-muted mb-2 mt-3">Time of day</Text>
                   <View className="flex-row flex-wrap gap-2">
                     {[null, ...TIME_OPTIONS].map((option) => {
                       const isSelected = preferredTime === option;
@@ -781,10 +781,10 @@ const Services = () => {
                         <TouchableOpacity
                           key={option ?? 'any'}
                           activeOpacity={0.82}
-                          className={`rounded-full border px-3 py-2 ${isSelected ? 'border-secondary bg-secondary' : 'border-white/20'}`}
+                          className={`rounded-full border px-3 py-2 ${isSelected ? 'border-ink bg-ink' : 'border-line'}`}
                           onPress={() => setPreferredTime(option)}
                         >
-                          <Text className={`font-psemibold text-xs ${isSelected ? 'text-primary' : 'text-white'}`}>
+                          <Text className={`font-psemibold text-xs ${isSelected ? 'text-cream' : 'text-ink'}`}>
                             {option ?? 'Any time'}
                           </Text>
                         </TouchableOpacity>
@@ -793,16 +793,16 @@ const Services = () => {
                   </View>
                 </View>
               ) : (
-                <Text className="mt-3 font-pregular text-xs text-gray-100">Tap a date to select it.</Text>
+                <Text className="mt-3 font-pregular text-xs text-muted">Tap a date to select it.</Text>
               )}
 
               <TouchableOpacity
                 activeOpacity={0.82}
-                style={{ marginTop: 14, alignItems: 'center', borderRadius: 12, paddingVertical: 12, backgroundColor: selectedBookingDates.length === 0 ? '#232533' : '#8ED1FC' }}
+                style={{ marginTop: 14, alignItems: 'center', borderRadius: 12, paddingVertical: 12, backgroundColor: selectedBookingDates.length === 0 ? '#E4DDD3' : '#1A1817' }}
                 onPress={handleConfirmBookingDates}
                 disabled={selectedBookingDates.length === 0}
               >
-                <Text style={{ fontFamily: 'Poppins-SemiBold', fontSize: 14, color: selectedBookingDates.length === 0 ? '#7b7b8b' : '#161622' }}>
+                <Text style={{ fontFamily: 'DMSans-SemiBold', fontSize: 14, color: selectedBookingDates.length === 0 ? '#8A8178' : '#F4F1EC' }}>
                   Continue booking
                 </Text>
               </TouchableOpacity>
@@ -815,33 +815,32 @@ const Services = () => {
 
       {/* Always on screen once something is added, so nobody has to scroll to find the next step */}
       {bookingSelections.length > 0 ? (
-        <View className="flex-row items-center border-t border-black-200 bg-black-100 px-4 py-3" style={{ columnGap: 8 }}>
+        <View className="flex-row items-center border-t border-line bg-card px-4 py-3" style={{ columnGap: 8 }}>
           {/* Shrinks rather than wraps, so "10 services" and "£12,000" stay
               on one line beside the two buttons on a small phone. */}
           <View style={{ flex: 1, minWidth: 56 }}>
-            <Text className="font-psemibold text-sm text-white" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+            <Text className="font-psemibold text-sm text-ink" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
               {bookingCount} {bookingCount === 1 ? 'service' : 'services'}
             </Text>
             {bookingTotal > 0 ? (
-              <Text className="font-pregular text-xs text-gray-100" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+              <Text className="font-pregular text-xs text-muted" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
                 {formatMoney(bookingTotal)}
               </Text>
             ) : null}
           </View>
           <TouchableOpacity
             activeOpacity={0.82}
-            className="rounded-xl px-3 py-3"
-            style={{ backgroundColor: '#F87171' }}
+            className="rounded-xl border border-ink px-3 py-3"
             onPress={() => setShowEditModal(true)}
           >
-            <Text className="font-psemibold text-sm text-primary" numberOfLines={1}>Edit services</Text>
+            <Text className="font-psemibold text-sm text-ink" numberOfLines={1}>Edit services</Text>
           </TouchableOpacity>
           <TouchableOpacity
             activeOpacity={0.82}
-            className="rounded-xl bg-secondary px-3 py-3"
+            className="rounded-xl bg-ink px-3 py-3"
             onPress={handleBookSelections}
           >
-            <Text className="font-psemibold text-sm text-primary" numberOfLines={1}>Choose dates</Text>
+            <Text className="font-psemibold text-sm text-cream" numberOfLines={1}>Choose dates</Text>
           </TouchableOpacity>
         </View>
       ) : null}
@@ -853,25 +852,25 @@ const Services = () => {
         onRequestClose={() => setShowEditModal(false)}
       >
         <View className="flex-1 items-center justify-center bg-black/70 px-5">
-          <View className="w-full rounded-2xl border border-black-200 bg-black-100" style={{ maxHeight: '85%' }}>
+          <View className="w-full rounded-2xl border border-line bg-card" style={{ maxHeight: '85%' }}>
             <ScrollView contentContainerStyle={{ padding: 24 }}>
-              <Text className="font-psemibold text-xl text-white">Your services</Text>
-              <Text className="mt-1 font-pregular text-sm text-gray-100">
+              <Text className="font-psemibold text-xl text-ink">Your services</Text>
+              <Text className="mt-1 font-pregular text-sm text-muted">
                 You'll pick dates next. The salon replies in Messages to confirm a time.
               </Text>
 
               <View className="mt-5" style={{ rowGap: 12 }}>
                 {bookingSelections.map((selection) => (
-                  <View key={selection.id} className="rounded-xl border border-white/10 bg-primary px-4 py-3">
+                  <View key={selection.id} className="rounded-xl border border-line bg-cream px-4 py-3">
                     {/* The name gets the full width; the details and − / +
                         share the line under it, so nothing wraps into a
                         narrow column beside the buttons. */}
-                    <Text className="font-psemibold text-sm text-white">{splitServiceName(selection.service).title}</Text>
-                    <Text className="mt-0.5 font-pregular text-xs text-gray-100">
+                    <Text className="font-psemibold text-sm text-ink">{splitServiceName(selection.service).title}</Text>
+                    <Text className="mt-0.5 font-pregular text-xs text-muted">
                       {[getCategoryLabel(selection.serviceCategory), selection.role].filter(Boolean).join(' · ')}
                     </Text>
                     <View className="mt-2 flex-row items-center justify-between" style={{ columnGap: 12 }}>
-                      <Text className="flex-1 font-psemibold text-sm text-secondary">
+                      <Text className="flex-1 font-psemibold text-sm text-ink">
                         {selection.quantity > 1 && selection.price > 0 ? `${formatPrice(selection.price)} each` : formatPrice(selection.price)}
                       </Text>
 
@@ -879,20 +878,20 @@ const Services = () => {
                         <TouchableOpacity
                           activeOpacity={0.82}
                           accessibilityLabel={selection.quantity === 1 ? `Remove ${selection.service}` : `One fewer ${selection.service}`}
-                          className="h-9 w-9 items-center justify-center rounded-full border border-white/20"
+                          className="h-9 w-9 items-center justify-center rounded-full border border-line"
                           onPress={() => changeQuantity(selection.id, -1)}
                         >
-                          <Text className="font-psemibold text-lg text-white">−</Text>
+                          <Text className="font-psemibold text-lg text-ink">−</Text>
                         </TouchableOpacity>
-                        <Text className="min-w-[16px] text-center font-psemibold text-base text-white">{selection.quantity}</Text>
+                        <Text className="min-w-[16px] text-center font-psemibold text-base text-ink">{selection.quantity}</Text>
                         <TouchableOpacity
                           activeOpacity={0.82}
                           accessibilityLabel={`Add ${selection.service} for one more person`}
                           disabled={selection.quantity >= MAX_QUANTITY}
-                          className={`h-9 w-9 items-center justify-center rounded-full bg-secondary ${selection.quantity >= MAX_QUANTITY ? 'opacity-40' : ''}`}
+                          className={`h-9 w-9 items-center justify-center rounded-full bg-ink ${selection.quantity >= MAX_QUANTITY ? 'opacity-40' : ''}`}
                           onPress={() => changeQuantity(selection.id, 1)}
                         >
-                          <Text className="font-psemibold text-lg text-primary">+</Text>
+                          <Text className="font-psemibold text-lg text-cream">+</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -900,23 +899,23 @@ const Services = () => {
                 ))}
               </View>
 
-              <Text className="mt-4 font-pregular text-xs text-gray-100">
+              <Text className="mt-4 font-pregular text-xs text-muted">
                 Booking for someone else too? Tap + to add the same service again. Tap − to take it off.
               </Text>
 
               {bookingTotal > 0 ? (
-                <View className="mt-4 flex-row items-center justify-between border-t border-white/10 pt-4">
-                  <Text className="font-psemibold text-sm text-white">Total</Text>
-                  <Text className="font-psemibold text-sm text-white">{formatMoney(bookingTotal)}</Text>
+                <View className="mt-4 flex-row items-center justify-between border-t border-line pt-4">
+                  <Text className="font-psemibold text-sm text-ink">Total</Text>
+                  <Text className="font-psemibold text-sm text-ink">{formatMoney(bookingTotal)}</Text>
                 </View>
               ) : null}
 
               <TouchableOpacity
                 activeOpacity={0.82}
-                className="mt-5 items-center rounded-xl bg-secondary px-4 py-3"
+                className="mt-5 items-center rounded-xl bg-ink px-4 py-3"
                 onPress={() => setShowEditModal(false)}
               >
-                <Text className="font-psemibold text-sm text-primary">Done</Text>
+                <Text className="font-psemibold text-sm text-cream">Done</Text>
               </TouchableOpacity>
             </ScrollView>
           </View>

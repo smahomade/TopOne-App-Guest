@@ -29,9 +29,9 @@ const GoogleLogo = ({ size = 22 }: { size?: number }) => (
 
 const OrDivider = ({ text }: { text: string }) => (
   <View className="w-full flex-row items-center">
-    <View style={{ flex: 1, height: 1, backgroundColor: '#3a3a4a' }} />
-    <Text className="mx-3 text-sm text-gray-100 font-pregular">{text}</Text>
-    <View style={{ flex: 1, height: 1, backgroundColor: '#3a3a4a' }} />
+    <View style={{ flex: 1, height: 1, backgroundColor: '#D5CDC2' }} />
+    <Text className="mx-3 text-sm text-muted font-pregular">{text}</Text>
+    <View style={{ flex: 1, height: 1, backgroundColor: '#D5CDC2' }} />
   </View>
 );
 

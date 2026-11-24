@@ -17,11 +17,11 @@ const InfoModal = ({ visible, title, message, buttonText = 'Got it', onClose }: 
         style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
         className="flex-1 items-center justify-center px-6"
       >
-        <View className="w-full rounded-2xl bg-black-100 p-6">
-          <Text className="text-center text-xl text-white font-psemibold">
+        <View className="w-full rounded-2xl bg-card p-6">
+          <Text className="text-center text-xl text-ink font-psemibold">
             {title}
           </Text>
-          <Text className="mt-3 text-center text-base text-gray-100 font-pregular">
+          <Text className="mt-3 text-center text-base text-muted font-pregular">
             {message}
           </Text>
           <CustomButton
